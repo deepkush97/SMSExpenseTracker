@@ -56,7 +56,7 @@ class SeedDatabaseCallback : RoomDatabase.Callback() {
             val isDefault = if (name == "Other") 1 else 0
 
             db.execSQL(
-                "INSERT INTO categories (id, name, icon, color, isDefault) VALUES (${index + 1}, '$name','$icon', $color"
+                "INSERT INTO categories (id, name, icon, color, isDefault) VALUES (${index + 1}, '$name','$icon', $color, $isDefault)"
             )
         }
     }
@@ -64,10 +64,10 @@ class SeedDatabaseCallback : RoomDatabase.Callback() {
     private fun seedSmsRules(db: SupportSQLiteDatabase) {
 
         val rules = listOf(
-            "HDFB CC Debit" to 1L to "Spent Rs\\.([\\d,.]+) On HDFC Bank Card \\d{4} At (.+?) On .+",
+            "HDFC CC Debit" to 1L to "Spent Rs\\.([\\d,.]+) On HDFC Bank Card \\d{4} At (.+?) On .+",
             "HDFC UPI Credit" to 1L to "Rs\\.([\\d,.]+) credited to HDFC Bank A/c \\w+ on [\\d-]+ from VPA (.+?) \\(UPI",
-            "HDFC UPI Debit" to 1L to "Rs\\.([\\d,.]+) debited from HDFC Bank A/c \\w+ towards (.+?) UMRN",
-            "HDFC NEFT Credit" to 1L to "INR ([\\d,.]+) deposited in HDFC Bank A/c \\w+ on [\\d-]+ for NEFT Cr-(.+?) Avl bal",
+            "HDFC e-Mandate" to 1L to "INR ([\\d,.]+) deducted from HDFC Bank A/C No \\w+ towards (.+?) UMRN",
+            "HDFC NEFT Credit" to 1L to "INR ([\\d,.]+) deposited in HDFC Bank A/c \\w+ on [\\w-]+ for NEFT Cr-(.+?)\\.?Avl bal",
             "ICICI UPI Debit" to 2L to "ICICI Bank Acct \\w+ debited for Rs ([\\d,.]+) on [\\d-]+; (.+?) credited\\. UPI",
             "ICICI UPI Credit" to 2L to "Acct \\w+ is credited with Rs ([\\d,.]+) on [\\d-]+ from (.+?)\\. UPI"
         )

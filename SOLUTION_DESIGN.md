@@ -16,27 +16,28 @@
 5. [System Architecture (Detailed)](#5-system-architecture-detailed)
 6. [Database Design (ER Diagram)](#6-database-design-er-diagram)
 7. [SMS Parsing Pipeline](#7-sms-parsing-pipeline)
-8. [Indian Bank SMS Patterns](#8-indian-bank-sms-patterns)
-9. [User-Extensible Regex System](#9-user-extensible-regex-system)
-10. [UI/UX Architecture](#10-uiux-architecture)
-11. [Onboarding & SMS Sync Flow](#11-onboarding--sms-sync-flow)
-12. [Sequence Diagrams](#12-sequence-diagrams)
-13. [Data Flow Diagrams](#13-data-flow-diagrams)
-14. [Error Logging Strategy](#14-error-logging-strategy)
-15. [Testing Strategy](#15-testing-strategy)
-16. [Play Store Considerations](#16-play-store-considerations)
-17. [CI/CD Pipeline (GitHub Actions)](#17-cicd-pipeline-github-actions)
-18. [ProGuard/R8 Rules](#18-proguardr8-rules)
-19. [Room TypeConverters & Migrations](#19-room-typeconverters--migrations)
-20. [Pre-populated Data (Banks & Categories)](#20-pre-populated-data-banks--categories)
-21. [Coroutine & Dispatcher Strategy](#21-coroutine--dispatcher-strategy)
-22. [Debounce & Batching Strategy](#22-debounce--batching-strategy)
-23. [Hilt Module Structure](#23-hilt-module-structure)
-24. [Empty States](#24-empty-states)
-25. [Manual Transaction Entry](#25-manual-transaction-entry)
-26. [Error States in UI](#26-error-states-in-ui)
-27. [Risk Mitigation](#27-risk-mitigation)
-28. [Future Enhancements](#28-future-enhancements)
+8. [Verified SMS Patterns](#8-verified-sms-patterns)
+9. [Category Detection Keywords](#9-category-detection-keywords)
+10. [User-Extensible Regex System](#10-user-extensible-regex-system)
+11. [UI/UX Architecture](#11-uiux-architecture)
+12. [Onboarding & SMS Sync Flow](#12-onboarding--sms-sync-flow)
+13. [Sequence Diagrams](#13-sequence-diagrams)
+14. [Data Flow Diagrams](#14-data-flow-diagrams)
+15. [Error Logging Strategy](#15-error-logging-strategy)
+16. [Testing Strategy](#16-testing-strategy)
+17. [Play Store Considerations](#17-play-store-considerations)
+18. [CI/CD Pipeline (GitHub Actions)](#18-cicd-pipeline-github-actions)
+19. [ProGuard/R8 Rules](#19-proguardr8-rules)
+20. [Room TypeConverters & Migrations](#20-room-typeconverters--migrations)
+21. [Pre-populated Data (Banks & Categories)](#21-pre-populated-data-banks--categories)
+22. [Coroutine & Dispatcher Strategy](#22-coroutine--dispatcher-strategy)
+23. [Debounce & Batching Strategy](#23-debounce--batching-strategy)
+24. [Hilt Module Structure](#24-hilt-module-structure)
+25. [Empty States](#25-empty-states)
+26. [Manual Transaction Entry](#26-manual-transaction-entry)
+27. [Error States in UI](#27-error-states-in-ui)
+28. [Risk Mitigation](#28-risk-mitigation)
+29. [Future Enhancements](#29-future-enhancements)
 
 ---
 
@@ -550,133 +551,13 @@ Users can configure sender IDs for banks not in the pre-configured list:
 
 ---
 
-## 8. Indian Bank SMS Patterns
+## 8. Verified SMS Patterns
 
-### 8.1 Common SMS Formats
-
-#### HDFC Bank — Debit
-
-```
-Your A/c XX3421 is debited for INR 1,500.00 on 15-07-26 by UPI Ref No 4829104720.
-To VPA swiggy@ybl. Available Bal: INR 23,450.50
-```
-
-#### HDFC Bank — UPI Debit
-
-```
-Acct XX3421 debited INR 450.00 to SWIGGY via UPI. Ref: 4829104720.
-Bal: INR 23,000.50
-```
-
-#### ICICI Bank — Debit
-
-```
-ICICI Bank Acct XX1234 debited INR 2,300.00 on 15-07-26.
-IMPS to MOHIT KUMAR Ref# 4829104720. Avl Bal INR 45,670.25
-```
-
-#### ICICI Bank — Credit
-
-```
-ICICI Bank Acct XX1234 credited INR 50,000.00 on 15-07-26.
-NEFT from RAHUL SHARMA Ref# NEFT123456. Avl Bal INR 95,670.25
-```
-
-#### SBI — Debit
-
-```
-Dear Customer, your SBI A/c X1234 debited by Rs.1,500.00 on 15/07/26.
-IMPS P2A to 9876543210(UPI). Avl Bal Rs.23,450.50.
-- SBI
-```
-
-#### SBI — Credit
-
-```
-Dear Customer, your SBI A/c X1234 is credited by Rs.50,000.00 on 15/07/26
-by NEFT from ABCD LTD Ref No NEFT12345. Avl Bal Rs.73,450.50.
-- SBI
-```
-
-#### Axis Bank — Debit
-
-```
-Axis Bank: Rs.2,500 debited from A/c XX5678 on 15-07-26 for UPI
-txn to merchant@paytm. UPI Ref: 4829104720. Avl Bal: Rs.34,500.00
-```
-
-#### Kotak Bank — Debit
-
-```
-Kotak Bank: INR 899 debited from A/c XX9012 on 15-Jul-26 for
-Netflix Subscription. Avl Bal: INR 12,345.67
-```
-
-### 8.2 Generic UPI SMS Pattern
-
-```
-Rs.{amount} {debited/credited} from/to {account/payer/payee}
-via UPI. Ref: {reference}. Avl Bal: Rs.{balance}
-```
-
-### 8.3 Regex Extraction Groups
-
-```kotlin
-// Common regex groups — updated to match real SMS patterns
-
-// Amount: "4831.76" or "1,000.00" or "546.00"
-val amountGroup = "(?<amount>[\\d,]+\\.?\\d*)"
-
-// Type: explicit keyword capture (nullable — use inference if null)
-val typeGroup = "(?<type>debited|credited|spent|refunded|deducted|deposited|loaded)"
-
-// Balance: "Avl bal Rs.9388.14" or "Bal: INR 23,000.50" or "Avl Bal INR 45,670.25"
-val balanceGroup = "(?<balance>[\\d,]+\\.?\\d*)"
-
-// Account: "XX1111" or "1111" or "*1234" or "**********1233"
-val accountGroup = "(?<account>[Xx*]+\\d{3,4}|\\d{4})"
-
-// Payee/Merchant: "Acme Inc." or "SWIGGY" or "cafe de lar" or "yourupi@addr"
-val payeeGroup = "(?<payee>[A-Za-z][A-Za-z0-9 .@]+)"
-
-// Reference: numeric UPI ref "620436716168" or alphanumeric "NEFT123456" or UMRN "HDFC7011403241000251"
-val refGroup = "(?<ref>\\d{6,}|NEFT\\d+|HDFC\\w+)"
-
-// Date: "2026-07-26:21:35:51" or "26-Jul-26" or "18-07-26" or "28-06-2026 21:38:47"
-val dateGroup = "(?<date>[\\d]{2}[-/][\\w]+[-/][\\d]{2,4}(?:[\\s:]+\\d{2}:\\d{2}(?::\\d{2})?(?:\\s*[AP]M)?)"
-
-// Channel: "POS/Ecom" or "UPI" or "NEFT"
-val channelGroup = "(?<channel>POS/Ecom|UPI|NEFT|IMPS|NETBanking|ECS)"
-```
-
-### 8.4 Category Detection Keywords
-
-| Category              | Keywords/Merchants                                                     |
-| --------------------- | ---------------------------------------------------------------------- |
-| **Food & Dining**     | swiggy, zomato, dominos, pizza, food, restaurant, cafe, 奶茶           |
-| **Groceries**         | bigbasket, blinkit, zepto, dmart, grocery, supermarket, reliance fresh |
-| **Fuel**              | petrol, diesel, hp, bpcl, iocl, shell, fuel, gas station               |
-| **Bills & Utilities** | electricity, water, gas, broadband, jio, airtel, vi, bsnl, bill        |
-| **Shopping**          | amazon, flipkart, meesho, ajio, myntra, mall                           |
-| **Transport**         | uber, ola, rapido, metro, parking, toll                                |
-| **Entertainment**     | netflix, prime, hotstar, spotify, movie, cinema                        |
-| **Health**            | pharmacy, medical, hospital, doctor, clinic, health                    |
-| **Education**         | school, college, university, course, book                              |
-| **Salary**            | salary, payroll, wage                                                  |
-| **Rent**              | rent, house, flat                                                      |
-| **EMI/Loans**         | emi, loan, installment, sip                                            |
-
-### 8.5 Detailed SMS Scenarios — 4 Banks + UPI + Pluxee
-
-> **Source:** Real SMS examples verified against actual bank alerts (July 2026).
-
----
-
-#### Scenario 1: HDFC Bank — Credit Card
+### 8.1 HDFC Bank
 
 **Sender IDs:** `AD-HDFCBK-S`, `VM-HDFCBK-S`, `JM-HDFCBK-S`, `VD-HDFCBK-S`, `JD-HDFCBK-S`
 
-##### 1a. Merchant Transaction (Debit)
+#### 8.1a HDFC CC Merchant Debit
 
 ```
 Spent Rs.4831.76 On HDFC Bank Card 1111 At Acme Inc. On 2026-07-26:21:35:51.Not You? To Block+Reissue Call 18002586161/SMS BLOCK CC 2468 to 7308080808
@@ -692,7 +573,7 @@ Spent Rs.4831.76 On HDFC Bank Card 1111 At Acme Inc. On 2026-07-26:21:35:51.Not 
 
 **Regex:** `Spent Rs\.(?<amount>[\d,.]+) On HDFC Bank Card (?<account>\d{4}) At (?<payee>[\w\s.@]+) On (?<date>[\d-]+:\d{2}:\d{2}:\d{2})`
 
-##### 1b. UPI Transaction (Debit)
+#### 8.1b HDFC CC UPI Debit
 
 ```
 Txn Rs.25.00
@@ -715,7 +596,7 @@ Call 18002586161/SMS BLOCK CC 2468 to 7308080808
 
 **Regex:** `Txn Rs\.(?<amount>[\d,.]+)[\s\S]*?On HDFC Bank Card (?<account>\d{4})[\s\S]*?At (?<payee>[\w\s.@]+)[\s\S]*?by UPI (?<ref>\d+)[\s\S]*?On (?<date>[\d-]+)`
 
-##### 1c. Refund/Credit
+#### 8.1c HDFC CC Refund/Credit
 
 ```
 Alert! Rs. 32 refunded by someComp on 20/JUL/2026 & adjusted against HDFC Bank Credit Card 1111 View updated balance here: bank link
@@ -731,13 +612,7 @@ Alert! Rs. 32 refunded by someComp on 20/JUL/2026 & adjusted against HDFC Bank C
 
 **Regex:** `Alert! Rs\.? (?<amount>[\d,.]+) refunded by (?<payee>[\w\s]+) on (?<date>[\d/]+).*?HDFC Bank Credit Card (?<account>\d{4})`
 
----
-
-#### Scenario 2: HDFC Bank — Debit Card / Account
-
-**Sender IDs:** `AD-HDFCBK-S`, `VM-HDFCBK-S`, `JM-HDFCBK-S`, `VD-HDFCBK-S`, `JD-HDFCBK-S`
-
-##### 2a. UPI Credit
+#### 8.1d HDFC Debit UPI Credit
 
 ```
 Credit Alert!
@@ -755,7 +630,7 @@ Rs.12000.00 credited to HDFC Bank A/c XX1111 on 18-07-26 from VPA yourupi@addr (
 
 **Regex:** `Rs\.(?<amount>[\d,.]+) credited to HDFC Bank A/c (?<account>\w+) on (?<date>[\d-]+) from VPA (?<payee>[\w@.]+) \(UPI (?<ref>\d+)\)`
 
-##### 2b. e-Mandate / Auto-Debit
+#### 8.1e HDFC e-Mandate Debit
 
 ```
 PAYMENT ALERT!
@@ -772,7 +647,7 @@ INR 1000.00 deducted from HDFC Bank A/C No 1234 towards Some CORP UMRN: HDFC7011
 
 **Regex:** `INR (?<amount>[\d,.]+) deducted from HDFC Bank A/C No (?<account>\d+) towards (?<payee>[\w\s]+) UMRN: (?<ref>\w+)`
 
-##### 2c. NetBanking Transfer (Debit)
+#### 8.1f HDFC NetBanking Debit
 
 ```
 Payment Successful! Rs. 66093.00 from A/c **********1233 to SOMECORP via HDFC Bank NetBanking. Not you?Call 18002586161
@@ -781,13 +656,13 @@ Payment Successful! Rs. 66093.00 from A/c **********1233 to SOMECORP via HDFC Ba
 | Field   | Value                |
 | ------- | -------------------- |
 | Amount  | 66093.00             |
-| Account | \***\*\*\*\*\***1233 |
+| Account | **********1233       |
 | Payee   | SOMECORP             |
 | Type    | DEBIT                |
 
 **Regex:** `Rs\.? (?<amount>[\d,.]+) from A/c (?<account>[\w*]+) to (?<payee>[\w\s]+) via HDFC Bank NetBanking`
 
-##### 2d. Salary / NEFT Credit
+#### 8.1g HDFC Salary/NEFT Credit
 
 ```
 Update! INR 1,000.00 deposited in HDFC Bank A/c XX1233 on 31-MAR-26 for NEFT Cr-ICIC0099999-SOMECOMPANY-someName.Avl bal INR 1,01,000.95. Cheque deposits in A/C are subject to clearing
@@ -802,15 +677,15 @@ Update! INR 1,000.00 deposited in HDFC Bank A/c XX1233 on 31-MAR-26 for NEFT Cr-
 | Balance | 1,01,000.95                      |
 | Type    | CREDIT                           |
 
-**Regex:** `INR (?<amount>[\d,.]+) deposited in HDFC Bank A/c (?<account>\w+) on (?<date>[\d-]+) for NEFT Cr-(?<payee>[\w-]+).*?Avl bal INR (?<balance>[\d,.]+)`
+**Regex:** `INR (?<amount>[\d,.]+) deposited in HDFC Bank A/c (?<account>\w+) on (?<date>[\w-]+) for NEFT Cr-(?<payee>[\w-]+).*?\\.?Avl bal INR (?<balance>[\d,.]+)`
 
 ---
 
-#### Scenario 3: ICICI Bank — Debit Card
+### 8.2 ICICI Bank
 
 **Sender IDs:** `AD-ICICIT-S`
 
-##### 3a. UPI Debit
+#### 8.2a ICICI UPI Debit
 
 ```
 ICICI Bank Acct XX123 debited for Rs 242.00 on 26-Jul-26; BUS Ticket credited. UPI:003637672623. Call 18002662 for dispute. SMS BLOCK 796 to 9215676766.
@@ -825,9 +700,9 @@ ICICI Bank Acct XX123 debited for Rs 242.00 on 26-Jul-26; BUS Ticket credited. U
 | UPI Ref | 003637672623 |
 | Type    | DEBIT        |
 
-**Regex:** `ICICI Bank Acct (?<account>\w+) debited for Rs (?<amount>[\d,.]+) on (?<date>[\d-]+); (?<payee>[\w\s]+) credited\. UPI:(?<ref>\d+)`
+**Regex:** `ICICI Bank Acct (?<account>\w+) debited for Rs (?<amount>[\d,.]+) on (?<date>[\w-]+); (?<payee>[\w\s]+) credited\. UPI:(?<ref>\d+)`
 
-##### 3b. UPI Credit
+#### 8.2b ICICI UPI Credit
 
 ```
 Dear Customer, Acct XX123 is credited with Rs 20.00 on 19-Jul-26 from NPCI BHIM. UPI:103691213332-ICICI Bank.
@@ -842,9 +717,9 @@ Dear Customer, Acct XX123 is credited with Rs 20.00 on 19-Jul-26 from NPCI BHIM.
 | UPI Ref | 103691213332 |
 | Type    | CREDIT       |
 
-**Regex:** `Acct (?<account>\w+) is credited with Rs (?<amount>[\d,.]+) on (?<date>[\d-]+) from (?<payee>[\w\s]+)\. UPI:(?<ref>\d+)`
+**Regex:** `Acct (?<account>\w+) is credited with Rs (?<amount>[\d,.]+) on (?<date>[\w-]+) from (?<payee>[\w\s]+)\. UPI:(?<ref>\d+)`
 
-##### 3c. IMPS Credit
+#### 8.2c ICICI IMPS Credit
 
 ```
 ICICI Bank Account XX123 is credited with Rs 61,000.00 on 03-Jul-26 by Account linked to mobile number XXXXX01234. IMPS Ref. no. 618441385660.
@@ -859,15 +734,15 @@ ICICI Bank Account XX123 is credited with Rs 61,000.00 on 03-Jul-26 by Account l
 | IMPS Ref | 618441385660      |
 | Type     | CREDIT            |
 
-**Regex:** `ICICI Bank Account (?<account>\w+) is credited with Rs (?<amount>[\d,.]+) on (?<date>[\d-]+) by Account linked to mobile number (?<payee>[\w]+)\. IMPS Ref\. no\. (?<ref>\d+)`
+**Regex:** `ICICI Bank Account (?<account>\w+) is credited with Rs (?<amount>[\d,.]+) on (?<date>[\w-]+) by Account linked to mobile number (?<payee>[\w]+)\. IMPS Ref\. no\. (?<ref>\d+)`
 
 ---
 
-#### Scenario 4: DCB Bank — Debit Card
+### 8.3 DCB Bank
 
 **Sender IDs:** `JD-DCBANK-T`
 
-##### 4a. POS/Ecom Debit
+#### 8.3a DCB POS/Ecom Debit
 
 ```
 INR 1403.36 debited DCB Bank a/c*1234 POS/Ecom txn to cafe de lar on 19-06-2026 07:59 PM.Not you?Call 0226899777 or SMS BLOCKCARD <Last 4 digits>to 9821878789
@@ -876,7 +751,7 @@ INR 1403.36 debited DCB Bank a/c*1234 POS/Ecom txn to cafe de lar on 19-06-2026 
 | Field     | Value               |
 | --------- | ------------------- |
 | Amount    | 1403.36             |
-| Account   | \*1234              |
+| Account   | *1234               |
 | Channel   | POS/Ecom            |
 | Merchant  | cafe de lar         |
 | Date/Time | 19-06-2026 07:59 PM |
@@ -886,31 +761,11 @@ INR 1403.36 debited DCB Bank a/c*1234 POS/Ecom txn to cafe de lar on 19-06-2026 
 
 ---
 
-#### Scenario 5: UPI Transaction (Generic — Any Bank)
-
-UPI transactions are sent by the user's own bank (HDFC, ICICI, SBI, etc.) using the bank's sender ID. The SMS format varies by bank. Use bank-specific rules above when possible.
-
-**Common UPI debit pattern (cross-bank):**
-
-```
-Rs.{amount} debited from A/c {account} to {payee} via UPI. Ref: {ref}. Avl Bal: Rs.{balance}
-```
-
-**Common UPI credit pattern (cross-bank):**
-
-```
-Rs.{amount} credited to A/c {account} from VPA {vpa} (UPI {ref})
-```
-
-Use the bank-specific rules from Scenarios 1–4 for best accuracy.
-
----
-
-#### Scenario 6: Pluxee (Sodexo) Meal Card
+### 8.4 Pluxee
 
 **Sender IDs:** `VD-Pluxee-S`, `JD-Pluxee-S`
 
-##### 6a. Meal Spend (Debit)
+#### 8.4a Pluxee Meal Spend (Debit)
 
 ```
 Rs. 546.00 spent from Pluxee  Meal Card wallet, card no.xx4910 on 28-06-2026 21:38:47 at SWIGGY . Avl bal Rs.9388.14. Not you call 18002106919
@@ -927,7 +782,7 @@ Rs. 546.00 spent from Pluxee  Meal Card wallet, card no.xx4910 on 28-06-2026 21:
 
 **Regex:** `Rs\. (?<amount>[\d,.]+) spent from Pluxee\s+Meal Card wallet, card no\.(?<account>\w+) on (?<date>[\d-]+ \d{2}:\d{2}:\d{2}) at (?<payee>[\w\s]+)\. Avl bal Rs\.(?<balance>[\d,.]+)`
 
-##### 6b. Reversal (Credit)
+#### 8.4b Pluxee Reversal (Credit)
 
 ```
 Your Pluxee Card xx4910 has been credited with INR 546.00 on Sun Jun 28 2026 22:41:31as a reversal against a previous transaction on Jun 28,2026 21:38:47.
@@ -942,7 +797,7 @@ Your Pluxee Card xx4910 has been credited with INR 546.00 on Sun Jun 28 2026 22:
 
 **Regex:** `Your Pluxee Card (?<account>\w+) has been credited with INR (?<amount>[\d,.]+) on (?<date>\w+ [\d]+ [\d]+ [\d]+:[\d]+:[\d]+)as a reversal`
 
-##### 6c. Wallet Load (Credit)
+#### 8.4c Pluxee Wallet Load (Credit)
 
 ```
 Your Pluxee Card has been successfully credited with Rs.2200 towards  Meal Wallet on Thu Sep 05 2024 17:03:06. Your current Meal Wallet balance is Rs.7142.70.
@@ -957,11 +812,26 @@ Your Pluxee Card has been successfully credited with Rs.2200 towards  Meal Walle
 
 **Regex:** `Your Pluxee Card has been successfully credited with Rs\.(?<amount>[\d,.]+) towards\s+Meal Wallet on (?<date>\w+ [\d]+ [\d]+ [\d]+:[\d]+:[\d]+)\. Your current Meal Wallet balance is Rs\.(?<balance>[\d,.]+)`
 
----
+## 9. Category Detection Keywords
 
-## 9. User-Extensible Regex System
+| Category              | Keywords/Merchants                                                     |
+| --------------------- | ---------------------------------------------------------------------- |
+| **Food & Dining**     | swiggy, zomato, dominos, pizza, food, restaurant, cafe                 |
+| **Groceries**         | bigbasket, blinkit, zepto, dmart, grocery, supermarket, reliance fresh |
+| **Fuel**              | petrol, diesel, hp, bpcl, iocl, shell, fuel, gas station               |
+| **Bills & Utilities** | electricity, water, gas, broadband, jio, airtel, vi, bsnl, bill        |
+| **Shopping**          | amazon, flipkart, meesho, ajio, myntra, mall                           |
+| **Transport**         | uber, ola, rapido, metro, parking, toll                                |
+| **Entertainment**     | netflix, prime, hotstar, spotify, movie, cinema                        |
+| **Health**            | pharmacy, medical, hospital, doctor, clinic, health                    |
+| **Education**         | school, college, university, course, book                              |
+| **Salary**            | salary, payroll, wage                                                  |
+| **Rent**              | rent, house, flat                                                      |
+| **EMI/Loans**         | emi, loan, installment, sip                                            |
 
-### 9.1 Overview
+## 10. User-Extensible Regex System
+
+### 10.1 Overview
 
 The SMS Expense Tracker uses a **regex-only** parsing approach. Users can:
 
@@ -970,7 +840,7 @@ The SMS Expense Tracker uses a **regex-only** parsing approach. Users can:
 3. **Create and edit SMS rules** per bank using regex with named capture groups
 4. **Test rules** against sample SMS text in real-time
 
-### 9.2 Rule Model
+### 10.2 Rule Model
 
 Each `SMS_RULE` contains:
 
@@ -988,7 +858,7 @@ Each `SMS_RULE` contains:
 | `priority`     | Int     | Yes      | Evaluation order (lower = higher priority)                             |
 | `isActive`     | Boolean | Yes      | Enable/disable rule                                                    |
 
-### 9.3 contentRegex Syntax
+### 10.3 contentRegex Syntax
 
 The `contentRegex` field uses standard Kotlin regex with **named capture groups** using the `(?<name>pattern)` syntax.
 
@@ -1005,7 +875,7 @@ The `contentRegex` field uses standard Kotlin regex with **named capture groups*
 - `date` — Transaction date
 - `ref` — Transaction reference ID
 
-### 9.4 Type Inference Strategy
+### 10.4 Type Inference Strategy
 
 The `typeGroup` field supports two modes:
 
@@ -1041,7 +911,7 @@ The system scans the full SMS body for type-determining keywords:
 6. If `loaded to` or `towards Meal Wallet` -> type = `WALLET_LOAD`
 7. Default fallback -> `DEBIT` (most common)
 
-### 9.5 Example Rules
+### 10.5 Example Rules
 
 #### HDFC Credit Card — Merchant Debit
 
@@ -1074,7 +944,7 @@ Rs\.(?<amount>[\d,.]+) credited to HDFC Bank A/c (?<account>\w+) on (?<date>[\d-
 #### ICICI Bank — UPI Debit
 
 ```regex
-ICICI Bank Acct (?<account>\w+) debited for Rs (?<amount>[\d,.]+) on (?<date>[\d-]+); (?<payee>[\w\s]+) credited\. UPI:(?<ref>\d+)
+ICICI Bank Acct (?<account>\w+) debited for Rs (?<amount>[\d,.]+) on (?<date>[\w-]+); (?<payee>[\w\s]+) credited\. UPI:(?<ref>\d+)
 ```
 
 - `amountGroup` = `"amount"`
@@ -1113,7 +983,7 @@ Rs\. (?<amount>[\d,.]+) spent from Pluxee\s+Meal Card wallet, card no\.(?<accoun
 - `dateGroup` = `"date"`
 - `refGroup` = null
 
-### 9.6 Bank Management Flow
+### 10.6 Bank Management Flow
 
 ```mermaid
 flowchart TD
@@ -1147,7 +1017,7 @@ flowchart TD
     style O fill:#C8E6C9
 ```
 
-### 9.7 Pre-Configured Banks
+### 10.7 Pre-Configured Banks
 
 The app ships with pre-configured rules for banks verified from real SMS:
 
@@ -1173,7 +1043,7 @@ The app ships with pre-configured rules for banks verified from real SMS:
 
 > **Note:** Banks marked "Verified" have rules created from real SMS examples. Others use reconstructed patterns that may need verification.
 
-### 9.8 Parser Test Interface
+### 10.8 Parser Test Interface
 
 The Parser Test screen provides:
 
@@ -1186,9 +1056,9 @@ The Parser Test screen provides:
 
 ---
 
-## 10. UI/UX Architecture
+## 11. UI/UX Architecture
 
-### 10.1 Screen Architecture
+### 11.1 Screen Architecture
 
 ```mermaid
 graph TB
@@ -1249,7 +1119,7 @@ graph TB
     PARSER --> P5
 ```
 
-### 10.2 Dashboard Layout
+### 11.2 Dashboard Layout
 
 ```
 ┌─────────────────────────────────┐
@@ -1282,7 +1152,7 @@ graph TB
 └─────────────────────────────────┘
 ```
 
-### 10.3 Material 3 Expressive Design Tokens
+### 11.3 Material 3 Expressive Design Tokens
 
 ```kotlin
 // Material 3 Expressive color scheme
@@ -1308,13 +1178,13 @@ val AppShapes = Shapes(
 
 ---
 
-## 11. Onboarding & SMS Sync Flow
+## 12. Onboarding & SMS Sync Flow
 
-### 11.1 Onboarding UX Principle
+### 12.1 Onboarding UX Principle
 
 > **"Show, don't block."** The user sees the full app UI from the moment they open it. Empty states explain what will appear. Data populates in the background. The user is never stuck on a loading screen.
 
-### 11.2 Onboarding Flow
+### 12.2 Onboarding Flow
 
 ```mermaid
 flowchart TD
@@ -1357,7 +1227,7 @@ flowchart TD
     style G fill:#FFCDD2
 ```
 
-### 11.3 Screen States
+### 12.3 Screen States
 
 #### Dashboard — Empty State (Before Permission)
 
@@ -1418,7 +1288,7 @@ flowchart TD
 └─────────────────────────────────┘
 ```
 
-### 11.4 Sync Range Options
+### 12.4 Sync Range Options
 
 | Range        | Description   | Use Case                       |
 | ------------ | ------------- | ------------------------------ |
@@ -1429,7 +1299,7 @@ flowchart TD
 | **3 Months** | Last 90 days  | Quarterly analysis             |
 | **All SMS**  | Entire inbox  | Full history (may take longer) |
 
-### 11.5 Background Sync Mechanism
+### 12.5 Background Sync Mechanism
 
 ```
 WorkManager Task (SmsSyncWorker)
@@ -1457,7 +1327,7 @@ WorkManager Task (SmsSyncWorker)
 - **Deduplication:** SMS are deduped by `date + address + body` hash before insert
 - **Progress:** Published via `WorkManager.getWorkInfoByIdFlow()` observed by ViewModel
 
-### 11.6 Permission Flow
+### 12.6 Permission Flow
 
 ```mermaid
 sequenceDiagram
@@ -1505,7 +1375,7 @@ sequenceDiagram
     end
 ```
 
-### 11.7 Re-Sync & Incremental Sync
+### 12.7 Re-Sync & Incremental Sync
 
 | Trigger                                    | Action                                                                               |
 | ------------------------------------------ | ------------------------------------------------------------------------------------ |
@@ -1516,9 +1386,9 @@ sequenceDiagram
 
 ---
 
-## 12. Sequence Diagrams
+## 13. Sequence Diagrams
 
-### 12.1 SMS Reading & Parsing Sequence
+### 13.1 SMS Reading & Parsing Sequence
 
 ```mermaid
 sequenceDiagram
@@ -1561,7 +1431,7 @@ sequenceDiagram
     Database-->>User: Update UI with new transactions
 ```
 
-### 12.2 Transaction List & Labeling Sequence
+### 13.2 Transaction List & Labeling Sequence
 
 ```mermaid
 sequenceDiagram
@@ -1596,7 +1466,7 @@ sequenceDiagram
     ViewModel-->>Screen: Recompose with new label
 ```
 
-### 12.3 Parser Test Sequence
+### 13.3 Parser Test Sequence
 
 ```mermaid
 sequenceDiagram
@@ -1641,9 +1511,9 @@ sequenceDiagram
 
 ---
 
-## 13. Data Flow Diagrams
+## 14. Data Flow Diagrams
 
-### 13.1 System Data Flow (Context Diagram)
+### 14.1 System Data Flow (Context Diagram)
 
 ```mermaid
 flowchart TD
@@ -1680,7 +1550,7 @@ flowchart TD
     G --> J
 ```
 
-### 13.2 Detailed Data Flow — SMS to Transaction
+### 14.2 Detailed Data Flow — SMS to Transaction
 
 ```mermaid
 flowchart LR
@@ -1705,7 +1575,7 @@ flowchart LR
     K -->|Flow| O[Export/Backup]
 ```
 
-### 13.3 Backup Data Flow
+### 14.3 Backup Data Flow
 
 ```mermaid
 flowchart TD
@@ -1731,9 +1601,9 @@ flowchart TD
 
 ---
 
-## 14. Error Logging Strategy
+## 15. Error Logging Strategy
 
-### 14.1 Log File Structure
+### 15.1 Log File Structure
 
 ```
 context.filesDir/
@@ -1750,7 +1620,7 @@ context.filesDir/
     └── sms_expense_tracker.db  # Room database
 ```
 
-### 14.2 Logger Implementation
+### 15.2 Logger Implementation
 
 ```kotlin
 class FileLogger(private val context: Context) {
@@ -1799,7 +1669,7 @@ class FileLogger(private val context: Context) {
 }
 ```
 
-### 14.3 Log Viewer in App
+### 15.3 Log Viewer in App
 
 The **Parser Test** screen includes a "View Logs" section where users can:
 
@@ -1810,9 +1680,9 @@ The **Parser Test** screen includes a "View Logs" section where users can:
 
 ---
 
-## 15. Testing Strategy
+## 16. Testing Strategy
 
-### 15.1 Testing Pyramid
+### 16.1 Testing Pyramid
 
 ```mermaid
 graph TB
@@ -1848,7 +1718,7 @@ graph TB
     E2E --> E1 & E2 & E3
 ```
 
-### 15.2 SMS Testing Solutions
+### 16.2 SMS Testing Solutions
 
 #### Problem: Emulators Don't Have Real SMS
 
@@ -1887,7 +1757,7 @@ class MockSmsContentProvider : ContentProvider() {
 
 Allow users to import SMS from a text file (one SMS per line) for testing the parser.
 
-### 15.3 Test Data - Indian Bank SMS Samples
+### 16.3 Test Data - Indian Bank SMS Samples
 
 Create a comprehensive test suite with real-world SMS patterns:
 
@@ -1921,9 +1791,9 @@ val testSmsSamples = mapOf(
 
 ---
 
-## 16. Play Store Considerations
+## 17. Play Store Considerations
 
-### 16.1 READ_SMS Permission Restriction
+### 17.1 READ_SMS Permission Restriction
 
 > **Critical:** Google Play Store **restricts** `READ_SMS` permission for expense tracking apps. This app **cannot** be published on Play Store as a standard app.
 
@@ -1936,7 +1806,7 @@ val testSmsSamples = mapOf(
 | **Huawei AppGallery**       | Alternative app store                       | Consider for broader reach   |
 | **Play Store (Restricted)** | Apply for exception via Google Play Console | Long shot, but possible      |
 
-### 16.2 Permission Justification (for alternative stores)
+### 17.2 Permission Justification (for alternative stores)
 
 ```xml
 <uses-permission android:name="android.permission.READ_SMS" />
@@ -1944,7 +1814,7 @@ val testSmsSamples = mapOf(
      All processing happens on-device. No SMS data is transmitted externally. -->
 ```
 
-### 16.3 Privacy Policy Requirements
+### 17.3 Privacy Policy Requirements
 
 Even for APK distribution, include:
 
@@ -1955,9 +1825,9 @@ Even for APK distribution, include:
 
 ---
 
-## 17. CI/CD Pipeline (GitHub Actions)
+## 18. CI/CD Pipeline (GitHub Actions)
 
-### 17.1 Overview
+### 18.1 Overview
 
 The app uses **GitHub Free** plan for CI/CD via GitHub Actions.
 
@@ -1970,7 +1840,7 @@ The app uses **GitHub Free** plan for CI/CD via GitHub Actions.
 
 A typical Android build takes ~5–7 min (cold cache) / ~2–3 min (warm cache). With 500–2000 min/month, this supports 70–400 full builds per month — more than enough.
 
-### 17.2 Pipeline Stages
+### 18.2 Pipeline Stages
 
 ```mermaid
 graph LR
@@ -2001,7 +1871,7 @@ graph LR
 | **8. Sign & Upload**  | Decode keystore -> sign -> upload to workflow artifacts      | 10s           | ubuntu-latest |
 | **9. GitHub Release** | (on tag) Create release with signed APK attached             | 10s           | ubuntu-latest |
 
-### 17.3 GitHub Secrets
+### 18.3 GitHub Secrets
 
 The following secrets must be configured in the repository:
 
@@ -2025,7 +1895,7 @@ base64 -i release.keystore -o release_keystore.b64
 # Copy contents of release_keystore.b64 into GitHub secret KEYSTORE_BASE64
 ```
 
-### 17.4 Workflow File
+### 18.4 Workflow File
 
 ```yaml
 # .github/workflows/build.yml
@@ -2196,7 +2066,7 @@ jobs:
             app/build/outputs/bundle/release/*.aab
 ```
 
-### 17.5 Build Triggers
+### 18.5 Build Triggers
 
 | Trigger                    | Jobs Run                                      | Artifacts                            |
 | -------------------------- | --------------------------------------------- | ------------------------------------ |
@@ -2205,7 +2075,7 @@ jobs:
 | **Pull Request to `main`** | Lint + Unit Tests                             | Test reports                         |
 | **Release published**      | Full pipeline including signed build          | Signed APK + AAB attached to release |
 
-### 17.6 Distribution Flow
+### 18.6 Distribution Flow
 
 ```mermaid
 flowchart LR
@@ -2230,7 +2100,7 @@ flowchart LR
     style N fill:#E3F2FD
 ```
 
-### 17.7 Cost Breakdown (GitHub Free)
+### 18.7 Cost Breakdown (GitHub Free)
 
 | Item                 | Limit                                 | Estimated Usage                               | Cost |
 | -------------------- | ------------------------------------- | --------------------------------------------- | ---- |
@@ -2239,7 +2109,7 @@ flowchart LR
 | **Concurrent jobs**  | 20                                    | 3–4 parallel jobs                             | $0   |
 | **Repository**       | Unlimited collaborators (public)      | -                                             | $0   |
 
-### 17.8 Pre-requisites
+### 18.8 Pre-requisites
 
 Before enabling the pipeline:
 
@@ -2276,9 +2146,9 @@ android {
 }
 ```
 
-## 18. ProGuard/R8 Rules
+## 19. ProGuard/R8 Rules
 
-### 18.1 Why Custom Rules Are Needed
+### 19.1 Why Custom Rules Are Needed
 
 Release builds use R8 for code shrinking, obfuscation, and optimization. Without explicit keep rules, the following components break:
 
@@ -2291,7 +2161,7 @@ Release builds use R8 for code shrinking, obfuscation, and optimization. Without
 | **Compose**                         | `@Stable` / `@Immutable` annotations stripped         | Recomposition issues              |
 | **Timber**                          | Tree implementations obfuscated                       | Log output lost                   |
 
-### 18.2 proguard-rules.pro
+### 19.2 proguard-rules.pro
 
 ```pro
 # ---- Room ----
@@ -2362,7 +2232,7 @@ Release builds use R8 for code shrinking, obfuscation, and optimization. Without
 }
 ```
 
-### 18.3 Testing Release Build
+### 19.3 Testing Release Build
 
 Before every release tagged build:
 
@@ -2381,9 +2251,9 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 
 ---
 
-## 19. Room TypeConverters & Migrations
+## 20. Room TypeConverters & Migrations
 
-### 19.1 TypeConverters
+### 20.1 TypeConverters
 
 Room stores primitive types only. Enums and complex types need `@TypeConverter`:
 
@@ -2459,7 +2329,7 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
 }
 ```
 
-### 19.2 Schema Export & Migration Strategy
+### 20.2 Schema Export & Migration Strategy
 
 **Schema export** (enabled via `exportSchema = true`):
 
@@ -2499,7 +2369,7 @@ Room.databaseBuilder(context, SmsExpenseDatabase::class.java, "sms_expense.db")
     .build()
 ```
 
-### 19.3 Migration Testing
+### 20.3 Migration Testing
 
 ```kotlin
 // MigrationTest.kt (androidTest)
@@ -2517,66 +2387,51 @@ class MigrationTest {
 
 ---
 
-## 20. Pre-populated Data (Banks & Categories)
+## 21. Pre-populated Data (Banks & Categories)
 
 ### 20.1 Bank Seed Data
 
-The app ships with pre-configured banks stored in `app/src/main/assets/databases/` via Room's `createFromAsset()` or a `RoomDatabase.Callback`.
+Seeded via `SeedDatabaseCallback.onCreate()` on first database creation.
 
-```kotlin
-// Pre-populated via RoomDatabase.Callback
-class SeedDatabaseCallback : Callback() {
-    override fun onCreate(db: SupportSQLiteDatabase) {
-        db.execSQL("""
-            INSERT INTO BANK (id, name, code, senderPattern, logoUrl, isActive, createdAt)
-            VALUES
-            (1, 'HDFC Bank', 'HDFC', '(HDFCBK)', 'hdfc.png', 1, datetime('now')),
-            (2, 'ICICI Bank', 'ICICI', '(ICICIT)', 'icici.png', 1, datetime('now')),
-            (3, 'State Bank of India', 'SBI', '^(SBI)', 'sbi.png', 1, datetime('now')),
-            (4, 'Axis Bank', 'AXIS', '(AXIS)', 'axis.png', 1, datetime('now')),
-            (5, 'Kotak Mahindra', 'KOTAK', '(KOTAK)', 'kotak.png', 1, datetime('now')),
-            (6, 'Yes Bank', 'YES', '^(YES)', 'yes.png', 1, datetime('now')),
-            (7, 'DCB Bank', 'DCB', '(DCBANK)', 'dcb.png', 1, datetime('now')),
-            (8, 'IDFC First Bank', 'IDFC', '^(IDFC)', 'idfc.png', 1, datetime('now')),
-            (9, 'IndusInd Bank', 'INDUS', '^(INDUS)', 'indus.png', 1, datetime('now')),
-            (10, 'Punjab National Bank', 'PNB', '^(PNB)', 'pnb.png', 1, datetime('now')),
-            (11, 'Bank of Baroda', 'BOB', '^(BOB)', 'bob.png', 1, datetime('now')),
-            (12, 'Pluxee (Sodexo)', 'PLUXEE', '(Pluxee)', 'pluxee.png', 1, datetime('now'))
-        """)
-    }
-}
-```
+| id | name | smsSender |
+|----|------|-----------|
+| 1 | HDFC Bank | HDFCBK |
+| 2 | ICICI Bank | ICICIB |
+| 3 | State Bank of India | SBI |
+| 4 | Axis Bank | AXISB |
+| 5 | Pluxee | PLXEE |
 
 ### 20.2 Default Categories
 
-```kotlin
-// Pre-populated categories
-INSERT INTO CATEGORY (id, name, icon, color, isDefault, displayOrder) VALUES
-(1, 'Food & Dining', '🍕', '#FF5722', 1, 1),
-(2, 'Groceries', '🛒', '#4CAF50', 1, 2),
-(3, 'Fuel & Transport', '⛽', '#FF9800', 1, 3),
-(4, 'Bills & Utilities', '📱', '#03A9F4', 1, 4),
-(5, 'Shopping', '🛍️', '#E91E63', 1, 5),
-(6, 'Entertainment', '🎬', '#9C27B0', 1, 6),
-(7, 'Healthcare', '🏥', '#00BCD4', 1, 7),
-(8, 'Education', '📚', '#3F51B5', 1, 8),
-(9, 'Travel', '✈️', '#FFEB3B', 1, 9),
-(10, 'Rent & Housing', '🏠', '#795548', 1, 10),
-(11, 'Salary & Income', '💰', '#4CAF50', 1, 11),
-(12, 'Investments', '📈', '#2196F3', 1, 12),
-(13, 'Transfer', '🔄', '#607D8B', 1, 13),
-(14, 'Uncategorized', '❓', '#9E9E9E', 0, 99)
-```
+| id | name | icon | color (ARGB) | isDefault |
+|----|------|------|-------------|-----------|
+| 1 | Food & Dining | restaurant | -13108 | 0 |
+| 2 | Groceries | shopping_cart | -13956304 | 0 |
+| 3 | Fuel | local_gas_station | -48060 | 0 |
+| 4 | Bills & Utilities | receipt | -13676760 | 0 |
+| 5 | Shopping | shopping_bag | -10496 | 0 |
+| 6 | Entertainment | movie | -16581634 | 0 |
+| 7 | Healthcare | local_hospital | -14513374 | 0 |
+| 8 | Transportation | directions_car | -12664161 | 0 |
+| 9 | Education | school | -4880347 | 0 |
+| 10 | Rent | home | -7084816 | 0 |
+| 11 | Travel | flight | -13676760 | 0 |
+| 12 | Salary | payments | -13956304 | 0 |
+| 13 | Investments | trending_up | -16581634 | 0 |
+| 14 | Other | category | -7829368 | 1 |
 
 ### 20.3 Default SMS Rule Seeds
 
-For each bank, 2–5 seed `SMS_RULE` entries are provided (matching the patterns documented in Section 8). Users can edit, disable, or delete these.
+Seeded with 6 rules (2 banks × 3 patterns each). Users can add more via the UI.
 
-```kotlin
-INSERT INTO SMS_RULE (id, bankId, ruleName, contentRegex, amountGroup, typeGroup, ...) VALUES
-(1, 1, 'HDFC CC Merchant Debit', 'Spent Rs\\.(\\d+[\.,]\\d+).*?Card (\\d{4}).*?At (.*?) On (\\d{4}-\\d{2}-\\d{2}:\\d{2}:\\d{2}:\\d{2})', 'amount', null, ...),
--- 30+ more seed rules for all banks
-```
+| id | bankId | description | pattern |
+|----|--------|-------------|---------|
+| 1 | 1 (HDFC) | HDFC CC Debit | `Spent Rs\.([\d,.]+) On HDFC Bank Card \d{4} At (.+?) On .+` |
+| 2 | 1 (HDFC) | HDFC UPI Credit | `Rs\.([\d,.]+) credited to HDFC Bank A/c \w+ on [\d-]+ from VPA (.+?) \(UPI` |
+| 3 | 1 (HDFC) | HDFC e-Mandate | `INR ([\d,.]+) deducted from HDFC Bank A/C No \w+ towards (.+?) UMRN` |
+| 4 | 1 (HDFC) | HDFC NEFT Credit | `INR ([\d,.]+) deposited in HDFC Bank A/c \w+ on [\w-]+ for NEFT Cr-(.+?)\.?Avl bal` |
+| 5 | 2 (ICICI) | ICICI UPI Debit | `ICICI Bank Acct \w+ debited for Rs ([\d,.]+) on [\d-]+; (.+?) credited\. UPI` |
+| 6 | 2 (ICICI) | ICICI UPI Credit | `Acct \w+ is credited with Rs ([\d,.]+) on [\d-]+ from (.+?)\. UPI` |
 
 ### 20.4 Loading Strategy
 
@@ -2600,7 +2455,7 @@ INSERT INTO SMS_RULE (id, bankId, ruleName, contentRegex, amountGroup, typeGroup
 
 ---
 
-## 21. Coroutine & Dispatcher Strategy
+## 22. Coroutine & Dispatcher Strategy
 
 ### 21.1 Dispatcher Bindings
 
@@ -2702,7 +2557,7 @@ fun `parse SMS returns correct amount`() = coroutineRule.testDispatcher.runTest 
 
 ---
 
-## 22. Debounce & Batching Strategy
+## 23. Debounce & Batching Strategy
 
 ### 22.1 Problem Statement
 
@@ -2794,7 +2649,7 @@ Deduplication is performed by hashing the raw SMS body (`smsBodyHash` column wit
 
 ---
 
-## 23. Hilt Module Structure
+## 24. Hilt Module Structure
 
 ### 23.1 Module Overview
 
@@ -2910,7 +2765,7 @@ Application
 
 ---
 
-## 24. Empty States
+## 25. Empty States
 
 ### 24.1 Empty State Design Principles
 
@@ -3031,7 +2886,7 @@ fun EmptyState(
 
 ---
 
-## 25. Manual Transaction Entry
+## 26. Manual Transaction Entry
 
 ### 25.1 Trigger Points
 
@@ -3117,7 +2972,7 @@ User taps (+) FAB
 
 ---
 
-## 26. Error States in UI
+## 27. Error States in UI
 
 ### 26.1 Error Type Matrix
 
@@ -3251,7 +3106,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
 
 ---
 
-## 27. Risk Mitigation
+## 28. Risk Mitigation
 
 | Risk                                      | Impact                          | Likelihood | Mitigation                                                                      |
 | ----------------------------------------- | ------------------------------- | ---------- | ------------------------------------------------------------------------------- |
@@ -3265,7 +3120,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
 
 ---
 
-## 28. Future Enhancements
+## 29. Future Enhancements
 
 ### Phase 2 (Post-MVP)
 
