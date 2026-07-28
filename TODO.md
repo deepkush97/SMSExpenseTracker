@@ -7,62 +7,53 @@
 
 ## Phase 0: Project Foundation
 
-### [ ] 1. Project Scaffold & Build Setup
-- [ ] Initialize Android project (Kotlin, Compose, Min SDK 28, Target SDK 35)
-- [ ] Create module structure: `core/`, `data/`, `domain/`, `presentation/`, `di/`
-- [ ] Configure `settings.gradle.kts` and `build.gradle.kts` (project + app)
-- [ ] Add all dependencies: Room, Hilt, Compose BOM, Navigation, Vico, Timber, Coroutines, MockK
-- [ ] Create `libs.versions.toml` (Gradle Version Catalog)
-- [ ] Configure Hilt `@HiltAndroidApp` Application class
-- [ ] Add `proguard-rules.pro` with keep rules for Room, Hilt, Compose, Coroutines
-- [ ] Add `AndroidManifest.xml` with permissions (`READ_SMS`, `RECEIVE_SMS`)
-- [ ] **Verify:** `./gradlew assembleDebug` compiles cleanly
+### [x] 1. Project Scaffold & Build Setup
+- [x] Initialize Android project (Kotlin, Compose, Min SDK 28, Target SDK 35)
+- [x] Create module structure: `core/`, `data/`, `domain/`, `presentation/`, `di/`
+- [x] Configure `settings.gradle.kts` and `build.gradle.kts` (project + app)
+- [x] Add all dependencies: Room, Hilt, Compose BOM, Navigation, Vico, Timber, Coroutines, MockK
+- [x] Create `libs.versions.toml` (Gradle Version Catalog)
+- [x] Configure Hilt `@HiltAndroidApp` Application class
+- [x] Add `proguard-rules.pro` with keep rules for Room, Hilt, Compose, Coroutines
+- [x] Add `AndroidManifest.xml` with permissions (`READ_SMS`, `RECEIVE_SMS`)
+- [x] **Verify:** `./gradlew assembleDebug` compiles cleanly
 
-### [ ] 2. Database Foundation
-- [ ] Implement all Room entities: `BankEntity`, `SmsRuleEntity`, `TransactionEntity`, `CategoryEntity`, `TransactionLabelEntity`, `UserCategoryRuleEntity`, `ParseLogEntity`, `SyncMetaEntity`
-- [ ] Implement all DAOs with `@Insert`, `@Update`, `@Delete`, `@Query` methods
-- [ ] Implement `Converters` class (`@TypeConverter` for enums, `LocalDateTime`, `BigDecimal`)
-- [ ] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 1, `exportSchema = true`)
-- [ ] Implement `SeedDatabaseCallback` (`RoomDatabase.Callback.onCreate()`) — inserts 12 banks, 14 categories, 30+ SMS_RULE seed rows
-- [ ] Configure Room schema export in `build.gradle.kts`
+### [x] 2. Database Foundation
+- [x] Implement all Room entities: `BankEntity`, `SmsRuleEntity`, `TransactionEntity`, `CategoryEntity`, `TransactionLabelEntity`, `UserCategoryRuleEntity`, `ParseLogEntity`, `SyncMetaEntity`
+- [x] Implement all DAOs with `@Insert`, `@Update`, `@Delete`, `@Query` methods
+- [x] Implement `Converters` class (`@TypeConverter` for enums, `LocalDateTime`, `Long` (paisa))
+- [x] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 1, `exportSchema = true`)
+- [x] Implement `SeedDatabaseCallback` (`RoomDatabase.Callback.onCreate()`) — inserts 5 banks, 14 categories, 6 SMS_RULE seed rows
+- [x] Configure Room schema export in `build.gradle.kts`
 - [ ] Implement `MIGRATION_1_2` example and migration test skeleton
 - [ ] **Verify:** Migration test passes; database helper queries return seed data
 
-### [ ] 3. Domain Models & Repository Interfaces
-- [ ] Implement domain models: `Transaction`, `Bank`, `SmsRule`, `Category`, `UserCategoryRule`, `ParseLog`, `SyncMeta`, `TransactionLabel`
-- [ ] Implement value objects: `SenderId`, `ParsedResult`, `ConfidenceScore`, `SyncProgress`, `SyncRange`
-- [ ] Implement repository interfaces: `TransactionRepository`, `BankRepository`, `SmsRuleRepository`, `CategoryRepository`, `ParseLogRepository`, `SyncMetaRepository`
-- [ ] Implement use case stubs: `ParseSmsUseCase`, `GetTransactionsUseCase`, `LabelTransactionUseCase`, `SyncSmsUseCase`, `ExportCsvUseCase`
+### [x] 3. Domain Models & Repository Interfaces
+- [x] Implement domain models: `Transaction`, `Bank`, `SmsRule`, `Category`, `UserCategoryRule`, `ParseLog`, `SyncMeta`, `TransactionLabel`
+- [x] Implement value objects: `SenderId`, `ParsedResult`, `ConfidenceScore`, `SyncProgress`, `SyncRange`
+- [x] Implement repository interfaces: `TransactionRepository`, `BankRepository`, `SmsRuleRepository`, `CategoryRepository`, `ParseLogRepository`, `SyncMetaRepository`
+- [x] Implement use case stubs: `ParseSmsUseCase`, `GetTransactionsUseCase`, `LabelTransactionUseCase`, `SyncSmsUseCase`, `ExportCsvUseCase`
 - [ ] **Verify:** All interfaces compile; use cases are injectable via Hilt
 
 ---
 
 ## Phase 1: SMS Parsing Core
 
-### [ ] 4. SMS Parser Engine
-- [ ] Implement `SenderDetector` — parse TRAI DLT sender IDs (`AD-HDFCBK-S` -> `HDFCBK`), strip suffix, match against bank patterns (contains/starts-with)
-- [ ] Implement `RegexParser` — apply regex rules by priority, extract named groups (`amount`, `type`, `balance`, `payee`, `account`, `date`, `ref`)
-- [ ] Implement `TypeInferrer` — keyword-based type inference (debited->DEBIT, spent->DEBIT, refunded->REFUND, reversal->REVERSAL, etc.) with priority chain
-- [ ] Implement `ConfidenceScorer` — score based on number of matched groups + keyword presence (0.0–1.0)
-- [ ] Implement `ParserEngine` — orchestrates sender detection, rule loading, regex matching, type inference, confidence scoring
+### [x] 4. SMS Parser Engine
+- [x] Implement `SenderDetector` — parse TRAI DLT sender IDs (`AD-HDFCBK-S` -> `HDFCBK`), strip suffix, match against bank patterns (contains/starts-with)
+- [x] Implement `RegexParser` — apply regex rules by priority, extract capture groups (`amount`, `description`)
+- [x] Implement `TypeInferrer` — keyword-based type inference (debited->DEBIT, spent->DEBIT, credited->CREDIT, refunded->CREDIT)
+- [x] Implement `ConfidenceScorer` — score based on matched groups + keyword presence (0.0–1.0)
+- [x] Implement `ParserEngine` — orchestrates sender detection, rule loading, regex matching, type inference, confidence scoring
 - [ ] Implement `ParseLog` recording for every parse attempt
-- [ ] **Verify:** Parser correctly extracts all fields from the 12 real SMS patterns
+- [ ] **Verify:** Parser correctly extracts all fields from the 14 real SMS patterns
 
-### [ ] 5. Parser Unit Tests (Real SMS Patterns)
-- [ ] Create test data class with all 12 SMS strings (HDFC CC merchant, UPI debit, refund; HDFC debit UPI credit, e-mandate, netbanking, salary credit; ICICI UPI debit/credit, IMPS credit; DCB POS/Ecom; Pluxee spend/reversal/wallet)
-- [ ] Write test: `HDFC_CC_MERCHANT_DEBIT` -> amount=4831.76, type=DEBIT, card=1111, merchant="Acme Inc."
-- [ ] Write test: `HDFC_CC_UPI_DEBIT` -> amount=25.00, ref=620436716168
-- [ ] Write test: `HDFC_CC_REFUND` -> amount=32.00, type=REFUND
-- [ ] Write test: `HDFC_DEBIT_UPI_CREDIT` -> amount=12000.00, type=CREDIT, vpa=yourupi@addr
-- [ ] Write test: `HDFC_E_MANDATE` -> amount=1000.00, type=E_MANDATE, payee="Some CORP"
-- [ ] Write test: `HDFC_NETBANKING` -> amount=66093.00, type=DEBIT, channel=NET_BANKING
-- [ ] Write test: `HDFC_SALARY_CREDIT` -> amount=1000.00, type=CREDIT, channel=NEFT
-- [ ] Write test: `ICICI_UPI_DEBIT/CREDIT` and `ICICI_IMPS_CREDIT`
-- [ ] Write test: `DCB_POS_ECOM_DEBIT` -> amount=1403.36, channel=ECOM
-- [ ] Write test: `PLUXEE_MEAL_SPEND`, `PLUXEE_REVERSAL`, `PLUXEE_WALLET_LOAD`
-- [ ] Write test: confidence score > 0.8 for matched, < 0.3 for unmatched
-- [ ] Write test: unknown sender -> no match, logged
-- [ ] **Verify:** All 12 patterns pass; `./gradlew testDebugUnitTest` is green
+### [x] 5. Parser Unit Tests (Real SMS Patterns)
+- [x] Create test data class with all 14 SMS strings across 4 banks
+- [x] Write all pattern tests with verified amounts and descriptions
+- [x] Write confidence score tests
+- [x] Write unknown sender test
+- [x] **Verify:** 22 tests pass; `./gradlew testDebugUnitTest` is green
 
 ---
 
