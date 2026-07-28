@@ -278,12 +278,14 @@ erDiagram
         datetime updatedAt
     }
 
+    // NOTE: amount stored as Long (paisa). ₹123.45 → 12345.
+    // Rationale: avoids floating-point errors, simplifies math, matches industry practice (Stripe, Razorpay).
     TRANSACTION {
         long id PK
         long bankId FK
         long smsRuleId FK
         string type "CREDIT | DEBIT | TRANSFER"
-        decimal amount
+        long amount "paisa"
         string currency "INR"
         string accountNumber "masked XX1234"
         string payeeOrPayer
@@ -2433,13 +2435,8 @@ class Converters {
     fun toLocalDateTime(value: Long?): LocalDateTime? =
         value?.let { LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC) }
 
-    @TypeConverter
-    fun fromBigDecimal(value: BigDecimal?): String? = value?.toString()
-
-    @TypeConverter
-    fun toBigDecimal(value: String?): BigDecimal? =
-        value?.let { BigDecimal(it) }
 }
+
 ```
 
 ```kotlin
