@@ -67,7 +67,7 @@
 - [x] Implement `SmsRuleRepositoryImpl` — load active rules by bank, rule priority ordering
 - [ ] Implement `CategoryRepositoryImpl` — CRUD for categories and auto-category rules
 - [ ] Implement `SyncMetaRepositoryImpl` — track last sync time, range, status, progress
-- [ ] Implement `ParseLogRepositoryImpl` — record and query parse logs
+- [x] Implement `ParseLogRepositoryImpl` — record and query parse logs
 - [ ] **Verify:** Data layer compiles; Room integration tests pass with in-memory DB
 
 ### [ ] 7. Sync Use Case (Debounce + Batching)
