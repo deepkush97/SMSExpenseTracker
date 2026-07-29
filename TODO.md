@@ -65,8 +65,8 @@
 - [ ] Implement `TransactionRepositoryImpl` — DAO delegation, batch insert with dedup (`smsBodyHash`), Flow-based query, category label assignment
 - [x] Implement `BankRepositoryImpl` — CRUD for banks and SMS rules
 - [x] Implement `SmsRuleRepositoryImpl` — load active rules by bank, rule priority ordering
-- [ ] Implement `CategoryRepositoryImpl` — CRUD for categories and auto-category rules
-- [ ] Implement `SyncMetaRepositoryImpl` — track last sync time, range, status, progress
+- [x] Implement `CategoryRepositoryImpl` — CRUD for categories and auto-category rules
+- [x] Implement `SyncMetaRepositoryImpl` — track last sync time, range, status, progress
 - [x] Implement `ParseLogRepositoryImpl` — record and query parse logs
 - [ ] **Verify:** Data layer compiles; Room integration tests pass with in-memory DB
 
