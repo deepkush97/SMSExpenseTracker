@@ -62,7 +62,7 @@
 ### [-] 6. Repository & Data Source Implementation
 - [x] Implement `SmsReader` — query `content://sms`, filter by sender ID pattern, return `Flow<List<SmsMessage>>`, support date range filtering
 - [ ] Implement `PermissionManager` — check/grant `READ_SMS` permission, request runtime, open settings fallback
-- [ ] Implement `TransactionRepositoryImpl` — DAO delegation, batch insert with dedup (`smsBodyHash`), Flow-based query, category label assignment
+- [x] Implement `TransactionRepositoryImpl` — DAO delegation, batch insert with dedup (`smsBodyHash`), Flow-based query, category label assignment
 - [x] Implement `BankRepositoryImpl` — CRUD for banks and SMS rules
 - [x] Implement `SmsRuleRepositoryImpl` — load active rules by bank, rule priority ordering
 - [x] Implement `CategoryRepositoryImpl` — CRUD for categories and auto-category rules
