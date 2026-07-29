@@ -35,26 +35,24 @@ class BankRepositoryImplTest {
         val result = repo.getAllBanks().first()
 
         assertEquals(3, result.size)
-        assertEquals(1L, result[0].id)
-        assertEquals("HDFC", result[0].name)
-        assertEquals("HDFCBK", result[0].smsSender)
-        assertEquals(2L, result[1].id)
-        assertEquals("ICICI", result[1].name)
-        assertEquals("ICICIB", result[1].smsSender)
-        assertEquals(3L, result[2].id)
-        assertEquals("DCB", result[2].name)
-        assertEquals("DCBANK", result[2].smsSender)
+        result.forEachIndexed { index, res ->
+            assertEquals(entities[index].id, res.id)
+            assertEquals(entities[index].name, res.name)
+            assertEquals(entities[index].smsSender, res.smsSender)
+
+        }
     }
 
     @Test
     fun `getBankById returns mapped bank when found`() = runTest {
-        coEvery { bankDao.getBankById(1L) } returns BankEntity(1, "HDFC", "HDFCBK")
+        val entity = BankEntity(1, "HDFC", "HDFCBK")
+        coEvery { bankDao.getBankById(1L) } returns entity
 
         val result =
             repo.getBankById(1L)
-        assertEquals(1L, result?.id)
-        assertEquals("HDFC", result?.name)
-        assertEquals("HDFCBK", result?.smsSender)
+        assertEquals(entity.id, result?.id)
+        assertEquals(entity.name, result?.name)
+        assertEquals(entity.smsSender, result?.smsSender)
         coVerify { bankDao.getBankById(1L) }
     }
 
@@ -70,13 +68,14 @@ class BankRepositoryImplTest {
 
     @Test
     fun `getBankBySender returns mapped bank when found`() = runTest {
-        coEvery { bankDao.getBankBySmsSender("HDFCBK") } returns BankEntity(1, "HDFC", "HDFCBK")
+        val entity = BankEntity(1, "HDFC", "HDFCBK")
+        coEvery { bankDao.getBankBySmsSender("HDFCBK") } returns entity
 
         val result =
             repo.getBankBySender("HDFCBK")
-        assertEquals(1L, result?.id)
-        assertEquals("HDFC", result?.name)
-        assertEquals("HDFCBK", result?.smsSender)
+        assertEquals(entity.id, result?.id)
+        assertEquals(entity.name, result?.name)
+        assertEquals(entity.smsSender, result?.smsSender)
         coVerify { bankDao.getBankBySmsSender("HDFCBK") }
     }
 
