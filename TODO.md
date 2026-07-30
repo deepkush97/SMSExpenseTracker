@@ -118,7 +118,7 @@
 - [x] Implement FAB (+) -> navigates to Manual Entry screen
 - [x] Implement Transaction List empty state
 - [x] Connect to `TransactionsViewModel` + `GetTransactionsUseCase` with live filter
-- [ ] **Verify:** Transactions render, search filters, category assignment works
+- [x] **Verify:** Transactions render, search filters, category assignment works
 
 ### [ ] 12. Manual Transaction Entry Screen
 - [ ] Implement form composable: Amount (currency input), Type (radio: Credit/Debit), Date (date picker), Account, Payee, Category dropdown, Reference
