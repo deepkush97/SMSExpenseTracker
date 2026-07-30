@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.smsexpensetracker.core.database.entity.TransactionEntity
+import com.smsexpensetracker.core.database.entity.TransactionType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -41,4 +42,19 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE transactionDate BETWEEN :start AND :end ORDER BY transactionDate DESC")
     fun getTransactionsBetweenDates(start: Long, end: Long): Flow<List<TransactionEntity>>
+
+    @Query("SELECT bankId, type, SUM(amount) AS total FROM transactions GROUP BY bankId, type")
+    fun getBankSummary(): Flow<List<BankSummary>>
+
+    @Query("SELECT strftime('%Y-%m', transactionDate, 'unixepoch') AS yearMonth, type, SUM(amount) AS total FROM transactions GROUP BY yearMonth, type ORDER BY yearMonth")
+    fun getMonthlySummary(): Flow<List<MonthlySummary>>
+
+    @Query("SELECT categoryId, SUM(amount) AS total FROM transactions WHERE type = 'DEBIT' GROUP BY categoryId")
+    fun getCategorySummary(): Flow<List<CategorySummary>>
+
+    @Query("SELECT SUM(amount) FROM transactions WHERE type = :type")
+    fun getTotalByType(type: TransactionType): Flow<Long?>
+
+    @Query("SELECT * FROM transactions ORDER BY transactionDate DESC LIMIT 5")
+    fun getRecentTransactions(): Flow<List<TransactionEntity>>
 }
