@@ -36,6 +36,7 @@ class DashboardViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
+    @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<DashboardUiState> = combine(
         getDashboardDataUseCase().totalSpent,
         getDashboardDataUseCase().totalReceived,
@@ -46,21 +47,13 @@ class DashboardViewModel @Inject constructor(
         bankRepository.getAllBanks(),
         categoryRepository.getAllCategories()
     ) { array ->
-        @Suppress("UNCHECKED_CAST")
         val spent = array[0] as? Long
-        @Suppress("UNCHECKED_CAST")
         val received = array[1] as? Long
-        @Suppress("UNCHECKED_CAST")
         val bankSums = array[2] as? List<com.smsexpensetracker.domain.model.BankSummary> ?: emptyList()
-        @Suppress("UNCHECKED_CAST")
         val monthlySums = array[3] as? List<com.smsexpensetracker.domain.model.MonthlySummary> ?: emptyList()
-        @Suppress("UNCHECKED_CAST")
         val catSums = array[4] as? List<com.smsexpensetracker.domain.model.CategorySummary> ?: emptyList()
-        @Suppress("UNCHECKED_CAST")
         val recent = array[5] as? List<Transaction> ?: emptyList()
-        @Suppress("UNCHECKED_CAST")
         val banks = array[6] as? List<Bank> ?: emptyList()
-        @Suppress("UNCHECKED_CAST")
         val cats = array[7] as? List<Category> ?: emptyList()
         val bankMap = banks.associateBy { it.id }
         val catMap = cats.associateBy { it.id }
