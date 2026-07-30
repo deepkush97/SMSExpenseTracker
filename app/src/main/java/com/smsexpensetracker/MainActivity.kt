@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -70,7 +72,7 @@ private fun PillNavigationBar(
     onItemClick: (BottomNavItem) -> Unit
 ) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter
     ) {
         Surface(
@@ -81,7 +83,7 @@ private fun PillNavigationBar(
             shadowElevation = 4.dp,
             color = MaterialTheme.colorScheme.surfaceContainer
         ) {
-            androidx.compose.foundation.layout.Row {
+            Row {
                 items.forEach { item ->
                     val selected = currentRoute == item.route
                     val scale by animateFloatAsState(
