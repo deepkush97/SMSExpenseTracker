@@ -686,7 +686,10 @@ fun TransactionsScreen(
             }
             else -> {
                 LazyColumn(
-                    contentPadding = PaddingValues(innerPadding.calculateTopPadding() + 16.dp, bottom = 88.dp)
+                    contentPadding = PaddingValues(
+                        top = innerPadding.calculateTopPadding() + 16.dp,
+                        bottom = 88.dp
+                    )
                 ) {
                     item { MonthlySummaryBanner(...) }
                     item { Spacer(Modifier.height(12.dp)) }

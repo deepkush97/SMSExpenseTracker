@@ -108,16 +108,16 @@
 - [x] Connect `DashboardViewModel` + `GetTransactionsUseCase` for live data
 - [x] **Verify:** Dashboard renders charts with seed/test data
 
-### [ ] 11. Transaction List Screen
-- [ ] Implement search bar with debounced query
-- [ ] Implement filter chips: All, Credit, Debit, Bank selector
-- [ ] Implement `LazyColumn` transaction list with date headers and group separators
-- [ ] Implement transaction row composable (amount, type icon, payee, date, category chip)
-- [ ] Implement Transaction Detail bottom sheet (all fields, category picker, edit label)
-- [ ] Implement category picker with searchable dropdown
-- [ ] Implement FAB (+) -> navigates to Manual Entry screen
-- [ ] Implement Transaction List empty state
-- [ ] Connect to `TransactionsViewModel` + `GetTransactionsUseCase` with live filter
+### [x] 11. Transaction List Screen
+- [x] Implement search bar with debounced query
+- [x] Implement filter chips: All, Credit, Debit, Bank selector
+- [x] Implement `LazyColumn` transaction list with date headers and group separators
+- [x] Implement transaction row composable (amount, type icon, payee, date, category chip)
+- [x] Implement Transaction Detail bottom sheet (all fields, category picker, edit label)
+- [x] Implement category picker with searchable dropdown
+- [x] Implement FAB (+) -> navigates to Manual Entry screen
+- [x] Implement Transaction List empty state
+- [x] Connect to `TransactionsViewModel` + `GetTransactionsUseCase` with live filter
 - [ ] **Verify:** Transactions render, search filters, category assignment works
 
 ### [ ] 12. Manual Transaction Entry Screen
