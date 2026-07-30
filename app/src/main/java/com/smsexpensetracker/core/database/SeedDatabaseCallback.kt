@@ -74,7 +74,7 @@ class SeedDatabaseCallback : RoomDatabase.Callback() {
         rules.forEachIndexed { index, (descBankId, pattern) ->
             val (desc, bankId) = descBankId
             db.execSQL(
-                "INSERT INTO sms_rules (id, bankId, pattern, description) VALUES(${index + 1}, $bankId, '$pattern', $desc)"
+                "INSERT INTO sms_rules (id, bankId, pattern, description) VALUES(${index + 1}, $bankId, '${pattern.replace("'", "''")}', '${desc.replace("'", "''")}')"
             )
         }
 

@@ -18,7 +18,9 @@ import androidx.navigation.compose.rememberNavController
 import com.smsexpensetracker.ui.navigation.AppNavHost
 import com.smsexpensetracker.ui.navigation.BottomNavItem
 import com.smsexpensetracker.ui.theme.SMSExpenseTrackerTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

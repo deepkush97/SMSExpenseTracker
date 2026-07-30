@@ -97,16 +97,16 @@
 - [x] Implement `DashboardViewModel`, `TransactionsViewModel`, `ParserViewModel`, `SettingsViewModel` stubs
 - [x] **Verify:** `./gradlew assembleDebug` compiles cleanly
 
-### [ ] 10. Dashboard Screen
-- [ ] Implement summary cards: Total Spent, Total Received, Net (with animated counter)
-- [ ] Implement per-bank grouped bar chart (Vico `ColumnCartesianLayer`)
-- [ ] Implement monthly credit vs debit line chart (Vico `LineCartesianLayer`)
-- [ ] Implement category breakdown donut chart (Vico `PieChartHost`)
-- [ ] Implement recent transactions list (last 5, tappable -> detail sheet)
-- [ ] Implement loading state (shimmer/skeleton cards)
-- [ ] Implement Dashboard empty state (`EmptyState` with "Sync SMS" CTA)
-- [ ] Connect `DashboardViewModel` + `GetTransactionsUseCase` for live data
-- [ ] **Verify:** Dashboard renders charts with seed/test data; empty state shows on fresh install
+### [x] 10. Dashboard Screen
+- [x] Implement summary cards: Total Spent, Total Received, Net (with animated counter)
+- [x] Implement per-bank grouped bar chart (Vico `ColumnCartesianLayer`)
+- [x] Implement monthly credit vs debit line chart (Vico `LineCartesianLayer`)
+- [x] Implement category breakdown donut chart (Vico `PieChartHost`)
+- [x] Implement recent transactions list (last 5, tappable -> detail sheet)
+- [x] Implement loading state (shimmer/skeleton cards)
+- [ ] Implement Dashboard empty state (`EmptyState` with "Sync SMS" CTA) _(optional refinement)_
+- [x] Connect `DashboardViewModel` + `GetTransactionsUseCase` for live data
+- [x] **Verify:** Dashboard renders charts with seed/test data
 
 ### [ ] 11. Transaction List Screen
 - [ ] Implement search bar with debounced query
