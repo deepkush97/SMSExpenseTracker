@@ -1,6 +1,10 @@
 package com.smsexpensetracker.domain.repository
 
+import com.smsexpensetracker.domain.model.BankSummary
+import com.smsexpensetracker.domain.model.CategorySummary
+import com.smsexpensetracker.domain.model.MonthlySummary
 import com.smsexpensetracker.domain.model.Transaction
+import com.smsexpensetracker.domain.model.TransactionType
 import kotlinx.coroutines.flow.Flow
 
 interface TransactionRepository {
@@ -12,4 +16,9 @@ interface TransactionRepository {
     fun getTransactionsBetweenDates(start: Long, end: Long): Flow<List<Transaction>>
     suspend fun insert(transaction: Transaction): Long
     suspend fun delete(transaction: Transaction)
+    fun getBankSummary(): Flow<List<BankSummary>>
+    fun getMonthlySummary(): Flow<List<MonthlySummary>>
+    fun getCategorySummary(): Flow<List<CategorySummary>>
+    fun getTotalByType(type: TransactionType): Flow<Long?>
+    fun getRecentTransactions(): Flow<List<Transaction>>
 }
