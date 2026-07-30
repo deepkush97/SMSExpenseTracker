@@ -2,6 +2,9 @@ package com.smsexpensetracker.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val SeedColor = Color(0xFF1A56DB)
+val DefaultThemeColor = SeedColor
+
 val Blue40 = Color(0xFF1A56DB)
 val Blue80 = Color(0xFFB3CCF5)
 val Green40 = Color(0xFF16A34A)

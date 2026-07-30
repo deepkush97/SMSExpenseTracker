@@ -1,69 +1,51 @@
 package com.smsexpensetracker.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-
-private val LightColorScheme = lightColorScheme(
-    primary = Blue40,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD3E3FD),
-    secondary = Green40,
-    onSecondary = Color.White,
-    secondaryContainer = Green80,
-    error = Red40,
-    onError = Color.White,
-    errorContainer = Red80,
-    surface = SurfaceLight,
-    onSurface = Color(0xFF1C1C1E),
-    background = SurfaceLight,
-    onBackground = Color(0xFF1C1C1E),
-    outline = Gray80
-)
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Blue80,
-    onPrimary = Color(0xFF003A9A),
-    primaryContainer = Color(0xFF0046B5),
-    secondary = Green80,
-    onSecondary = Color(0xFF003D1A),
-    secondaryContainer = Color(0xFF005B26),
-    error = Red80,
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    surface = SurfaceDark,
-    onSurface = Color(0xFFE5E5E5),
-    background = SurfaceDark,
-    onBackground = Color(0xFFE5E5E5),
-    outline = Gray80
-)
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.rememberDynamicColorScheme
 
 @Composable
 fun SMSExpenseTrackerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    pureBlack: Boolean = false,
+    seedColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val context = LocalContext.current
+
+    val useSystemDynamic = seedColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    val baseColorScheme = if (useSystemDynamic) {
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        rememberDynamicColorScheme(
+            seedColor = seedColor,
+            isDark = darkTheme,
+            specVersion = ColorSpec.SpecVersion.SPEC_2025,
+            style = PaletteStyle.TonalSpot
+        )
     }
 
-    MaterialTheme(
+    val colorScheme = if (darkTheme && pureBlack) {
+        baseColorScheme.copy(surface = Color.Black, background = Color.Black)
+    } else {
+        baseColorScheme
+    }
+
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = AppShapes,
+        motionScheme = MotionScheme.expressive(),
         content = content
     )
 }
