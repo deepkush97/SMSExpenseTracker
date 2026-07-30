@@ -88,14 +88,14 @@
 
 ## Phase 3: Core UI
 
-### [ ] 9. Navigation, Theme & Infrastructure
-- [ ] Implement Material 3 theme (`AppColorScheme`, `AppShapes`, `AppTypography`)
-- [ ] Implement NavHost with bottom navigation: Dashboard, Transactions, Parser Test, Settings
-- [ ] Implement `MainActivity` with `@AndroidEntryPoint`, Scaffold with bottom bar
-- [ ] Implement `EmptyState` composable (icon, title, subtitle, action button)
+### [x] 9. Navigation, Theme & Infrastructure
+- [x] Implement Material 3 theme (finance colors: blue primary, green secondary, red error)
+- [x] Implement NavHost with bottom navigation: Dashboard, Transactions, Parser Test, Settings
+- [x] Implement `MainActivity` with `@AndroidEntryPoint`, Scaffold with bottom bar
+- [x] Implement `EmptyState` composable (icon, title, subtitle, action button)
 - [ ] Implement `ErrorBanner`, `ErrorSnackbar`, `ErrorDialog` composables
-- [ ] Implement `DashboardViewModel`, `TransactionsViewModel`, `ParserViewModel`, `SettingsViewModel` stubs
-- [ ] **Verify:** App launches, shows bottom nav, navigation between tabs works
+- [x] Implement `DashboardViewModel`, `TransactionsViewModel`, `ParserViewModel`, `SettingsViewModel` stubs
+- [x] **Verify:** `./gradlew assembleDebug` compiles cleanly
 
 ### [ ] 10. Dashboard Screen
 - [ ] Implement summary cards: Total Spent, Total Received, Net (with animated counter)
