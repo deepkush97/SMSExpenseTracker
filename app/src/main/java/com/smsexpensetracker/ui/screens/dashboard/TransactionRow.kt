@@ -33,40 +33,47 @@ fun TransactionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.small
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (categoryColor != null) {
-                Surface(
-                    modifier = Modifier.size(12.dp).clip(CircleShape),
-                    color = categoryColor
-                ) {}
-                Spacer(Modifier.width(12.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (categoryColor != null) {
+                    Surface(
+                        modifier = Modifier.size(12.dp).clip(CircleShape),
+                        color = categoryColor
+                    ) {}
+                    Spacer(Modifier.width(12.dp))
+                }
+                Column {
+                    Text(
+                        text = transaction.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = transaction.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Column {
-                Text(
-                    text = transaction.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = transaction.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = formatPaisa(transaction.amount),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (transaction.transactionType == TransactionType.CREDIT) Green40 else Red40
+            )
         }
-        Text(
-            text = formatPaisa(transaction.amount),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = if (transaction.transactionType == TransactionType.CREDIT) Green40 else Red40
-        )
     }
 }

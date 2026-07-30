@@ -48,17 +48,20 @@ fun TransactionFilterChips(
         FilterChip(
             selected = filterType == null,
             onClick = { onFilterTypeChange(null) },
-            label = { Text("All") }
+            label = { Text("All") },
+            shape = MaterialTheme.shapes.small
         )
         FilterChip(
             selected = filterType == TransactionType.CREDIT,
             onClick = { onFilterTypeChange(TransactionType.CREDIT) },
-            label = { Text("Credit") }
+            label = { Text("Credit") },
+            shape = MaterialTheme.shapes.small
         )
         FilterChip(
             selected = filterType == TransactionType.DEBIT,
             onClick = { onFilterTypeChange(TransactionType.DEBIT) },
-            label = { Text("Debit") }
+            label = { Text("Debit") },
+            shape = MaterialTheme.shapes.small
         )
         Spacer(Modifier.width(8.dp))
         Box(modifier = Modifier.weight(1f)) {
@@ -73,7 +76,8 @@ fun TransactionFilterChips(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bankExpanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth(),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodySmall
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    shape = MaterialTheme.shapes.small
                 )
                 ExposedDropdownMenu(
                     expanded = bankExpanded,

@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -63,7 +63,7 @@ fun TransactionDetailSheet(
             DetailRow("Date", transaction.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")))
             DetailRow("Description", transaction.description)
 
-            Divider()
+            HorizontalDivider()
 
             Text("Category", style = MaterialTheme.typography.titleSmall)
             ExposedDropdownMenuBox(
@@ -75,7 +75,8 @@ fun TransactionDetailSheet(
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    shape = MaterialTheme.shapes.small
                 )
                 ExposedDropdownMenu(
                     expanded = categoryExpanded,

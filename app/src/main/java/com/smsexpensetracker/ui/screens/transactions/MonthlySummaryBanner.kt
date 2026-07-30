@@ -41,6 +41,7 @@ fun MonthlySummaryBanner(
 
     Card(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )

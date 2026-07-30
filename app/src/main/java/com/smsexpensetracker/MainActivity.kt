@@ -86,7 +86,7 @@ private fun PillNavigationBar(
                     val selected = currentRoute == item.route
                     val scale by animateFloatAsState(
                         targetValue = if (selected) 1f else 0.92f,
-                        animationSpec = AppAnimation.spring
+                        animationSpec = AppAnimation.spring()
                     )
                     NavigationBarItem(
                         selected = selected,

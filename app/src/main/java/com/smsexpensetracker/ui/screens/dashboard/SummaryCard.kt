@@ -1,11 +1,9 @@
 package com.smsexpensetracker.ui.screens.dashboard
 
 import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -18,9 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.smsexpensetracker.ui.theme.AppAnimation
 import kotlin.math.absoluteValue
 
 @Composable
@@ -33,11 +31,12 @@ fun SummaryCard(
 ) {
     val animatedAmount by animateIntAsState(
         targetValue = amountPaisa.toInt(),
-        animationSpec = tween(durationMillis = 600)
+        animationSpec = AppAnimation.spring()
     )
 
     Card(
         modifier = modifier,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
     ) {
         Column(
