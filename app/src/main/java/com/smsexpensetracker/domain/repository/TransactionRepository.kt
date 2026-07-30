@@ -16,6 +16,7 @@ interface TransactionRepository {
     fun getTransactionsBetweenDates(start: Long, end: Long): Flow<List<Transaction>>
     suspend fun insert(transaction: Transaction): Long
     suspend fun delete(transaction: Transaction)
+    suspend fun updateTransactionCategory(id: Long, categoryId: Long?)
     fun getBankSummary(): Flow<List<BankSummary>>
     fun getMonthlySummary(): Flow<List<MonthlySummary>>
     fun getCategorySummary(): Flow<List<CategorySummary>>

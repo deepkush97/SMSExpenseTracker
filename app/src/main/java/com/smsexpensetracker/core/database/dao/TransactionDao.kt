@@ -57,4 +57,7 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions ORDER BY transactionDate DESC LIMIT 5")
     fun getRecentTransactions(): Flow<List<TransactionEntity>>
+
+    @Query("UPDATE transactions SET categoryId = :categoryId WHERE id = :id")
+    suspend fun updateTransactionCategory(id: Long, categoryId: Long?)
 }

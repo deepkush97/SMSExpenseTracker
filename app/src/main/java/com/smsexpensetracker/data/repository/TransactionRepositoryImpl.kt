@@ -43,6 +43,10 @@ class TransactionRepositoryImpl @Inject constructor(
     override suspend fun delete(transaction: Transaction) =
         transactionDao.delete(transaction.toEntity())
 
+    override suspend fun updateTransactionCategory(id: Long, categoryId: Long?) {
+        transactionDao.updateTransactionCategory(id, categoryId)
+    }
+
     override fun getBankSummary(): Flow<List<BankSummary>> =
         transactionDao.getBankSummary().map { list ->
             list.map { BankSummary(it.bankId, TransactionType.valueOf(it.type.name), it.total) }
