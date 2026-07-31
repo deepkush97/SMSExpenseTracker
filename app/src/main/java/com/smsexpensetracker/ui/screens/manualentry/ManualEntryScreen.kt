@@ -73,6 +73,14 @@ fun ManualEntryScreen(
         }
     }
 
+    LaunchedEffect(state.saveError) {
+        val error = state.saveError
+        if (error != null) {
+            snackbarHostState.showSnackbar(error)
+            viewModel.consumeSaveError()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

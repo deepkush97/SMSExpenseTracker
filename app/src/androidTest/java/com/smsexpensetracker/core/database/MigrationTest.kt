@@ -30,6 +30,8 @@ class MigrationTest {
 
         val db = helper.runMigrationsAndValidate("migration-test", 2, true, SmsExpenseDatabase.MIGRATION_1_2)
 
+        db.execSQL("PRAGMA foreign_keys = ON")
+
         db.query("SELECT name FROM banks WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("HDFC Bank", cursor.getString(0))
@@ -37,6 +39,15 @@ class MigrationTest {
         db.query("SELECT parseMethod FROM transactions").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("SMS", cursor.getString(0))
+        }
+        db.execSQL("INSERT INTO categories (id, name, icon, color, isDefault) VALUES (6, 'Healthcare', '', 0, 0)")
+        db.execSQL(
+            "INSERT INTO transactions (bankId, amount, type, description, transactionDate, categoryId, rawSms, smsTimestamp, createdAt, parseMethod) " +
+                "VALUES (1, 500, 'DEBIT', 'hospital', 1750000000, 6, '', 1750000000, 1750000000, 'MANUAL')"
+        )
+        db.query("SELECT COUNT(*) FROM transactions WHERE categoryId = 6").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1L, cursor.getLong(0))
         }
     }
 }

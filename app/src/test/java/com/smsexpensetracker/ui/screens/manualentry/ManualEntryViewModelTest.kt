@@ -22,6 +22,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -206,6 +208,20 @@ class ManualEntryViewModelTest {
         vm.save()
         advanceUntilIdle()
         vm.consumeSavedSnackbar()
-        assertEquals(false, vm.uiState.value.showSavedSnackbar)
+        assertFalse(vm.uiState.value.showSavedSnackbar)
+    }
+
+    @Test
+    fun `failed insert resets saving and sets save error`() = runTest(testDispatcher) {
+        coEvery { transactionRepository.insert(any()) } throws RuntimeException("boom")
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.onAmountChange("100.50")
+        vm.onPayeeChange("Zomato")
+        vm.save()
+        advanceUntilIdle()
+
+        assertFalse(vm.uiState.value.isSaving)
+        assertNotNull(vm.uiState.value.saveError)
     }
 }

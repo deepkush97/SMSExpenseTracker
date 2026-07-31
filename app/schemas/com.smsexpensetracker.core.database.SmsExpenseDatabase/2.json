@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "067f1a009e552f9e0e07c3b2ff484c52",
+    "identityHash": "083496c548e9dcb9779dab5670e4c3eb",
     "entities": [
       {
         "tableName": "banks",
@@ -214,7 +214,7 @@
       },
       {
         "tableName": "transactions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bankId` INTEGER NOT NULL, `amount` INTEGER NOT NULL, `type` TEXT NOT NULL, `description` TEXT NOT NULL, `transactionDate` INTEGER NOT NULL, `categoryId` INTEGER, `rawSms` TEXT NOT NULL, `smsTimestamp` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `parseMethod` TEXT NOT NULL, FOREIGN KEY(`bankId`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`categoryId`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bankId` INTEGER NOT NULL, `amount` INTEGER NOT NULL, `type` TEXT NOT NULL, `description` TEXT NOT NULL, `transactionDate` INTEGER NOT NULL, `categoryId` INTEGER, `rawSms` TEXT NOT NULL, `smsTimestamp` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `parseMethod` TEXT NOT NULL, FOREIGN KEY(`bankId`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -301,7 +301,7 @@
             ]
           },
           {
-            "table": "banks",
+            "table": "categories",
             "onDelete": "SET NULL",
             "onUpdate": "NO ACTION",
             "columns": [
@@ -424,7 +424,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '067f1a009e552f9e0e07c3b2ff484c52')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '083496c548e9dcb9779dab5670e4c3eb')"
     ]
   }
 }

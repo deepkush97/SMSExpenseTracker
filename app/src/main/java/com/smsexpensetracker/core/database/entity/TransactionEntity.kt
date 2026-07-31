@@ -17,7 +17,7 @@ enum class ParseMethod { SMS, MANUAL }
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = BankEntity::class,
+            entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
             onDelete = ForeignKey.SET_NULL,

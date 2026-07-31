@@ -52,7 +52,27 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE transactions ADD COLUMN parseMethod TEXT NOT NULL DEFAULT 'SMS'")
+                db.execSQL(
+                    "CREATE TABLE `transactions_new` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`bankId` INTEGER NOT NULL, `amount` INTEGER NOT NULL, " +
+                        "`type` TEXT NOT NULL, `description` TEXT NOT NULL, " +
+                        "`transactionDate` INTEGER NOT NULL, `categoryId` INTEGER, " +
+                        "`rawSms` TEXT NOT NULL, `smsTimestamp` INTEGER NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL, " +
+                        "`parseMethod` TEXT NOT NULL DEFAULT 'SMS', " +
+                        "FOREIGN KEY(`bankId`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                        "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)"
+                )
+                db.execSQL(
+                    "INSERT INTO `transactions_new` (" +
+                        "id, bankId, amount, type, description, transactionDate, categoryId, " +
+                        "rawSms, smsTimestamp, createdAt, parseMethod) " +
+                        "SELECT id, bankId, amount, type, description, transactionDate, categoryId, " +
+                        "rawSms, smsTimestamp, createdAt, 'SMS' FROM `transactions`"
+                )
+                db.execSQL("DROP TABLE `transactions`")
+                db.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
             }
         }
 
