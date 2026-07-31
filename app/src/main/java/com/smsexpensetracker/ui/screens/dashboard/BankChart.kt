@@ -10,14 +10,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisGuidelineComponent
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLineComponent
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisTickComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.common.Fill
 
 @Composable
 fun BankChart(
@@ -50,11 +57,29 @@ fun BankChart(
                 }
             }
 
+            val colorScheme = MaterialTheme.colorScheme
+            val axisLabel = rememberAxisLabelComponent(
+                style = TextStyle(color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
+            )
+            val axisLine = rememberAxisLineComponent(fill = Fill(colorScheme.outlineVariant))
+            val axisTick = rememberAxisTickComponent(fill = Fill(colorScheme.outlineVariant))
+            val axisGuideline = rememberAxisGuidelineComponent(fill = Fill(colorScheme.surfaceVariant))
+
             CartesianChartHost(
                 chart = rememberCartesianChart(
                     rememberColumnCartesianLayer(),
-                    startAxis = VerticalAxis.rememberStart(),
-                    bottomAxis = HorizontalAxis.rememberBottom(),
+                    startAxis = VerticalAxis.rememberStart(
+                        line = axisLine,
+                        label = axisLabel,
+                        tick = axisTick,
+                        guideline = axisGuideline
+                    ),
+                    bottomAxis = HorizontalAxis.rememberBottom(
+                        line = axisLine,
+                        label = axisLabel,
+                        tick = axisTick,
+                        guideline = axisGuideline
+                    ),
                 ),
                 modelProducer = modelProducer,
                 modifier = Modifier.fillMaxWidth().height(200.dp),
