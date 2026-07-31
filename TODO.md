@@ -120,12 +120,12 @@
 - [x] Connect to `TransactionsViewModel` + `GetTransactionsUseCase` with live filter
 - [x] **Verify:** Transactions render, search filters, category assignment works
 
-### [ ] 12. Manual Transaction Entry Screen
-- [ ] Implement form composable: Amount (currency input), Type (radio: Credit/Debit), Date (date picker), Account, Payee, Category dropdown, Reference
-- [ ] Implement form validation (amount > 0, date required, max lengths)
-- [ ] Implement inline error display per field
-- [ ] Implement save flow: validate -> insert `TransactionEntity(parseMethod=MANUAL)` -> close -> list updates
-- [ ] **Verify:** Manual entry saves to database; appears in transaction list
+### [-] 12. Manual Transaction Entry Screen
+- [x] Implement form composable: Amount (currency input), Type (radio: Credit/Debit), Date (date picker), Account, Payee, Category dropdown, Reference
+- [x] Implement form validation (amount > 0, date required, max lengths)
+- [x] Implement inline error display per field
+- [x] Implement save flow: validate -> insert `TransactionEntity(parseMethod=MANUAL)` -> close -> list updates
+- [~] **Verify:** Manual entry saves to database; appears in transaction list (needs device/emulator smoke test)
 
 ### [ ] 13. Parser Test Screen
 - [ ] Implement SMS text input area (multiline `OutlinedTextField`)
@@ -195,6 +195,26 @@
 - [ ] Build release APK/AAB, smoke test on physical device
 - [ ] Verify ProGuard rules don't break functionality
 - [ ] **Verify:** `./gradlew lint` passes; `./gradlew testDebugUnitTest` 100% pass; release APK works
+
+---
+
+## UI Polish (Sprint: 2026-07-31)
+
+- [x] Indian currency formatting (₹12,34,567.89) everywhere
+- [x] Font polish (typography scale)
+- [x] Category chip/avatar contrast fixes
+- [x] Transaction list rows — icon-forward, tonal cards, snappy press
+- [x] Donut chart legend styling
+- [x] Chart axis theming (no black-on-dark labels)
+- [x] Pill search bar with clear button
+- [x] Credit green / debit onSurface color in TransactionRow
+- [x] Deleted `TransactionListItem.kt`; `DateSectionHeader` moved to `TransactionsScreen.kt`
+
+### Smoke-Test Checklist (manual)
+
+- [ ] Dark / Light / AMOLED modes: summary cards, recent transactions, chart axes (no black-on-dark labels), donut legend text
+- [ ] Transactions list: avatars readable for bright and dark categories, credit green vs debit default color, pill search with clear button
+- [ ] Amounts: `₹12,34,567.89` Indian grouping everywhere (dashboard, list, detail sheet, monthly banner)
 
 ---
 
