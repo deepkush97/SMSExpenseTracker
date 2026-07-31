@@ -78,6 +78,17 @@ class ManualEntryViewModelTest {
     }
 
     @Test
+    fun `blank amount and payee show both errors`() = runTest(testDispatcher) {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.save()
+        advanceUntilIdle()
+        assertEquals("Amount is required", vm.uiState.value.errors.amount)
+        assertEquals("Payee is required", vm.uiState.value.errors.payee)
+        coVerify(exactly = 0) { transactionRepository.insert(any()) }
+    }
+
+    @Test
     fun `invalid amount shows error and does not insert`() = runTest(testDispatcher) {
         val vm = createViewModel()
         advanceUntilIdle()

@@ -12,6 +12,7 @@ import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,35 +93,28 @@ class ManualEntryViewModel @Inject constructor(
         val current = _uiState.value
         if (current.isSaving) return
 
-        if (current.amountInput.isBlank()) {
-            _uiState.update { it.copy(errors = FormErrors(amount = "Amount is required")) }
-            return
-        }
-
         val amountPaisa = parsePaisa(current.amountInput)
-        if (amountPaisa == null || amountPaisa <= 0) {
-            val message = if (amountPaisa == null) {
-                "Enter a valid amount"
-            } else {
-                "Amount must be greater than zero"
+        val errors = FormErrors(
+            amount = when {
+                current.amountInput.isBlank() -> "Amount is required"
+                amountPaisa == null -> "Enter a valid amount"
+                amountPaisa <= 0 -> "Amount must be greater than zero"
+                else -> null
+            },
+            payee = when {
+                current.payee.isBlank() -> "Payee is required"
+                current.payee.length > 200 -> "Payee must be 200 characters or fewer"
+                else -> null
             }
-            _uiState.update { it.copy(errors = FormErrors(amount = message)) }
-            return
-        }
+        )
 
-        if (current.payee.isBlank()) {
-            _uiState.update { it.copy(errors = FormErrors(payee = "Payee is required")) }
-            return
-        }
-
-        if (current.payee.length > 200) {
-            _uiState.update {
-                it.copy(errors = FormErrors(payee = "Payee must be 200 characters or fewer"))
-            }
+        if (errors.amount != null || errors.payee != null) {
+            _uiState.update { it.copy(errors = errors) }
             return
         }
 
         val bankId = current.bankId ?: return
+        val paisa = amountPaisa ?: return
         val description = if (current.reference.isBlank()) {
             current.payee.trim()
         } else {
@@ -135,7 +129,7 @@ class ManualEntryViewModel @Inject constructor(
                     Transaction(
                         id = 0L,
                         bankId = bankId,
-                        amount = amountPaisa,
+                        amount = paisa,
                         transactionType = current.type,
                         description = description,
                         transactionDate = current.transactionDate.atStartOfDay(),
@@ -156,6 +150,8 @@ class ManualEntryViewModel @Inject constructor(
                         showSavedSnackbar = true
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(saveError = "Could not save transaction. Please try again.")
