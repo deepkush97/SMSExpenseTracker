@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,21 +13,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.smsexpensetracker.ui.components.EmptyState
+import com.smsexpensetracker.ui.components.TransactionRow
+import com.smsexpensetracker.ui.components.rememberSpringPressScale
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -120,15 +128,27 @@ fun TransactionsScreen(
                         grouped.forEach { (header, txs) ->
                             item(key = "header_$header") { DateSectionHeader(header) }
                             items(txs, key = { it.id }) { tx ->
-                                TransactionListItem(
-                                    transaction = tx,
-                                    bankName = state.banks.find { it.id == tx.bankId }?.name ?: "Unknown",
-                                    categoryName = tx.categoryId?.let { cid -> state.categories.find { it.id == cid }?.name },
-                                    categoryColor = tx.categoryId?.let { cid -> state.categories.find { it.id == cid } }?.let { Color(it.color) },
-                                    onClick = { viewModel.onTransactionClick(tx) }
-                                )
-                                if (tx != grouped.values.last().last()) {
-                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                                val (interactionSource, scale) = rememberSpringPressScale()
+                                val bankName = state.banks.find { it.id == tx.bankId }?.name ?: "Unknown"
+                                val category = tx.categoryId?.let { cid -> state.categories.find { it.id == cid } }
+                                Card(
+                                    onClick = { viewModel.onTransactionClick(tx) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                                        .graphicsLayer { scaleX = scale; scaleY = scale },
+                                    shape = MaterialTheme.shapes.large,
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                                    ),
+                                    interactionSource = interactionSource
+                                ) {
+                                    TransactionRow(
+                                        transaction = tx,
+                                        categoryName = category?.name,
+                                        categoryColor = category?.let { Color(it.color) },
+                                        subtitle = "$bankName · ${tx.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))}"
+                                    )
                                 }
                             }
                         }
@@ -147,4 +167,17 @@ fun TransactionsScreen(
             onDismiss = viewModel::onDismissSheet
         )
     }
+}
+
+@Composable
+private fun DateSectionHeader(label: String, modifier: Modifier = Modifier) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontWeight = FontWeight.SemiBold,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+    )
 }
