@@ -91,6 +91,8 @@ dependencies {
 
     implementation(libs.timber)
 
+    implementation(libs.androidx.datastore.preferences)
+
     implementation(libs.coroutines.android)
 
 
