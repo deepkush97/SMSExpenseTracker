@@ -113,6 +113,7 @@ git commit -m "feat: extract shared parsePaisa helper with exact paisa math"
 - Modify: `app/src/main/java/com/smsexpensetracker/domain/model/Transaction.kt`
 - Modify: `app/src/main/java/com/smsexpensetracker/data/repository/TransactionRepositoryImpl.kt`
 - Modify: `app/src/main/java/com/smsexpensetracker/core/database/SmsExpenseDatabase.kt`
+- Modify: `app/build.gradle.kts` (expose `schemas/` to androidTest assets so `MigrationTestHelper` can find the schema JSON)
 - Test: `app/src/test/java/com/smsexpensetracker/data/repository/TransactionRepositoryImplTest.kt`
 - Test: `app/src/androidTest/java/com/smsexpensetracker/core/database/MigrationTest.kt`
 - (generated) `app/schemas/.../2.json`
@@ -270,12 +271,24 @@ class MigrationTest {
 }
 ```
 
-- [ ] **Step 10: Build to regenerate schema 2.json + run unit tests**
+- [ ] **Step 10: Expose schemas to androidTest assets**
+
+`MigrationTestHelper` reads the exported schema JSON from the androidTest APK's assets under `schemas/`. Without this, the test compiles but fails at runtime. In `app/build.gradle.kts` add inside the `android { }` block (after `buildFeatures`):
+
+```kotlin
+    sourceSets {
+        getByName("androidTest").assets.srcDirs(files("$projectDir/schemas"))
+    }
+```
+
+Verify with: `./gradlew assembleDebugAndroidTest` — Expected: BUILD SUCCESSFUL (androidTest compiles; it only runs on a device/emulator via `connectedDebugAndroidTest`).
+
+- [ ] **Step 11: Build to regenerate schema 2.json + run unit tests**
 
 Run: `./gradlew assembleDebug` — Expected: BUILD SUCCESSFUL, `app/schemas/com.smsexpensetracker.core.database.SmsExpenseDatabase/2.json` created with `parseMethod` column.
 Run: `./gradlew testDebugUnitTest` — Expected: PASS.
 
-- [ ] **Step 11: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
 git add app/src app/schemas
