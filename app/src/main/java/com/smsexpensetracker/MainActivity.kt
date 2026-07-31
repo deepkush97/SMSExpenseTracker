@@ -65,17 +65,19 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        PillNavigationBar(
-                            items = BottomNavItem.items,
-                            currentRoute = currentRoute,
-                            onItemClick = { item ->
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+                        if (currentRoute in BottomNavItem.items.map { it.route }) {
+                            PillNavigationBar(
+                                items = BottomNavItem.items,
+                                currentRoute = currentRoute,
+                                onItemClick = { item ->
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 ) { innerPadding ->
                     AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
