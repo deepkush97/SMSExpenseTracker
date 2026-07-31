@@ -23,14 +23,5 @@ object RegexParser {
             bankId = bankId,
             rawSms = smsBody
         )
-
-    }
-
-    private fun parsePaisa(amountStr: String): Long? {
-        val cleaned = amountStr.replace(
-            ",", ""
-        )
-        val rupees = cleaned.toDoubleOrNull() ?: return null
-        return (rupees * 100).toLong()
     }
 }
