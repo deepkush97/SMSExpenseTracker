@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.Transaction
-import com.smsexpensetracker.ui.screens.dashboard.formatPaisa
+import com.smsexpensetracker.ui.util.formatPaisa
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)

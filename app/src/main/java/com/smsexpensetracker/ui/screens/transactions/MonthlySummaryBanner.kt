@@ -21,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.smsexpensetracker.ui.screens.dashboard.formatPaisa
+import com.smsexpensetracker.ui.util.formatPaisa
 import com.smsexpensetracker.ui.theme.Green40
 import com.smsexpensetracker.ui.theme.Red40
 import java.time.YearMonth

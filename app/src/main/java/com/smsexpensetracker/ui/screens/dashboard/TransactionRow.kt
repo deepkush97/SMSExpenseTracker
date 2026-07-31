@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.smsexpensetracker.domain.model.Transaction
 import com.smsexpensetracker.domain.model.TransactionType
+import com.smsexpensetracker.ui.util.formatPaisa
 import com.smsexpensetracker.ui.theme.Green40
 import com.smsexpensetracker.ui.theme.Red40
 import java.time.format.DateTimeFormatter

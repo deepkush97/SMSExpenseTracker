@@ -1,6 +1,8 @@
 package com.smsexpensetracker.ui.screens.dashboard
 
-import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.TwoWayConverter
+import androidx.compose.animation.core.animateValueAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.smsexpensetracker.ui.theme.AppAnimation
-import kotlin.math.absoluteValue
+import com.smsexpensetracker.ui.util.formatPaisa
 
 @Composable
 fun SummaryCard(
@@ -29,9 +31,11 @@ fun SummaryCard(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    val animatedAmount by animateIntAsState(
-        targetValue = amountPaisa.toInt(),
-        animationSpec = AppAnimation.spring()
+    val animatedAmount by animateValueAsState(
+        targetValue = amountPaisa,
+        animationSpec = AppAnimation.spring(),
+        typeConverter = LongVectorConverter,
+        label = "amount"
     )
 
     Card(
@@ -66,9 +70,7 @@ fun SummaryCard(
     }
 }
 
-fun formatPaisa(paisa: Long): String {
-    val rupees = paisa / 100
-    val paise = (paisa % 100).absoluteValue
-    val sign = if (paisa < 0) "-" else ""
-    return "₹$sign${rupees}.${paise.toString().padStart(2, '0')}"
-}
+private val LongVectorConverter: TwoWayConverter<Long, AnimationVector1D> = TwoWayConverter(
+    convertToVector = { AnimationVector1D(it.toFloat()) },
+    convertFromVector = { it.value.toLong() }
+)
