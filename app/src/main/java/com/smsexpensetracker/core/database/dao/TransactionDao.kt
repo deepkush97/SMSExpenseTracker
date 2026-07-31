@@ -60,4 +60,7 @@ interface TransactionDao {
 
     @Query("UPDATE transactions SET categoryId = :categoryId WHERE id = :id")
     suspend fun updateTransactionCategory(id: Long, categoryId: Long?)
+
+    @Query("SELECT COUNT(*) FROM transactions")
+    suspend fun count(): Int
 }
