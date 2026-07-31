@@ -23,8 +23,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.smsexpensetracker.ui.components.TransactionRow
+import com.smsexpensetracker.ui.components.rememberSpringPressScale
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun DashboardScreen(
@@ -92,17 +96,24 @@ fun DashboardScreen(
                 )
             }
             items(state.recentTransactions) { transaction ->
+                val (interactionSource, scale) = rememberSpringPressScale()
                 Card(
+                    onClick = { onTransactionClick(transaction.id) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { scaleX = scale; scaleY = scale },
                     shape = MaterialTheme.shapes.large,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    interactionSource = interactionSource
                 ) {
                     TransactionRow(
                         transaction = transaction,
-                        categoryColor = null,
-                        onClick = { onTransactionClick(transaction.id) }
+                        subtitle = transaction.transactionDate.format(
+                            DateTimeFormatter.ofPattern("dd MMM yyyy")
+                        )
                     )
                 }
             }
