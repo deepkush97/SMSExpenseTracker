@@ -52,11 +52,14 @@ android {
     }
 }
 
-configurations.all {
-    resolutionStrategy.force(
-        "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1",
-        "androidx.concurrent:concurrent-futures:1.2.0"
-    )
+// androidTest-only: room-testing needs kotlinx-serialization 1.8.1 and test-ext-junit needs concurrent-futures 1.2.0 vs the main graph's lifecycle/core pins (1.7.3/1.1.0); AGP aligns androidTest classpaths to the main variant, so the force must also cover the variant runtime classpaths
+configurations.configureEach {
+    if (name.contains("AndroidTest") || name.endsWith("RuntimeClasspath")) {
+        resolutionStrategy.force(
+            "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1",
+            "androidx.concurrent:concurrent-futures:1.2.0"
+        )
+    }
 }
 
 dependencies {
