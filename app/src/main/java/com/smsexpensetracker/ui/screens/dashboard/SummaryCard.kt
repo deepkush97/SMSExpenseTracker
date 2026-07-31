@@ -64,7 +64,7 @@ fun SummaryCard(
                 )
             }
             Text(
-                text = formatPaisa(animatedAmount.toLong()),
+                text = formatPaisa(animatedAmount),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = color

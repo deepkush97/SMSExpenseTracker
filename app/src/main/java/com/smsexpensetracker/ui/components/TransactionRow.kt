@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,8 +24,8 @@ import com.smsexpensetracker.domain.model.Transaction
 import com.smsexpensetracker.domain.model.TransactionType
 import com.smsexpensetracker.ui.theme.Green40
 import com.smsexpensetracker.ui.theme.Green80
+import com.smsexpensetracker.ui.util.categoryChipColors
 import com.smsexpensetracker.ui.util.formatAmountWithSign
-import com.smsexpensetracker.ui.util.readableOnColor
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -41,11 +40,15 @@ fun TransactionRow(
     val isDark = colorScheme.onSurface.luminance() > 0.5f
     val creditColor = if (isDark) Green80 else Green40
     val avatarBackground = if (categoryColor != null) {
-        lerp(colorScheme.surfaceContainerHigh, categoryColor, 0.18f)
+        categoryChipColors(categoryColor, colorScheme.surfaceContainerHigh).background
     } else {
         colorScheme.surfaceContainerHighest
     }
-    val avatarForeground = if (categoryColor != null) readableOnColor(categoryColor) else colorScheme.onSurfaceVariant
+    val avatarForeground = if (categoryColor != null) {
+        categoryChipColors(categoryColor, colorScheme.surfaceContainerHigh).foreground
+    } else {
+        colorScheme.onSurfaceVariant
+    }
     val avatarText = (categoryName ?: transaction.description).firstOrNull()?.uppercase() ?: "?"
 
     Row(
