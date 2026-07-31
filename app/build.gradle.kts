@@ -47,6 +47,16 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        getByName("androidTest").assets.srcDirs(files("$projectDir/schemas"))
+    }
+}
+
+configurations.all {
+    resolutionStrategy.force(
+        "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1",
+        "androidx.concurrent:concurrent-futures:1.2.0"
+    )
 }
 
 dependencies {

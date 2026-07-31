@@ -4,6 +4,8 @@ import java.time.LocalDateTime
 
 enum class TransactionType { CREDIT, DEBIT }
 
+enum class ParseMethod { SMS, MANUAL }
+
 data class Transaction(
     val id: Long,
     val bankId: Long,
@@ -14,5 +16,6 @@ data class Transaction(
     val categoryId: Long?,
     val rawSms: String,
     val smsTimestamp: Long,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
+    val parseMethod: ParseMethod = ParseMethod.SMS
 )

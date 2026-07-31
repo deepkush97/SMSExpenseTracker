@@ -1,6 +1,7 @@
 package com.smsexpensetracker.core.database
 
 import androidx.room.TypeConverter
+import com.smsexpensetracker.core.database.entity.ParseMethod
 import com.smsexpensetracker.core.database.entity.ParseStatus
 import com.smsexpensetracker.core.database.entity.TransactionType
 import java.time.LocalDateTime
@@ -19,6 +20,12 @@ class Converters {
 
     @TypeConverter
     fun toParseStatus(value: String): ParseStatus = ParseStatus.valueOf(value)
+
+    @TypeConverter
+    fun fromParseMethod(value: ParseMethod): String = value.name
+
+    @TypeConverter
+    fun toParseMethod(value: String): ParseMethod = ParseMethod.valueOf(value)
 
     @TypeConverter
     fun fromLocalDateTime(value: LocalDateTime?): Long? = value?.toEpochSecond(ZoneOffset.UTC)

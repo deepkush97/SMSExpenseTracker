@@ -5,6 +5,8 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
+enum class ParseMethod { SMS, MANUAL }
+
 @Entity(
     tableName = "transactions",
     foreignKeys = [
@@ -34,7 +36,8 @@ data class TransactionEntity(
     val categoryId: Long? = null,
     val rawSms: String,
     val smsTimestamp: Long,
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+    val parseMethod: ParseMethod = ParseMethod.SMS
 )
 
 enum class TransactionType {

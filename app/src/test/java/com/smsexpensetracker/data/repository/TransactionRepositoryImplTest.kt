@@ -1,8 +1,10 @@
 package com.smsexpensetracker.data.repository
 
 import com.smsexpensetracker.core.database.dao.TransactionDao
+import com.smsexpensetracker.core.database.entity.ParseMethod
 import com.smsexpensetracker.core.database.entity.TransactionEntity
 import com.smsexpensetracker.core.database.entity.TransactionType
+import com.smsexpensetracker.domain.model.ParseMethod as DomainParseMethod
 import com.smsexpensetracker.domain.model.Transaction
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -174,6 +176,27 @@ class TransactionRepositoryImplTest {
         coVerify { transactionDao.delete(any()) }
     }
 
+    @Test
+    fun `insert maps manual parseMethod into entity`() = runTest {
+        coEvery { transactionDao.insert(any<TransactionEntity>()) } returns 5L
+        repo.insert(
+            Transaction(
+                id = 0L, bankId = 1L, amount = 2500L,
+                transactionType = com.smsexpensetracker.domain.model.TransactionType.DEBIT,
+                description = "Zomato", transactionDate = date, categoryId = null,
+                rawSms = "", smsTimestamp = 0L, createdAt = date,
+                parseMethod = DomainParseMethod.MANUAL
+            )
+        )
+        coVerify {
+            transactionDao.insert(
+                match<TransactionEntity> {
+                    it.parseMethod == ParseMethod.MANUAL && it.rawSms == "" && it.smsTimestamp == 0L
+                }
+            )
+        }
+    }
+
     private fun assertTransaction(expected: TransactionEntity, actual: Transaction) {
         assertEquals(expected.id, actual.id)
         assertEquals(expected.bankId, actual.bankId)
@@ -185,6 +208,7 @@ class TransactionRepositoryImplTest {
         assertEquals(expected.rawSms, actual.rawSms)
         assertEquals(expected.smsTimestamp, actual.smsTimestamp)
         assertEquals(expected.createdAt, actual.createdAt)
+        assertEquals(expected.parseMethod.name, actual.parseMethod.name)
     }
 
     private fun assertTransactionList(result: List<Transaction>) {

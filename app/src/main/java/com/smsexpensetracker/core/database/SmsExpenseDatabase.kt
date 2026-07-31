@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.smsexpensetracker.core.database.dao.BankDao
 import com.smsexpensetracker.core.database.dao.CategoryDao
 import com.smsexpensetracker.core.database.dao.ParseLogDao
@@ -32,7 +34,7 @@ import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
         TransactionLabelEntity::class,
         UserCategoryRuleEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -48,6 +50,12 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: SmsExpenseDatabase? = null
 
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN parseMethod TEXT NOT NULL DEFAULT 'SMS'")
+            }
+        }
+
         fun getInstance(context: Context): SmsExpenseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -55,6 +63,7 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
                     SmsExpenseDatabase::class.java,
                     "sms_expense_tracker.db"
                 ).addCallback(SeedDatabaseCallback())
+                    .addMigrations(MIGRATION_1_2)
 //                    .setQueryCallback(Executors.newSingleThreadExecutor()) { sqlQuery, bindArgs ->
 //                        // some query logs for debug
 //                    }

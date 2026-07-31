@@ -82,6 +82,7 @@ class TransactionRepositoryImpl @Inject constructor(
         rawSms,
         smsTimestamp,
         createdAt,
+        parseMethod = com.smsexpensetracker.core.database.entity.ParseMethod.valueOf(parseMethod.name),
     )
 
     private fun TransactionEntity.toDomain() = Transaction(
@@ -95,5 +96,6 @@ class TransactionRepositoryImpl @Inject constructor(
         rawSms,
         smsTimestamp,
         createdAt,
+        parseMethod = com.smsexpensetracker.domain.model.ParseMethod.valueOf(parseMethod.name),
     )
 }
