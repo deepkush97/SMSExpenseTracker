@@ -708,6 +708,7 @@ git commit -m "feat: add ManualEntryViewModel with validation and save flow"
 **Files:**
 - Create: `app/src/main/java/com/smsexpensetracker/ui/screens/manualentry/ManualEntryScreen.kt`
 - Modify: `app/src/main/java/com/smsexpensetracker/ui/navigation/NavGraph.kt`
+- Modify: `app/src/main/java/com/smsexpensetracker/MainActivity.kt` (hide pill nav bar on full-screen routes)
 
 **Interfaces:**
 - Consumes: `ManualEntryViewModel` + `ManualEntryUiState` (Task 3)
@@ -980,15 +981,37 @@ composable("manual_entry") {
 }
 ```
 
-- [ ] **Step 3: Build**
+- [ ] **Step 3: Hide the pill nav bar on full-screen routes**
+
+The manual entry screen is a full-screen route pushed over the Transactions tab — the floating pill bar must not remain visible over it. In `MainActivity.kt` gate the `bottomBar` on the current route being one of the bottom-nav tabs (the `currentRoute` value is already computed at line 63):
+
+```kotlin
+bottomBar = {
+    if (currentRoute in BottomNavItem.items.map { it.route }) {
+        PillNavigationBar(
+            items = BottomNavItem.items,
+            currentRoute = currentRoute,
+            onItemClick = { item ->
+                navController.navigate(item.route) {
+                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        )
+    }
+}
+```
+
+- [ ] **Step 4: Build**
 
 Run: `./gradlew assembleDebug`
 Expected: BUILD SUCCESSFUL. (Fix any API mismatch — e.g. `SegmentedButton`/`DatePickerDialog` signatures in material3 1.5.0-alpha.)
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add app/src/main/java/com/smsexpensetracker/ui/screens/manualentry/ManualEntryScreen.kt app/src/main/java/com/smsexpensetracker/ui/navigation/NavGraph.kt
+git add app/src/main/java/com/smsexpensetracker/ui/screens/manualentry/ManualEntryScreen.kt app/src/main/java/com/smsexpensetracker/ui/navigation/NavGraph.kt app/src/main/java/com/smsexpensetracker/MainActivity.kt
 git commit -m "feat: add ManualEntryScreen with form and navigation route"
 ```
 
