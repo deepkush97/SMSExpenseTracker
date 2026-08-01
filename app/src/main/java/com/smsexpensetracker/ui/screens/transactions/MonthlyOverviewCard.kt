@@ -31,9 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,9 +41,8 @@ import com.patrykandpatrick.vico.compose.pie.PieChartHost
 import com.patrykandpatrick.vico.compose.pie.data.PieChartModelProducer
 import com.patrykandpatrick.vico.compose.pie.data.pieSeries
 import com.patrykandpatrick.vico.compose.pie.rememberPieChart
-import com.smsexpensetracker.ui.theme.Blue40
-import com.smsexpensetracker.ui.theme.Blue80
 import com.smsexpensetracker.ui.theme.Green40
+import com.smsexpensetracker.ui.theme.Green80
 import com.smsexpensetracker.ui.theme.Red40
 import com.smsexpensetracker.ui.theme.Red80
 import com.smsexpensetracker.ui.util.formatPaisa
@@ -68,7 +65,9 @@ fun MonthlyOverviewCard(
     val isDark = colorScheme.onSurface.luminance() > 0.5f
 
     Card(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainerLow
@@ -97,7 +96,9 @@ fun MonthlyOverviewCard(
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "Next month",
-                        tint = if (canGoNext) colorScheme.onSurfaceVariant else colorScheme.onSurface.copy(alpha = 0.3f)
+                        tint = if (canGoNext) colorScheme.onSurfaceVariant else colorScheme.onSurface.copy(
+                            alpha = 0.3f
+                        )
                     )
                 }
             }
@@ -107,12 +108,20 @@ fun MonthlyOverviewCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                CompactStat(label = "Credits", amount = credits, color = if (isDark) Blue80 else Blue40)
+                CompactStat(
+                    label = "Credits",
+                    amount = credits,
+                    color = if (isDark) Green80 else Green40
+                )
                 CompactStat(label = "Debits", amount = debits, color = if (isDark) Red80 else Red40)
                 CompactStat(
                     label = "Net",
                     amount = net,
-                    color = if (net >= 0) { if (isDark) Blue80 else Blue40 } else { if (isDark) Red80 else Red40 }
+                    color = if (net >= 0) {
+                        if (isDark) Green80 else Green40
+                    } else {
+                        if (isDark) Red80 else Red40
+                    }
                 )
             }
 
