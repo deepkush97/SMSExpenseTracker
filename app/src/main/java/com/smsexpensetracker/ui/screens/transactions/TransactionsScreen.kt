@@ -75,33 +75,18 @@ fun TransactionsScreen(
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 88.dp)
                 ) {
-                    item(key = "summary") {
+                    item(key = "overview") {
                         Box(modifier = Modifier.padding(top = 8.dp)) {
-                            MonthlySummaryBanner(
+                            MonthlyOverviewCard(
                                 yearMonth = state.currentMonth,
                                 credits = state.monthlyCredits,
                                 debits = state.monthlyDebits,
                                 net = state.netAmount,
-                                onPrevMonth = {
-                                    viewModel.onMonthChange(
-                                        state.currentMonth.minusMonths(
-                                            1
-                                        )
-                                    )
-                                },
-                                onNextMonth = {
-                                    viewModel.onMonthChange(
-                                        state.currentMonth.plusMonths(
-                                            1
-                                        )
-                                    )
-                                }
+                                categoryData = state.monthlyCategoryBreakdown,
+                                onPrevMonth = { viewModel.onMonthChange(state.currentMonth.minusMonths(1)) },
+                                onNextMonth = { viewModel.onMonthChange(state.currentMonth.plusMonths(1)) }
                             )
                         }
-                    }
-                    item(key = "categoryChartSpacer") { Spacer(Modifier.height(12.dp)) }
-                    item(key = "categoryChart") {
-                        MonthlyCategoryChart(data = state.monthlyCategoryBreakdown)
                     }
                     item(key = "searchSpacer") { Spacer(Modifier.height(12.dp)) }
                     item(key = "search") {
