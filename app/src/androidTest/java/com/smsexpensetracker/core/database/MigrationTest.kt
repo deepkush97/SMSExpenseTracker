@@ -96,4 +96,23 @@ class MigrationTest {
         }
         db.close()
     }
+
+    @Test
+    fun migrate4To5_addsIsActiveColumn() {
+        helper.createDatabase("migration-test-v5", 4).use { db ->
+            db.execSQL("INSERT INTO banks (id, name, smsSender) VALUES (1, 'HDFC Bank', 'HDFCBK')")
+            db.execSQL(
+                "INSERT INTO sms_rules (id, bankId, pattern, description) " +
+                    "VALUES (1, 1, 'Spent Rs\\\\.([\\\\d,.]+) On HDFC Bank Card', 'HDFC CC Debit')"
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate("migration-test-v5", 5, true, SmsExpenseDatabase.MIGRATION_4_5)
+
+        db.query("SELECT isActive FROM sms_rules WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1L, cursor.getLong(0))
+        }
+        db.close()
+    }
 }
