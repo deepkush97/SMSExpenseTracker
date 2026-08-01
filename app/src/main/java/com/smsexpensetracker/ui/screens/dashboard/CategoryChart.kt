@@ -31,6 +31,8 @@ import com.patrykandpatrick.vico.compose.pie.PieChartHost
 import com.patrykandpatrick.vico.compose.pie.data.PieChartModelProducer
 import com.patrykandpatrick.vico.compose.pie.data.pieSeries
 import com.patrykandpatrick.vico.compose.pie.rememberPieChart
+import com.patrykandpatrick.vico.compose.pie.PieChart
+import com.patrykandpatrick.vico.compose.common.Fill
 import com.smsexpensetracker.ui.util.formatPaisa
 
 @Composable
@@ -53,6 +55,7 @@ fun CategoryChart(
         } else {
             val modelProducer = remember { PieChartModelProducer() }
             val values = data.map { it.amount / 100.0 }
+            val slices = data.map { PieChart.Slice(fill = Fill(Color(it.color))) }
 
             LaunchedEffect(values) {
                 modelProducer.runTransaction {
@@ -61,7 +64,9 @@ fun CategoryChart(
             }
 
             PieChartHost(
-                rememberPieChart(),
+                rememberPieChart(
+                    sliceProvider = PieChart.SliceProvider.series(slices)
+                ),
                 modelProducer = modelProducer,
                 modifier = Modifier.fillMaxWidth().height(200.dp)
             )

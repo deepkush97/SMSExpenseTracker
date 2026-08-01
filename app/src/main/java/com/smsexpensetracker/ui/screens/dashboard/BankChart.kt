@@ -35,6 +35,12 @@ fun BankChart(
         Text(
             text = "Spending by Bank",
             style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 2.dp)
+        )
+        Text(
+            text = "Credits (green) vs Debits (red) per bank",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         if (data.isEmpty()) {
