@@ -103,6 +103,6 @@ class DashboardViewModel @Inject constructor(
                 color = cs.categoryId?.let { catMap[it]?.color } ?: 0xFF6B7280.toInt(),
                 amount = cs.total
             )
-        }
+        }.sortedByDescending { it.amount }
     }
 }
