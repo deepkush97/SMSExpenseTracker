@@ -21,12 +21,16 @@ import kotlinx.coroutines.launch
 import java.time.YearMonth
 import javax.inject.Inject
 
+data class MonthlyCategoryItem(val categoryName: String, val color: Int, val amount: Long)
+
 data class TransactionsUiState(
     val currentMonth: YearMonth = YearMonth.now(),
     val monthlyCredits: Long = 0,
     val monthlyDebits: Long = 0,
     val netAmount: Long = 0,
     val displayedTransactions: List<Transaction> = emptyList(),
+    val monthlyCategoryBreakdown: List<MonthlyCategoryItem> = emptyList(),
+    val monthlyTxCount: Int = 0,
     val searchQuery: String = "",
     val filterType: TransactionType? = null,
     val selectedBankId: Long? = null,
@@ -84,6 +88,19 @@ class TransactionsViewModel @Inject constructor(
         val credits = monthTxs.filter { it.transactionType == TransactionType.CREDIT }.sumOf { it.amount }
         val debits = monthTxs.filter { it.transactionType == TransactionType.DEBIT }.sumOf { it.amount }
 
+        val catMap = categories.associateBy { it.id }
+        val categoryBreakdown = monthTxs
+            .filter { it.transactionType == TransactionType.DEBIT }
+            .groupBy { it.categoryId }
+            .map { (catId, txs) ->
+                MonthlyCategoryItem(
+                    categoryName = catId?.let { catMap[it]?.name } ?: "Uncategorized",
+                    color = catId?.let { catMap[it]?.color } ?: 0xFF6B7280.toInt(),
+                    amount = txs.sumOf { it.amount }
+                )
+            }
+            .sortedByDescending { it.amount }
+
         val displayed = monthTxs.filter { tx ->
             (type == null || tx.transactionType == type) &&
                 (bankId == null || tx.bankId == bankId) &&
@@ -96,6 +113,8 @@ class TransactionsViewModel @Inject constructor(
             monthlyDebits = debits,
             netAmount = credits - debits,
             displayedTransactions = displayed,
+            monthlyCategoryBreakdown = categoryBreakdown,
+            monthlyTxCount = monthTxs.size,
             searchQuery = query,
             filterType = type,
             selectedBankId = bankId,

@@ -105,6 +105,20 @@ fun TransactionsScreen(
                     }
                     item(key = "chipSpacer") { Spacer(Modifier.height(4.dp)) }
 
+                    item(key = "monthlySummary") {
+                        MonthlySummaryCard(
+                            credits = state.monthlyCredits,
+                            debits = state.monthlyDebits,
+                            net = state.netAmount,
+                            txCount = state.monthlyTxCount
+                        )
+                    }
+                    item(key = "summaryChartSpacer") { Spacer(Modifier.height(8.dp)) }
+                    item(key = "categoryChart") {
+                        MonthlyCategoryChart(data = state.monthlyCategoryBreakdown)
+                    }
+                    item(key = "chartListSpacer") { Spacer(Modifier.height(8.dp)) }
+
                     if (state.displayedTransactions.isEmpty()) {
                         item(key = "empty") {
                             EmptyState(
