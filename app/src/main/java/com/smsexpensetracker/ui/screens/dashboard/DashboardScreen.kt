@@ -99,6 +99,7 @@ fun DashboardScreen(
             items(state.recentTransactions) { transaction ->
                 val (interactionSource, scale) = rememberSpringPressScale()
                 val category = transaction.categoryId?.let { cid -> state.categories.find { it.id == cid } }
+                val bankName = state.banks.find { it.id == transaction.bankId }?.name
                 Card(
                     onClick = { onTransactionClick(transaction.id) },
                     modifier = Modifier
@@ -115,9 +116,15 @@ fun DashboardScreen(
                         transaction = transaction,
                         categoryName = category?.name,
                         categoryColor = category?.let { Color(it.color) },
-                        subtitle = transaction.transactionDate.format(
-                            DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
-                        )
+                        subtitle = buildString {
+                            if (bankName != null) {
+                                append(bankName)
+                                append(" · ")
+                            }
+                            append(transaction.transactionDate.format(
+                                DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
+                            ))
+                        }
                     )
                 }
             }

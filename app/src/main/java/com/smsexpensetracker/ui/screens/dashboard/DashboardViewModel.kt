@@ -23,6 +23,7 @@ data class DashboardUiState(
     val categoryChartData: List<CategoryPieItem> = emptyList(),
     val recentTransactions: List<Transaction> = emptyList(),
     val categories: List<Category> = emptyList(),
+    val banks: List<Bank> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -66,6 +67,7 @@ class DashboardViewModel @Inject constructor(
             categoryChartData = catSums.toCategoryPieItems(catMap),
             recentTransactions = recent,
             categories = cats,
+            banks = banks,
             isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardUiState())
