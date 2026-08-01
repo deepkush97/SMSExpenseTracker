@@ -38,7 +38,7 @@ fun BankChart(
             modifier = Modifier.padding(bottom = 2.dp)
         )
         Text(
-            text = "Credits (green) vs Debits (red) per bank",
+            text = "Credits (blue) vs Debits (green) per bank",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)

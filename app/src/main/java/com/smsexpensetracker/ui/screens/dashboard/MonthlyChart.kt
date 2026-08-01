@@ -38,7 +38,7 @@ fun MonthlyChart(
             modifier = Modifier.padding(bottom = 2.dp)
         )
         Text(
-            text = "Credits (green) vs Debits (red) over time",
+            text = "Credits (blue) vs Debits (green) over time",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
