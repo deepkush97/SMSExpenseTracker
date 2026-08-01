@@ -46,7 +46,7 @@ class SmsSyncUseCase @Inject constructor(
         _progress.value = SyncProgress()
         return try {
             withContext(ioDispatcher) {
-                val rules = smsRuleRepository.getAllRules().first()
+                val rules = smsRuleRepository.getAllRules().first().filter { it.isActive }
                 val messages = smsReader.readSms().first()
                 val total = messages.size
 

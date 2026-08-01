@@ -83,7 +83,7 @@ class ParserViewModel @Inject constructor(
 
     private fun resolveRules(current: ParserUiState): Pair<Long?, List<SmsRule>> {
         val bankId = current.selectedBankId ?: detectBank(current.senderInput, current.banks)
-        val rules = if (bankId != null) allRules.filter { it.bankId == bankId } else emptyList()
+        val rules = if (bankId != null) allRules.filter { it.bankId == bankId && it.isActive } else emptyList()
         return bankId to rules
     }
 

@@ -104,6 +104,21 @@ class SmsSyncUseCaseTest {
     }
 
     @Test
+    fun `sync ignores inactive rules`() = runTest {
+        val inactiveHdfc = hdfcRule.copy(id = 99L, isActive = false)
+        coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(inactiveHdfc))
+        coEvery { transactionRepository.insertBatch(any()) } returns 0
+        coEvery { parseLogRepository.insert(any()) } returns Unit
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        val result = useCase.sync()
+
+        assertEquals(SyncResult(scanned = 1, inserted = 0, unparsed = 1), result)
+        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+    }
+
+    @Test
     fun `sync records parse log for unparsed sms`() = runTest {
         val junk = SmsMessage(11L, "UNKNOWN", "This is not a bank SMS", 1750000000001L)
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(junk))
