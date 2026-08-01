@@ -127,16 +127,16 @@
 - [x] Implement save flow: validate -> insert `TransactionEntity(parseMethod=MANUAL)` -> close -> list updates
 - [~] **Verify:** Manual entry saves to database; appears in transaction list (needs device/emulator smoke test)
 
-### [ ] 13. Parser Test Screen
-- [ ] Implement SMS text input area (multiline `OutlinedTextField`)
-- [ ] Implement bank selector dropdown (auto-detect or manual select)
-- [ ] Implement "Test Parse" button
-- [ ] Implement parsed result display: all extracted fields with labels + confidence badge
-- [ ] Implement regex rule editor (edit `contentRegex`, map named groups to fields)
-- [ ] Implement "Add as Transaction" button (promote parsed result to manual entry)
-- [ ] Implement log viewer section (recent parse failures from FileLogger)
-- [ ] Connect to `ParserViewModel`
-- [ ] **Verify:** Pasting an SMS and tapping "Test Parse" shows correctly extracted fields
+### [x] 13. Parser Test Screen
+- [x] Implement SMS text input area (multiline `OutlinedTextField`)
+- [x] Implement bank selector dropdown (auto-detect or manual select)
+- [x] Implement "Test Parse" button
+- [x] Implement parsed result display: all extracted fields with labels + confidence badge
+- [ ] Implement regex rule editor (edit `contentRegex`, map named groups to fields) _(deferred to Settings SMS rule mgmt, Task 14)_
+- [x] Implement "Add as Transaction" button (promote parsed result to manual entry)
+- [ ] Implement log viewer section (recent parse failures from FileLogger) _(blocked on Task 8)_
+- [x] Connect to `ParserViewModel`
+- [x] **Verify:** Pasting an SMS and tapping "Test Parse" shows correctly extracted fields
 
 ### [ ] 14. Settings Screen
 - [ ] Implement bank management: list banks, add new, edit sender pattern
