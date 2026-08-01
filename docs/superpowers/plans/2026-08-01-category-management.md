@@ -254,7 +254,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -335,7 +334,7 @@ class CategoryManagementViewModelTest {
         val viewModel = CategoryManagementViewModel(repository)
         viewModel.deleteCategory(food)
         advanceUntilIdle()
-        verify(exactly = 0) { repository.delete(any()) }
+        coVerify(exactly = 0) { repository.delete(any()) }
     }
 }
 ```
@@ -860,7 +859,7 @@ Add imports: `androidx.compose.material.icons.filled.Category`, `androidx.compos
 - [ ] **Step 3: Build + full gate**
 
 Run: `./gradlew testDebugUnitTest assembleDebug`
-Expected: BUILD SUCCESSFUL, all tests pass (171 — 165 existing + 6 validation + 5 viewmodel, plus any from prior tasks).
+Expected: BUILD SUCCESSFUL, all tests pass (176 — 165 existing + 6 validation + 5 viewmodel).
 
 - [ ] **Step 4: Commit**
 
