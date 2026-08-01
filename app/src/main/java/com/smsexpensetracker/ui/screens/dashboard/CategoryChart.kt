@@ -79,7 +79,9 @@ fun CategoryChart(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val total = data.sumOf { it.amount }
                 data.forEach { item ->
+                    val pct = if (total > 0) item.amount * 100.0 / total else 0.0
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
@@ -97,7 +99,7 @@ fun CategoryChart(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = formatPaisa(item.amount),
+                            text = "${formatPaisa(item.amount)}  %.1f%%".format(pct),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
