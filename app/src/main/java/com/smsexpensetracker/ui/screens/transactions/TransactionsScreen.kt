@@ -73,11 +73,10 @@ fun TransactionsScreen(
             }
             else -> {
                 LazyColumn(
-                    contentPadding = PaddingValues(bottom = 88.dp),
-                    modifier = Modifier.background(Color.Red.copy(alpha = 0.1f))
+                    contentPadding = PaddingValues(bottom = 88.dp)
                 ) {
                     item(key = "summary") {
-                        Box(modifier = Modifier.padding(top = 8.dp).background(Color.Blue.copy(alpha = 0.15f))) {
+                        Box(modifier = Modifier.padding(top = 8.dp)) {
                             MonthlySummaryBanner(
                                 yearMonth = state.currentMonth,
                                 credits = state.monthlyCredits,
@@ -88,6 +87,7 @@ fun TransactionsScreen(
                             )
                         }
                     }
+                    item(key = "searchSpacer") { Spacer(Modifier.height(12.dp)) }
                     item(key = "search") {
                         TransactionSearchBar(
                             query = state.searchQuery,
