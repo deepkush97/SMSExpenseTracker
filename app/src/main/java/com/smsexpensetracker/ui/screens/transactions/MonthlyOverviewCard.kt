@@ -14,13 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -35,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,8 +43,9 @@ import com.patrykandpatrick.vico.compose.pie.PieChartHost
 import com.patrykandpatrick.vico.compose.pie.data.PieChartModelProducer
 import com.patrykandpatrick.vico.compose.pie.data.pieSeries
 import com.patrykandpatrick.vico.compose.pie.rememberPieChart
+import com.smsexpensetracker.ui.theme.Blue40
+import com.smsexpensetracker.ui.theme.Blue80
 import com.smsexpensetracker.ui.theme.Green40
-import com.smsexpensetracker.ui.theme.Green80
 import com.smsexpensetracker.ui.theme.Red40
 import com.smsexpensetracker.ui.theme.Red80
 import com.smsexpensetracker.ui.util.formatPaisa
@@ -66,6 +65,7 @@ fun MonthlyOverviewCard(
 ) {
     val canGoNext = yearMonth < YearMonth.now()
     val colorScheme = MaterialTheme.colorScheme
+    val isDark = colorScheme.onSurface.luminance() > 0.5f
 
     Card(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -102,34 +102,17 @@ fun MonthlyOverviewCard(
                 }
             }
 
-            // Summary chips
+            // Summary chips — compact single-row layout
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                SummaryChip(
-                    label = "Credits",
-                    amount = credits,
-                    icon = Icons.Filled.TrendingUp,
-                    color = Green80,
-                    containerColor = lerp(colorScheme.surfaceContainerHigh, Green40, 0.12f),
-                    modifier = Modifier.weight(1f)
-                )
-                SummaryChip(
-                    label = "Debits",
-                    amount = debits,
-                    icon = Icons.Filled.TrendingDown,
-                    color = Red80,
-                    containerColor = lerp(colorScheme.surfaceContainerHigh, Red40, 0.12f),
-                    modifier = Modifier.weight(1f)
-                )
-                SummaryChip(
+                CompactStat(label = "Credits", amount = credits, color = if (isDark) Blue80 else Blue40)
+                CompactStat(label = "Debits", amount = debits, color = if (isDark) Red80 else Red40)
+                CompactStat(
                     label = "Net",
                     amount = net,
-                    icon = if (net >= 0) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown,
-                    color = if (net >= 0) Green40 else Red40,
-                    containerColor = lerp(colorScheme.surfaceContainerHigh, if (net >= 0) Green40 else Red40, 0.12f),
-                    modifier = Modifier.weight(1f)
+                    color = if (net >= 0) { if (isDark) Blue80 else Blue40 } else { if (isDark) Red80 else Red40 }
                 )
             }
 
@@ -208,28 +191,12 @@ fun MonthlyOverviewCard(
 }
 
 @Composable
-private fun SummaryChip(
+private fun CompactStat(
     label: String,
     amount: Long,
-    icon: ImageVector,
-    color: Color,
-    containerColor: Color,
-    modifier: Modifier = Modifier
+    color: Color
 ) {
-    val shape = RoundedCornerShape(12.dp)
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(containerColor)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = color,
-            modifier = Modifier.padding(start = 1.dp)
-        )
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
@@ -239,7 +206,7 @@ private fun SummaryChip(
             text = formatPaisa(amount),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = color
         )
     }
 }
