@@ -42,6 +42,8 @@ fun TransactionRow(
     val isDark = colorScheme.onSurface.luminance() > 0.5f
     val isCredit = transaction.transactionType == TransactionType.CREDIT
 
+    val transactionAmount = if (isCredit) transaction.amount else -transaction.amount
+
     val avatarBg = if (isCredit) {
         if (isDark) Green80.copy(alpha = 0.18f) else Green40.copy(alpha = 0.18f)
     } else {
@@ -122,13 +124,13 @@ fun TransactionRow(
             }
         }
         Text(
-            text = formatAmountWithSign(transaction.amount),
+            text = formatAmountWithSign(transactionAmount),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = if (isCredit) {
                 if (isDark) Green80 else Green40
             } else {
-                colorScheme.onSurface
+                if (isDark) Red80 else Red40
             }
         )
     }

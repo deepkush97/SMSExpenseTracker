@@ -48,8 +48,7 @@ fun TransactionsScreen(
     val state by viewModel.uiState.collectAsState()
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        floatingActionButton = {
+        modifier.fillMaxSize(), floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToManualEntry) {
                 Icon(Icons.Filled.Add, contentDescription = "Add transaction")
             }
@@ -61,6 +60,7 @@ fun TransactionsScreen(
                     CircularProgressIndicator()
                 }
             }
+
             state.displayedTransactions.isEmpty() && state.searchQuery.isBlank() && state.filterType == null && state.selectedBankId == null -> {
                 EmptyState(
                     icon = Icons.AutoMirrored.Filled.List,
@@ -70,6 +70,7 @@ fun TransactionsScreen(
                     onAction = { /* TODO: trigger sync when SyncUseCase is ready */ }
                 )
             }
+
             else -> {
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 88.dp)
@@ -81,8 +82,20 @@ fun TransactionsScreen(
                                 credits = state.monthlyCredits,
                                 debits = state.monthlyDebits,
                                 net = state.netAmount,
-                                onPrevMonth = { viewModel.onMonthChange(state.currentMonth.minusMonths(1)) },
-                                onNextMonth = { viewModel.onMonthChange(state.currentMonth.plusMonths(1)) }
+                                onPrevMonth = {
+                                    viewModel.onMonthChange(
+                                        state.currentMonth.minusMonths(
+                                            1
+                                        )
+                                    )
+                                },
+                                onNextMonth = {
+                                    viewModel.onMonthChange(
+                                        state.currentMonth.plusMonths(
+                                            1
+                                        )
+                                    )
+                                }
                             )
                         }
                     }
@@ -132,8 +145,10 @@ fun TransactionsScreen(
                             item(key = "header_$header") { DateSectionHeader(header) }
                             items(txs, key = { it.id }) { tx ->
                                 val (interactionSource, scale) = rememberSpringPressScale()
-                                val bankName = state.banks.find { it.id == tx.bankId }?.name ?: "Unknown"
-                                val category = tx.categoryId?.let { cid -> state.categories.find { it.id == cid } }
+                                val bankName =
+                                    state.banks.find { it.id == tx.bankId }?.name ?: "Unknown"
+                                val category =
+                                    tx.categoryId?.let { cid -> state.categories.find { it.id == cid } }
                                 Card(
                                     onClick = { viewModel.onTransactionClick(tx) },
                                     modifier = Modifier
@@ -150,7 +165,11 @@ fun TransactionsScreen(
                                         transaction = tx,
                                         categoryName = category?.name,
                                         categoryColor = category?.let { Color(it.color) },
-                                        subtitle = "$bankName · ${tx.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM, hh:mm a"))}"
+                                        subtitle = "$bankName · ${
+                                            tx.transactionDate.format(
+                                                DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
+                                            )
+                                        }"
                                     )
                                 }
                             }

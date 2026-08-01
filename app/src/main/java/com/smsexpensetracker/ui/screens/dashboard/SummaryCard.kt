@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateValueAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,11 +48,16 @@ fun SummaryCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 24.dp, start = 12.dp, top = 12.dp, bottom = 12.dp),
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,

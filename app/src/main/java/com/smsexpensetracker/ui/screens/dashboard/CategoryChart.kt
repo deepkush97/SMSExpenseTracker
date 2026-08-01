@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -25,14 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.pie.PieChart
 import com.patrykandpatrick.vico.compose.pie.PieChartHost
 import com.patrykandpatrick.vico.compose.pie.data.PieChartModelProducer
 import com.patrykandpatrick.vico.compose.pie.data.pieSeries
 import com.patrykandpatrick.vico.compose.pie.rememberPieChart
-import com.patrykandpatrick.vico.compose.pie.PieChart
-import com.patrykandpatrick.vico.compose.common.Fill
 import com.smsexpensetracker.ui.util.formatPaisa
 
 @Composable
@@ -68,7 +70,9 @@ fun CategoryChart(
                     sliceProvider = PieChart.SliceProvider.series(slices)
                 ),
                 modelProducer = modelProducer,
-                modifier = Modifier.fillMaxWidth().height(200.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
             )
 
             Column(
@@ -80,16 +84,28 @@ fun CategoryChart(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val total = data.sumOf { it.amount }
+
                 data.forEach { item ->
                     val pct = if (total > 0) item.amount * 100.0 / total else 0.0
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    val formattedAmount = formatPaisa(item.amount)
+                    val parts = formattedAmount.split(".")
+                    val integerPart = parts.getOrNull(0) ?: formattedAmount
+                    val decimalPart = parts.getOrNull(1)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Box(
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
                                 .background(Color(item.color))
                         )
+
                         Spacer(Modifier.width(8.dp))
+
                         Text(
                             text = item.categoryName,
                             style = MaterialTheme.typography.bodyMedium,
@@ -98,11 +114,42 @@ fun CategoryChart(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Row(
+                            modifier = Modifier.defaultMinSize(minWidth = 90.dp), // Adjust width to fit max amount
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Text(
+                                text = integerPart,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.End
+                            )
+
+                            if (decimalPart != null) {
+                                Text(
+                                    text = ".$decimalPart",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.width(12.dp))
+
                         Text(
-                            text = "${formatPaisa(item.amount)}  %.1f%%".format(pct),
+                            text = "%5.1f%%".format(pct),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.width(68.dp)
                         )
                     }
                 }
