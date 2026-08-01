@@ -17,5 +17,24 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun getCategoryById(id: Long): Category? =
         categoryDao.getAllCategoryById(id)?.toDomain()
 
+    override suspend fun insert(category: Category): Long =
+        categoryDao.insert(category.toEntity())
+
+    override suspend fun update(category: Category) {
+        categoryDao.update(category.toEntity())
+    }
+
+    override suspend fun delete(category: Category) {
+        categoryDao.delete(category.toEntity())
+    }
+
     private fun CategoryEntity.toDomain() = Category(id, name, icon, color, isDefault)
+
+    private fun Category.toEntity() = CategoryEntity(
+        id = id,
+        name = name,
+        icon = icon,
+        color = color,
+        isDefault = isDefault
+    )
 }
