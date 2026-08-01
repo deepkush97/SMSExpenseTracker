@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -110,6 +111,7 @@ fun ManualEntryScreen(
                 singleLine = true,
                 isError = state.errors.amount != null,
                 supportingText = state.errors.amount?.let { { Text(it) } },
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -134,6 +136,7 @@ fun ManualEntryScreen(
                 readOnly = true,
                 label = { Text("Date") },
                 trailingIcon = { Icon(Icons.Filled.DateRange, contentDescription = null) },
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showDatePicker = true }
@@ -149,6 +152,7 @@ fun ManualEntryScreen(
                     readOnly = true,
                     label = { Text("Account") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bankExpanded) },
+                    shape = RoundedCornerShape(28.dp),
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
@@ -171,6 +175,7 @@ fun ManualEntryScreen(
                 singleLine = true,
                 isError = state.errors.payee != null,
                 supportingText = state.errors.payee?.let { { Text(it) } },
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -179,6 +184,7 @@ fun ManualEntryScreen(
                 onValueChange = viewModel::onReferenceChange,
                 label = { Text("Reference (optional)") },
                 singleLine = true,
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -192,6 +198,7 @@ fun ManualEntryScreen(
                     readOnly = true,
                     label = { Text("Category") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                    shape = RoundedCornerShape(28.dp),
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(

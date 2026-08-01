@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -74,10 +75,10 @@ fun TransactionFilterChips(
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bankExpanded) },
+                    shape = RoundedCornerShape(28.dp),
                     modifier = Modifier.menuAnchor().fillMaxWidth(),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodySmall,
-                    shape = MaterialTheme.shapes.small
+                    textStyle = MaterialTheme.typography.bodySmall
                 )
                 ExposedDropdownMenu(
                     expanded = bankExpanded,
