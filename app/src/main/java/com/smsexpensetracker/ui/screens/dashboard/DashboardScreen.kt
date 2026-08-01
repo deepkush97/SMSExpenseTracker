@@ -1,7 +1,6 @@
 package com.smsexpensetracker.ui.screens.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,14 +9,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,6 +35,7 @@ import java.time.format.DateTimeFormatter
 fun DashboardScreen(
     modifier: Modifier = Modifier,
     onTransactionClick: (Long) -> Unit = {},
+    onNavigateToTransactions: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -88,48 +89,6 @@ fun DashboardScreen(
             }
         }
 
-        if (state.recentTransactions.isNotEmpty()) {
-            item {
-                Text(
-                    text = "Recent Transactions",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-            }
-            items(state.recentTransactions) { transaction ->
-                val (interactionSource, scale) = rememberSpringPressScale()
-                val category = transaction.categoryId?.let { cid -> state.categories.find { it.id == cid } }
-                val bankName = state.banks.find { it.id == transaction.bankId }?.name
-                Card(
-                    onClick = { onTransactionClick(transaction.id) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .graphicsLayer { scaleX = scale; scaleY = scale },
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    interactionSource = interactionSource
-                ) {
-                    TransactionRow(
-                        transaction = transaction,
-                        categoryName = category?.name,
-                        categoryColor = category?.let { Color(it.color) },
-                        subtitle = buildString {
-                            if (bankName != null) {
-                                append(bankName)
-                                append(" · ")
-                            }
-                            append(transaction.transactionDate.format(
-                                DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
-                            ))
-                        }
-                    )
-                }
-            }
-        }
-
         if (state.bankChartData.isNotEmpty()) {
             item {
                 Card(
@@ -178,18 +137,56 @@ fun DashboardScreen(
             }
         }
 
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
+        if (state.recentTransactions.isNotEmpty()) {
+            item {
                 Text(
-                    text = "SMS Expense Tracker",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Recent Transactions",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
+            }
+            items(state.recentTransactions) { transaction ->
+                val (interactionSource, scale) = rememberSpringPressScale()
+                val category =
+                    transaction.categoryId?.let { cid -> state.categories.find { it.id == cid } }
+                val bankName = state.banks.find { it.id == transaction.bankId }?.name
+                Card(
+                    onClick = { onTransactionClick(transaction.id) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { scaleX = scale; scaleY = scale },
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    interactionSource = interactionSource
+                ) {
+                    TransactionRow(
+                        transaction = transaction,
+                        categoryName = category?.name,
+                        categoryColor = category?.let { Color(it.color) },
+                        subtitle = buildString {
+                            if (bankName != null) {
+                                append(bankName)
+                                append(" · ")
+                            }
+                            append(
+                                transaction.transactionDate.format(
+                                    DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
+                                )
+                            )
+                        }
+                    )
+                }
+            }
+            item(key = "viewAll") {
+                TextButton(
+                    onClick = onNavigateToTransactions,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                ) {
+                    Text("View All Transactions")
+                }
             }
         }
     }

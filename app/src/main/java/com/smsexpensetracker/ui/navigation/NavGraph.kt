@@ -18,7 +18,13 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         startDestination = BottomNavItem.Dashboard.route,
         modifier = modifier
     ) {
-        composable(BottomNavItem.Dashboard.route) { DashboardScreen() }
+        composable(BottomNavItem.Dashboard.route) {
+            DashboardScreen(
+                onNavigateToTransactions = {
+                    navController.navigate(BottomNavItem.Transactions.route)
+                }
+            )
+        }
         composable(BottomNavItem.Transactions.route) {
             TransactionsScreen(
                 onNavigateToManualEntry = { navController.navigate("manual_entry") }
