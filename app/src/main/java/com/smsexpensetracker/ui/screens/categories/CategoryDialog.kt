@@ -7,13 +7,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -36,6 +34,7 @@ import com.smsexpensetracker.ui.util.CATEGORY_ICON_NAMES
 import com.smsexpensetracker.ui.util.materialIcon
 import com.smsexpensetracker.ui.util.validateCategoryName
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CategoryDialog(
     existing: Category?,
@@ -65,15 +64,14 @@ fun CategoryDialog(
                 )
                 Column {
                     Text("Color", style = MaterialTheme.typography.labelLarge)
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(6),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp)
                     ) {
-                        items(CATEGORY_COLORS) { value ->
+                        CATEGORY_COLORS.forEach { value ->
                             val selected = value == color
                             Box(
                                 modifier = Modifier
@@ -93,25 +91,24 @@ fun CategoryDialog(
                 }
                 Column {
                     Text("Icon", style = MaterialTheme.typography.labelLarge)
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(7),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp)
                     ) {
-                        items(CATEGORY_ICON_NAMES) { name ->
-                            val selected = name == icon
+                        CATEGORY_ICON_NAMES.forEach { iconName ->
+                            val selected = iconName == icon
                             val tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             Icon(
-                                imageVector = materialIcon(name),
-                                contentDescription = name,
+                                imageVector = materialIcon(iconName),
+                                contentDescription = iconName,
                                 tint = tint,
                                 modifier = Modifier
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .clickable { icon = name }
+                                    .clickable { icon = iconName }
                                     .padding(4.dp)
                             )
                         }

@@ -34,7 +34,7 @@ import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
         TransactionLabelEntity::class,
         UserCategoryRuleEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -83,6 +83,12 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("UPDATE `categories` SET `isDefault` = 1 WHERE `id` BETWEEN 1 AND 14")
+            }
+        }
+
         fun getInstance(context: Context): SmsExpenseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -90,7 +96,7 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
                     SmsExpenseDatabase::class.java,
                     "sms_expense_tracker.db"
                 ).addCallback(SeedDatabaseCallback())
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 //                    .setQueryCallback(Executors.newSingleThreadExecutor()) { sqlQuery, bindArgs ->
 //                        // some query logs for debug
 //                    }

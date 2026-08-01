@@ -76,4 +76,24 @@ class MigrationTest {
         }
         db.close()
     }
+
+    @Test
+    fun migrate3To4_marksSeededCategoriesAsDefault() {
+        helper.createDatabase("migration-test-v4", 3).use { db ->
+            db.execSQL("INSERT INTO categories (id, name, icon, color, isDefault) VALUES (1, 'Food', '', 0, 0)")
+            db.execSQL("INSERT INTO categories (id, name, icon, color, isDefault) VALUES (15, 'Mine', '', 0, 0)")
+        }
+
+        val db = helper.runMigrationsAndValidate("migration-test-v4", 4, true, SmsExpenseDatabase.MIGRATION_3_4)
+
+        db.query("SELECT isDefault FROM categories WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1L, cursor.getLong(0))
+        }
+        db.query("SELECT isDefault FROM categories WHERE id = 15").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0L, cursor.getLong(0))
+        }
+        db.close()
+    }
 }

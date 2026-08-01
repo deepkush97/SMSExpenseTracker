@@ -53,7 +53,7 @@ class SeedDatabaseCallback : RoomDatabase.Callback() {
         categories.forEachIndexed { index, record ->
             val (name, iconColor) = record
             val (icon, color) = iconColor
-            val isDefault = if (name == "Other") 1 else 0
+            val isDefault = 1
 
             db.execSQL(
                 "INSERT INTO categories (id, name, icon, color, isDefault) VALUES (${index + 1}, '$name','$icon', $color, $isDefault)"
