@@ -6,6 +6,8 @@ import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import com.smsexpensetracker.domain.usecase.GetTransactionsUseCase
+import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
+import com.smsexpensetracker.domain.value.SyncResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -35,6 +37,7 @@ class TransactionsViewModelTest {
     private lateinit var bankRepository: BankRepository
     private lateinit var categoryRepository: CategoryRepository
     private lateinit var transactionRepository: TransactionRepository
+    private lateinit var smsSyncUseCase: SmsSyncUseCase
     private lateinit var viewModel: TransactionsViewModel
 
     @Before
@@ -44,6 +47,7 @@ class TransactionsViewModelTest {
         bankRepository = mockk()
         categoryRepository = mockk()
         transactionRepository = mockk()
+        smsSyncUseCase = mockk()
     }
 
     @After
@@ -75,7 +79,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         viewModel.onMonthChange(YearMonth.of(2026, 1))
@@ -95,7 +99,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         viewModel.onSearchQueryChange("Zomato")
@@ -115,7 +119,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         viewModel.onFilterTypeChange(TransactionType.CREDIT)
@@ -131,7 +135,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         val futureMonth = YearMonth.now().plusMonths(1)
@@ -148,10 +152,35 @@ class TransactionsViewModelTest {
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
         coEvery { transactionRepository.updateTransactionCategory(any(), any()) } returns Unit
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
         viewModel.onCategoryChange(1L, 5L)
         advanceUntilIdle()
 
         coVerify { transactionRepository.updateTransactionCategory(1L, 5L) }
+    }
+
+    @Test
+    fun `sync runs use case and publishes result message`() = runTest(testDispatcher) {
+        coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+        every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+        every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+        coEvery { smsSyncUseCase.sync() } returns SyncResult(scanned = 5, inserted = 2, unparsed = 1)
+
+        viewModel = TransactionsViewModel(
+            getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase
+        )
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.sync()
+        advanceUntilIdle()
+
+        val msg = viewModel.uiState.value.syncMessage
+        assertTrue(msg != null && msg.contains("Scanned 5"))
+        assertTrue(!viewModel.uiState.value.isSyncing)
+
+        viewModel.consumeSyncMessage()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.syncMessage == null)
     }
 }

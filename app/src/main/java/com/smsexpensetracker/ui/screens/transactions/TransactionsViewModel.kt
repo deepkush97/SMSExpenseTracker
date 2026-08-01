@@ -10,6 +10,7 @@ import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import com.smsexpensetracker.domain.usecase.GetTransactionsUseCase
+import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,7 +37,9 @@ data class TransactionsUiState(
     val banks: List<Bank> = emptyList(),
     val categories: List<Category> = emptyList(),
     val selectedTransaction: Transaction? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val isSyncing: Boolean = false,
+    val syncMessage: String? = null
 )
 
 @HiltViewModel
@@ -44,7 +47,8 @@ class TransactionsViewModel @Inject constructor(
     private val getTransactionsUseCase: GetTransactionsUseCase,
     private val bankRepository: BankRepository,
     private val categoryRepository: CategoryRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val smsSyncUseCase: SmsSyncUseCase
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -62,6 +66,9 @@ class TransactionsViewModel @Inject constructor(
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
     val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction.asStateFlow()
 
+    private val _isSyncing = MutableStateFlow(false)
+    private val _syncMessage = MutableStateFlow<String?>(null)
+
     @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<TransactionsUiState> = combine(
         getTransactionsUseCase(),
@@ -70,7 +77,9 @@ class TransactionsViewModel @Inject constructor(
         _searchQuery,
         _filterType,
         _selectedBankId,
-        _currentMonth
+        _currentMonth,
+        _isSyncing,
+        _syncMessage
     ) { array ->
         val allTxs = array[0] as List<Transaction>
         val banks = array[1] as List<Bank>
@@ -79,6 +88,8 @@ class TransactionsViewModel @Inject constructor(
         val type = array[4] as TransactionType?
         val bankId = array[5] as Long?
         val month = array[6] as YearMonth
+        val isSyncing = array[7] as Boolean
+        val syncMessage = array[8] as String?
 
         val monthTxs = allTxs.filter { tx ->
             YearMonth.from(tx.transactionDate) == month
@@ -119,7 +130,9 @@ class TransactionsViewModel @Inject constructor(
             banks = banks,
             categories = categories,
             selectedTransaction = _selectedTransaction.value,
-            isLoading = false
+            isLoading = false,
+            isSyncing = isSyncing,
+            syncMessage = syncMessage
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TransactionsUiState())
 
@@ -136,5 +149,23 @@ class TransactionsViewModel @Inject constructor(
         viewModelScope.launch {
             transactionRepository.updateTransactionCategory(transactionId, categoryId)
         }
+    }
+
+    fun sync() {
+        if (_isSyncing.value) return
+        _isSyncing.value = true
+        viewModelScope.launch {
+            val result = smsSyncUseCase.sync()
+            _syncMessage.value = if (result.error != null) {
+                "Sync failed. Try again."
+            } else {
+                "Scanned ${result.scanned}, added ${result.inserted}, unparsed ${result.unparsed}"
+            }
+            _isSyncing.value = false
+        }
+    }
+
+    fun consumeSyncMessage() {
+        _syncMessage.value = null
     }
 }
