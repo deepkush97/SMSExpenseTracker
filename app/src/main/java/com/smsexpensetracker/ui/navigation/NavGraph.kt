@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.smsexpensetracker.ui.screens.categories.CategoryManagementScreen
 import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
 import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
 import com.smsexpensetracker.ui.screens.parser.ParserScreen
@@ -34,6 +35,13 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             ManualEntryScreen(onBack = { navController.popBackStack() })
         }
         composable(BottomNavItem.Parser.route) { ParserScreen() }
-        composable(BottomNavItem.Settings.route) { SettingsScreen() }
+        composable(BottomNavItem.Settings.route) {
+            SettingsScreen(
+                onNavigateToCategories = { navController.navigate("categories") }
+            )
+        }
+        composable("categories") {
+            CategoryManagementScreen(onBack = { navController.popBackStack() })
+        }
     }
 }

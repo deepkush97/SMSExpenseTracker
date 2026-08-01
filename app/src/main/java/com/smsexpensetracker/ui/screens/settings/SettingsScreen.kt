@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.outlined.BrightnessAuto
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Nightlight
@@ -33,7 +35,8 @@ import com.smsexpensetracker.ui.theme.ThemeMode
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onNavigateToCategories: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -84,6 +87,43 @@ fun SettingsScreen(
             selected = state.themeMode == ThemeMode.AMOLED,
             onClick = { viewModel.onThemeModeChange(ThemeMode.AMOLED) }
         )
+
+        Spacer(modifier = Modifier.size(32.dp))
+
+        Text(
+            text = "Data",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.size(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onNavigateToCategories)
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Category,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Categories",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Spacer(modifier = Modifier.size(32.dp))
 
