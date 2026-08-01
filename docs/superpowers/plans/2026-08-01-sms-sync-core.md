@@ -58,11 +58,38 @@
 
 - [ ] **Step 1: Add `smsBodyHash` to the entity**
 
-In `TransactionEntity.kt`, append after `parseMethod`:
+In `TransactionEntity.kt`:
+1. Add the import `androidx.room.Index` (it already imports `Entity`, `ForeignKey`, `PrimaryKey`).
+2. Add the unique index to the `@Entity` declaration — **required** so Room generates the index on fresh installs AND the exported schema matches the migration. Without it, dedup via `ON CONFLICT IGNORE` silently fails on fresh installs and `runMigrationsAndValidate` fails:
+
+```kotlin
+@Entity(
+    tableName = "transactions",
+    foreignKeys = [
+        ForeignKey(
+            entity = BankEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["bankId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = CategoryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["categoryId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+    ],
+    indices = [Index(value = ["smsBodyHash"], unique = true)]
+)
+```
+
+3. Append after `parseMethod`:
 
 ```kotlin
 val smsBodyHash: String? = null
 ```
+
+> SQLite unique indexes allow multiple `NULL`s, so manual transactions (no `rawSms`, hash stays `NULL`) are unaffected by the unique constraint.
 
 - [ ] **Step 2: Bump DB version and add `MIGRATION_2_3`**
 
@@ -212,7 +239,7 @@ git commit -m "feat: add smsBodyHash dedup column, migration v3, and insertBatch
 ## Task 2: `SmsSyncUseCase` + value objects
 
 **Files:**
-- Create: `app/src/main/java/com/smsexpensetracker/domain/value/SyncProgress.kt`
+- **Modify** (not create — stub exists): `app/src/main/java/com/smsexpensetracker/domain/value/SyncProgress.kt` — replace the stub `SyncProgress(progress, total, status)` + `SyncStatus` enum with the shape below; `SyncStatus` is referenced nowhere and can be deleted. `SyncProgress` is also referenced nowhere else (verified), so the shape change is safe.
 - Create: `app/src/main/java/com/smsexpensetracker/domain/value/SyncResult.kt`
 - Create: `app/src/main/java/com/smsexpensetracker/domain/usecase/SmsSyncUseCase.kt`
 - Delete: `app/src/main/java/com/smsexpensetracker/domain/usecase/SyncSmsUseCase.kt`
@@ -228,7 +255,7 @@ git commit -m "feat: add smsBodyHash dedup column, migration v3, and insertBatch
 
 - [ ] **Step 1: Write value objects**
 
-`SyncProgress.kt`:
+`SyncProgress.kt` — **REPLACE the entire existing file** (remove the `SyncStatus` enum too):
 
 ```kotlin
 package com.smsexpensetracker.domain.value
@@ -425,12 +452,15 @@ class SmsSyncUseCaseTest {
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
 
         val first = backgroundScope.launch { useCase.sync() }
-        advanceUntilIdle()
+        runCurrent()
         val second = useCase.sync()
 
         assertEquals(SyncResult(), second)
         first.cancel()
     }
+```
+
+> **Why `runCurrent()` not `advanceUntilIdle()` (coroutines-test 1.11.0):** `advanceUntilIdle()` only runs *foreground* events and deliberately skips `backgroundScope` coroutines (`isForeground = context[BackgroundWork] === null` in `TestCoroutineScheduler.kt:69,110`). With `advanceUntilIdle()` the background `sync()` never starts, `isRunning` stays false, the second call enters the body and hangs forever on the `never` flow. `runCurrent()` runs all events scheduled at the current virtual time, including background ones.
 
     @Test
     fun `sync returns error when insert batch fails`() = runTest {
@@ -550,7 +580,9 @@ class SmsSyncUseCase @Inject constructor(
                         }
                         processed++
                     }
-                    inserted += transactionRepository.insertBatch(transactions)
+                    if (transactions.isNotEmpty()) {
+                        inserted += transactionRepository.insertBatch(transactions)
+                    }
                     _progress.value = SyncProgress(
                         processed = processed,
                         total = total,
