@@ -21,6 +21,22 @@ class BankRepositoryImpl @Inject constructor(
     override suspend fun getBankBySender(sender: String): Bank? =
         bankDao.getBankBySmsSender(sender)?.toDomain()
 
+    override suspend fun insert(bank: Bank): Long =
+        bankDao.insert(bank.toEntity())
+
+    override suspend fun update(bank: Bank) {
+        bankDao.update(bank.toEntity())
+    }
+
+    override suspend fun delete(bank: Bank) {
+        bankDao.delete(bank.toEntity())
+    }
+
+    override suspend fun countTransactions(bankId: Long): Int =
+        bankDao.getTransactionCount(bankId)
+
     private fun BankEntity.toDomain() = Bank(id = id, name = name, smsSender = smsSender)
+
+    private fun Bank.toEntity() = BankEntity(id = id, name = name, smsSender = smsSender)
 
 }

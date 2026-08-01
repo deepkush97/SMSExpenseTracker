@@ -32,4 +32,7 @@ interface BankDao {
 
     @Query("SELECT * FROM banks WHERE smsSender = :sender")
     suspend fun getBankBySmsSender(sender: String): BankEntity?
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE bankId = :bankId")
+    suspend fun getTransactionCount(bankId: Long): Int
 }

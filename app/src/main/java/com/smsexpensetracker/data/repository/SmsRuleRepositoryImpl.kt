@@ -23,7 +23,15 @@ class SmsRuleRepositoryImpl @Inject constructor(
     override suspend fun insert(rule: SmsRule): Long =
         smsRuleDao.insert(rule.toEntity())
 
-    private fun SmsRuleEntity.toDomain() = SmsRule(id, bankId, pattern, description)
+    override suspend fun update(rule: SmsRule) {
+        smsRuleDao.update(rule.toEntity())
+    }
 
-    private fun SmsRule.toEntity() = SmsRuleEntity(id, bankId, pattern, description)
+    override suspend fun delete(rule: SmsRule) {
+        smsRuleDao.delete(rule.toEntity())
+    }
+
+    private fun SmsRuleEntity.toDomain() = SmsRule(id, bankId, pattern, description, isActive)
+
+    private fun SmsRule.toEntity() = SmsRuleEntity(id, bankId, pattern, description, isActive)
 }

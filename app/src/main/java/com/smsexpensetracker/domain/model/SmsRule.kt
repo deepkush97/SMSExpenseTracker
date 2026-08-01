@@ -4,5 +4,6 @@ data class SmsRule(
     val id: Long,
     val bankId: Long,
     val pattern: String,
-    val description: String
+    val description: String,
+    val isActive: Boolean = true
 )

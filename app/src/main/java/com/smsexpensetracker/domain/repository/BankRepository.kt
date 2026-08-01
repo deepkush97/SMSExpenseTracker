@@ -7,4 +7,12 @@ interface BankRepository {
     fun getAllBanks(): Flow<List<Bank>>
     suspend fun getBankById(id: Long): Bank?
     suspend fun getBankBySender(sender: String): Bank?
+
+    suspend fun insert(bank: Bank): Long
+
+    suspend fun update(bank: Bank)
+
+    suspend fun delete(bank: Bank)
+
+    suspend fun countTransactions(bankId: Long): Int
 }
