@@ -2,11 +2,15 @@ package com.smsexpensetracker.di
 
 import com.smsexpensetracker.data.repository.BankRepositoryImpl
 import com.smsexpensetracker.data.repository.CategoryRepositoryImpl
+import com.smsexpensetracker.data.repository.ParseLogRepositoryImpl
 import com.smsexpensetracker.data.repository.SmsRuleRepositoryImpl
+import com.smsexpensetracker.data.repository.SyncMetaRepositoryImpl
 import com.smsexpensetracker.data.repository.TransactionRepositoryImpl
 import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.CategoryRepository
+import com.smsexpensetracker.domain.repository.ParseLogRepository
 import com.smsexpensetracker.domain.repository.SmsRuleRepository
+import com.smsexpensetracker.domain.repository.SyncMetaRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
@@ -41,4 +45,16 @@ abstract class RepositoryModule {
     abstract fun bindSmsRuleRepository(
         impl: SmsRuleRepositoryImpl
     ): SmsRuleRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindParseLogRepository(
+        impl: ParseLogRepositoryImpl
+    ): ParseLogRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSyncMetaRepository(
+        impl: SyncMetaRepositoryImpl
+    ): SyncMetaRepository
 }
