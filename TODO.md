@@ -45,7 +45,7 @@
 - [x] Implement `TypeInferrer` — keyword-based type inference (debited->DEBIT, spent->DEBIT, credited->CREDIT, refunded->CREDIT)
 - [x] Implement `ConfidenceScorer` — score based on matched groups + keyword presence (0.0–1.0)
 - [x] Implement `ParserEngine` — orchestrates sender detection, rule loading, regex matching, type inference, confidence scoring
-- [ ] Implement `ParseLog` recording for every parse attempt
+- [x] Implement `ParseLog` recording for every parse attempt
 - [ ] **Verify:** Parser correctly extracts all fields from the 14 real SMS patterns
 
 ### [x] 5. Parser Unit Tests (Real SMS Patterns)
@@ -61,7 +61,7 @@
 
 ### [-] 6. Repository & Data Source Implementation
 - [x] Implement `SmsReader` — query `content://sms`, filter by sender ID pattern, return `Flow<List<SmsMessage>>`, support date range filtering
-- [ ] Implement `PermissionManager` — check/grant `READ_SMS` permission, request runtime, open settings fallback
+- [x] Implement `PermissionManager` — check/grant `READ_SMS` permission, request runtime, open settings fallback
 - [x] Implement `TransactionRepositoryImpl` — DAO delegation, batch insert with dedup (`smsBodyHash`), Flow-based query, category label assignment
 - [x] Implement `BankRepositoryImpl` — CRUD for banks and SMS rules
 - [x] Implement `SmsRuleRepositoryImpl` — load active rules by bank, rule priority ordering
@@ -71,11 +71,11 @@
 - [ ] **Verify:** Data layer compiles; Room integration tests pass with in-memory DB
 
 ### [ ] 7. Sync Use Case (Debounce + Batching)
-- [ ] Implement `SmsSyncUseCase` — orchestrates `SmsReader.readSms(range)` -> debounce(300ms) -> chunk(100) -> `ParserEngine.parseBatch()` -> `TransactionRepository.insertBatch()` -> emit progress
-- [ ] Implement deduplication: SHA-256 `smsBodyHash` in `TransactionEntity`, `@Insert(onConflict = IGNORE)`
-- [ ] Implement incremental sync: query only SMS with date > `lastSyncAt`
-- [ ] Implement `SmsSyncWorker` (WorkManager) — periodic background sync with constraints (battery not low)
-- [ ] **Verify:** End-to-end sync test with mock SMS data produces correct transactions
+- [x] Implement `SmsSyncUseCase` — orchestrates `SmsReader.readSms(range)` -> debounce(300ms) -> chunk(100) -> `ParserEngine.parseBatch()` -> `TransactionRepository.insertBatch()` -> emit progress
+- [x] Implement deduplication: SHA-256 `smsBodyHash` in `TransactionEntity`, `@Insert(onConflict = IGNORE)`
+- [ ] Implement incremental sync: query only SMS with date > `lastSyncAt` _(deferred — full-scan + hash-dedup chosen; background worker is a separate sub-project)_
+- [ ] Implement `SmsSyncWorker` (WorkManager) — periodic background sync with constraints (battery not low) _(deferred — full-scan + hash-dedup chosen; background worker is a separate sub-project)_
+- [~] **Verify:** End-to-end sync test with mock SMS data produces correct transactions (needs device/emulator smoke test)
 
 ### [ ] 8. Infrastructure: Logging & Backup
 - [ ] Implement `FileLogger` — write to `filesDir/logs/{error_log, parse_failures, unparsed_sms, crash_log}.txt`
