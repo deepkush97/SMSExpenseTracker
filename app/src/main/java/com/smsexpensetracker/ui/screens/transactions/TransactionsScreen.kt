@@ -1,5 +1,6 @@
 package com.smsexpensetracker.ui.screens.transactions
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -72,20 +73,20 @@ fun TransactionsScreen(
             }
             else -> {
                 LazyColumn(
-                    contentPadding = PaddingValues(
-                        top = innerPadding.calculateTopPadding(),
-                        bottom = 88.dp
-                    )
+                    contentPadding = PaddingValues(bottom = 88.dp),
+                    modifier = Modifier.background(Color.Red.copy(alpha = 0.1f))
                 ) {
                     item(key = "summary") {
-                        MonthlySummaryBanner(
-                            yearMonth = state.currentMonth,
-                            credits = state.monthlyCredits,
-                            debits = state.monthlyDebits,
-                            net = state.netAmount,
-                            onPrevMonth = { viewModel.onMonthChange(state.currentMonth.minusMonths(1)) },
-                            onNextMonth = { viewModel.onMonthChange(state.currentMonth.plusMonths(1)) }
-                        )
+                        Box(modifier = Modifier.padding(top = 8.dp).background(Color.Blue.copy(alpha = 0.15f))) {
+                            MonthlySummaryBanner(
+                                yearMonth = state.currentMonth,
+                                credits = state.monthlyCredits,
+                                debits = state.monthlyDebits,
+                                net = state.netAmount,
+                                onPrevMonth = { viewModel.onMonthChange(state.currentMonth.minusMonths(1)) },
+                                onNextMonth = { viewModel.onMonthChange(state.currentMonth.plusMonths(1)) }
+                            )
+                        }
                     }
                     item(key = "search") {
                         TransactionSearchBar(
