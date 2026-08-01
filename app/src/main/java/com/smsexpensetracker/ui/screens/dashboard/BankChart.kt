@@ -22,6 +22,7 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelCompone
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLineComponent
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisTickComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
 import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
@@ -82,6 +83,11 @@ fun BankChart(
             val axisTick = rememberAxisTickComponent(fill = Fill(colorScheme.outlineVariant))
             val axisGuideline = rememberAxisGuidelineComponent(fill = Fill(colorScheme.surfaceVariant))
 
+            val bankNames = data.map { it.bankName }
+            val bottomAxisValueFormatter = CartesianValueFormatter { _, value, _ ->
+                bankNames.getOrElse(value.toInt()) { "" }
+            }
+
             val columnProvider = ColumnCartesianLayer.ColumnProvider.series(
                 rememberLineComponent(fill = Fill(creditColor)),
                 rememberLineComponent(fill = Fill(debitColor))
@@ -99,6 +105,7 @@ fun BankChart(
                     bottomAxis = HorizontalAxis.rememberBottom(
                         line = axisLine,
                         label = axisLabel,
+                        valueFormatter = bottomAxisValueFormatter,
                         tick = axisTick,
                         guideline = axisGuideline
                     ),

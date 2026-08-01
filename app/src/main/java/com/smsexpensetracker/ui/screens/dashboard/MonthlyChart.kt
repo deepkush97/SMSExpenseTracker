@@ -22,6 +22,7 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelCompone
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLineComponent
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisTickComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
@@ -82,6 +83,16 @@ fun MonthlyChart(
             val axisTick = rememberAxisTickComponent(fill = Fill(colorScheme.outlineVariant))
             val axisGuideline = rememberAxisGuidelineComponent(fill = Fill(colorScheme.surfaceVariant))
 
+            val monthLabels = data.map {
+                try {
+                    val ym = java.time.YearMonth.parse(it.month)
+                    ym.format(java.time.format.DateTimeFormatter.ofPattern("MMM"))
+                } catch (_: Exception) { it.month }
+            }
+            val bottomAxisValueFormatter = CartesianValueFormatter { _, value, _ ->
+                monthLabels.getOrElse(value.toInt()) { "" }
+            }
+
             val lineProvider = LineCartesianLayer.LineProvider.series(
                 LineCartesianLayer.rememberLine(
                     LineCartesianLayer.LineFill.single(Fill(creditColor))
@@ -103,6 +114,7 @@ fun MonthlyChart(
                     bottomAxis = HorizontalAxis.rememberBottom(
                         line = axisLine,
                         label = axisLabel,
+                        valueFormatter = bottomAxisValueFormatter,
                         tick = axisTick,
                         guideline = axisGuideline
                     ),
