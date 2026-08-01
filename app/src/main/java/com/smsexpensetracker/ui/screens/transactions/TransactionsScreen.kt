@@ -147,7 +147,7 @@ fun TransactionsScreen(
                                         transaction = tx,
                                         categoryName = category?.name,
                                         categoryColor = category?.let { Color(it.color) },
-                                        subtitle = "$bankName · ${tx.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))}"
+                                        subtitle = "$bankName · ${tx.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM, hh:mm a"))}"
                                     )
                                 }
                             }

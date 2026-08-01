@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,9 +28,10 @@ import com.smsexpensetracker.domain.model.Transaction
 import com.smsexpensetracker.domain.model.TransactionType
 import com.smsexpensetracker.ui.theme.Green40
 import com.smsexpensetracker.ui.theme.Green80
+import com.smsexpensetracker.ui.theme.Red40
+import com.smsexpensetracker.ui.theme.Red80
 import com.smsexpensetracker.ui.util.categoryChipColors
 import com.smsexpensetracker.ui.util.formatAmountWithSign
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun TransactionRow(
@@ -34,64 +39,111 @@ fun TransactionRow(
     modifier: Modifier = Modifier,
     categoryName: String? = null,
     categoryColor: Color? = null,
-    subtitle: String = transaction.transactionDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+    subtitle: String = ""
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isDark = colorScheme.onSurface.luminance() > 0.5f
-    val creditColor = if (isDark) Green80 else Green40
-    val avatarBackground = if (categoryColor != null) {
+    val isCredit = transaction.transactionType == TransactionType.CREDIT
+
+    val avatarBg = if (isCredit) {
+        if (isDark) Green80.copy(alpha = 0.18f) else Green40.copy(alpha = 0.18f)
+    } else {
+        if (isDark) Red80.copy(alpha = 0.18f) else Red40.copy(alpha = 0.18f)
+    }
+    val avatarFg = if (isCredit) {
+        if (isDark) Green80 else Green40
+    } else {
+        if (isDark) Red80 else Red40
+    }
+
+    val chipBg = if (categoryColor != null) {
         categoryChipColors(categoryColor, colorScheme.surfaceContainerHigh).background
     } else {
         colorScheme.surfaceContainerHighest
     }
-    val avatarForeground = if (categoryColor != null) {
+    val chipFg = if (categoryColor != null) {
         categoryChipColors(categoryColor, colorScheme.surfaceContainerHigh).foreground
     } else {
         colorScheme.onSurfaceVariant
     }
-    val avatarText = (categoryName ?: transaction.description).firstOrNull()?.uppercase() ?: "?"
+    val chipLabel = categoryName ?: transaction.description.take(12)
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(avatarBackground),
+                .background(avatarBg),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = avatarText,
-                style = MaterialTheme.typography.labelLarge,
-                color = avatarForeground
+                text = if (isCredit) "C" else "D",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = avatarFg
             )
         }
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(chipBg)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = chipLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = chipFg,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
             Text(
                 text = transaction.description,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (subtitle.isNotBlank()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AccessTime,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
         Text(
             text = formatAmountWithSign(transaction.amount),
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = if (transaction.transactionType == TransactionType.CREDIT) creditColor else colorScheme.onSurface
+            fontWeight = FontWeight.Bold,
+            color = if (isCredit) {
+                if (isDark) Green80 else Green40
+            } else {
+                colorScheme.onSurface
+            }
         )
     }
 }

@@ -112,7 +112,7 @@ fun DashboardScreen(
                     TransactionRow(
                         transaction = transaction,
                         subtitle = transaction.transactionDate.format(
-                            DateTimeFormatter.ofPattern("dd MMM yyyy")
+                            DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
                         )
                     )
                 }
