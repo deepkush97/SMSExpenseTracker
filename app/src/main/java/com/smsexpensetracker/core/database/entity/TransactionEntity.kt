@@ -2,6 +2,7 @@ package com.smsexpensetracker.core.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
@@ -22,8 +23,8 @@ enum class ParseMethod { SMS, MANUAL }
             childColumns = ["categoryId"],
             onDelete = ForeignKey.SET_NULL,
         ),
-
-    ]
+    ],
+    indices = [Index(value = ["smsBodyHash"], unique = true)]
 )
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
@@ -37,7 +38,8 @@ data class TransactionEntity(
     val rawSms: String,
     val smsTimestamp: Long,
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    val parseMethod: ParseMethod = ParseMethod.SMS
+    val parseMethod: ParseMethod = ParseMethod.SMS,
+    val smsBodyHash: String? = null
 )
 
 enum class TransactionType {

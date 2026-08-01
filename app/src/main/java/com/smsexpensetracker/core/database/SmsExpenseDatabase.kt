@@ -34,7 +34,7 @@ import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
         TransactionLabelEntity::class,
         UserCategoryRuleEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -76,6 +76,13 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `transactions` ADD COLUMN `smsBodyHash` TEXT")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_transactions_smsBodyHash` ON `transactions` (`smsBodyHash`)")
+            }
+        }
+
         fun getInstance(context: Context): SmsExpenseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -83,7 +90,7 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
                     SmsExpenseDatabase::class.java,
                     "sms_expense_tracker.db"
                 ).addCallback(SeedDatabaseCallback())
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
 //                    .setQueryCallback(Executors.newSingleThreadExecutor()) { sqlQuery, bindArgs ->
 //                        // some query logs for debug
 //                    }

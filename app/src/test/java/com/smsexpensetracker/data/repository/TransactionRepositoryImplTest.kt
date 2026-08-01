@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
@@ -192,6 +193,44 @@ class TransactionRepositoryImplTest {
             transactionDao.insert(
                 match<TransactionEntity> {
                     it.parseMethod == ParseMethod.MANUAL && it.rawSms == "" && it.smsTimestamp == 0L
+                }
+            )
+        }
+    }
+
+    private fun sha256Hex(input: String): String =
+        MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+
+    @Test
+    fun `insertBatch hashes non-blank bodies and counts inserted rows`() = runTest {
+        val txs = listOf(
+            Transaction(
+                id = 0L, bankId = 1L, amount = 100L,
+                transactionType = com.smsexpensetracker.domain.model.TransactionType.DEBIT,
+                description = "a", transactionDate = date, categoryId = null,
+                rawSms = "hello", smsTimestamp = 1L, createdAt = date,
+                parseMethod = DomainParseMethod.SMS
+            ),
+            Transaction(
+                id = 0L, bankId = 1L, amount = 200L,
+                transactionType = com.smsexpensetracker.domain.model.TransactionType.CREDIT,
+                description = "b", transactionDate = date, categoryId = null,
+                rawSms = "", smsTimestamp = 2L, createdAt = date,
+                parseMethod = DomainParseMethod.SMS
+            )
+        )
+        coEvery { transactionDao.insertBatchIgnore(any()) } returns longArrayOf(1L, -1L)
+
+        val count = repo.insertBatch(txs)
+
+        assertEquals(1, count)
+        coVerify {
+            transactionDao.insertBatchIgnore(
+                match<List<TransactionEntity>> { list ->
+                    list.size == 2 &&
+                        list[0].smsBodyHash == sha256Hex("hello") &&
+                        list[1].smsBodyHash == null
                 }
             )
         }

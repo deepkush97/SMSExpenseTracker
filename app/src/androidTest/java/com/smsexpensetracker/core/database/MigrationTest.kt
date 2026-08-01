@@ -50,4 +50,30 @@ class MigrationTest {
             assertEquals(1L, cursor.getLong(0))
         }
     }
+
+    @Test
+    fun migrate2To3_addsSmsBodyHashColumn_andUniqueIndex() {
+        helper.createDatabase("migration-test-v3", 2).use { db ->
+            db.execSQL("INSERT INTO banks (id, name, smsSender) VALUES (1, 'HDFC Bank', 'HDFCBK')")
+            db.execSQL(
+                "INSERT INTO transactions (bankId, amount, type, description, transactionDate, categoryId, rawSms, smsTimestamp, createdAt, parseMethod) " +
+                    "VALUES (1, 1000, 'DEBIT', 'desc', 1750000000, NULL, 'raw', 1750000000, 1750000000, 'MANUAL')"
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate("migration-test-v3", 3, true, SmsExpenseDatabase.MIGRATION_2_3)
+
+        db.query("SELECT COUNT(*) FROM transactions").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1L, cursor.getLong(0))
+        }
+        db.query("PRAGMA index_list('transactions')").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) {
+                if (cursor.getString(1) == "index_transactions_smsBodyHash") found = true
+            }
+            assertTrue(found)
+        }
+        db.close()
+    }
 }

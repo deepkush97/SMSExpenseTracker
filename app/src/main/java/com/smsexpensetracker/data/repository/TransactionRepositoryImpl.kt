@@ -10,6 +10,7 @@ import com.smsexpensetracker.domain.model.TransactionType
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.security.MessageDigest
 import javax.inject.Inject
 
 class TransactionRepositoryImpl @Inject constructor(
@@ -39,6 +40,21 @@ class TransactionRepositoryImpl @Inject constructor(
 
     override suspend fun insert(transaction: Transaction): Long =
         transactionDao.insert(transaction.toEntity())
+
+    override suspend fun insertBatch(transactions: List<Transaction>): Int {
+        val result = transactionDao.insertBatchIgnore(
+            transactions.map { tx ->
+                tx.toEntity().copy(
+                    smsBodyHash = tx.rawSms.takeIf { it.isNotBlank() }?.let { raw ->
+                        MessageDigest.getInstance("SHA-256")
+                            .digest(raw.toByteArray())
+                            .joinToString("") { "%02x".format(it) }
+                    }
+                )
+            }
+        )
+        return result.count { it > 0 }
+    }
 
     override suspend fun delete(transaction: Transaction) =
         transactionDao.delete(transaction.toEntity())
