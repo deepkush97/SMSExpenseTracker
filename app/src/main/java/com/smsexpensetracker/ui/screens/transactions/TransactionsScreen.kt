@@ -73,7 +73,7 @@ fun TransactionsScreen(
             else -> {
                 LazyColumn(
                     contentPadding = PaddingValues(
-                        top = innerPadding.calculateTopPadding() + 16.dp,
+                        top = innerPadding.calculateTopPadding(),
                         bottom = 88.dp
                     )
                 ) {
