@@ -87,7 +87,6 @@ fun TransactionsScreen(
                             onNextMonth = { viewModel.onMonthChange(state.currentMonth.plusMonths(1)) }
                         )
                     }
-                    item(key = "searchSpacer") { Spacer(Modifier.height(12.dp)) }
                     item(key = "search") {
                         TransactionSearchBar(
                             query = state.searchQuery,

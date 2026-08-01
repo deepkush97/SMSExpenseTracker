@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -97,6 +98,7 @@ fun DashboardScreen(
             }
             items(state.recentTransactions) { transaction ->
                 val (interactionSource, scale) = rememberSpringPressScale()
+                val category = transaction.categoryId?.let { cid -> state.categories.find { it.id == cid } }
                 Card(
                     onClick = { onTransactionClick(transaction.id) },
                     modifier = Modifier
@@ -111,6 +113,8 @@ fun DashboardScreen(
                 ) {
                     TransactionRow(
                         transaction = transaction,
+                        categoryName = category?.name,
+                        categoryColor = category?.let { Color(it.color) },
                         subtitle = transaction.transactionDate.format(
                             DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
                         )

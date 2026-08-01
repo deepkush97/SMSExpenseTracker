@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -117,22 +114,11 @@ fun TransactionRow(
                 overflow = TextOverflow.Ellipsis
             )
             if (subtitle.isNotBlank()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.AccessTime,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colorScheme.onSurfaceVariant
+                )
             }
         }
         Text(
