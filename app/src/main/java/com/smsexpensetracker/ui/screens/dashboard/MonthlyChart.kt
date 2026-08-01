@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,9 +23,15 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLineComponen
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisTickComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.Fill
+import com.smsexpensetracker.ui.theme.Green40
+import com.smsexpensetracker.ui.theme.Green80
+import com.smsexpensetracker.ui.theme.Red40
+import com.smsexpensetracker.ui.theme.Red80
 
 @Composable
 fun MonthlyChart(
@@ -38,7 +45,7 @@ fun MonthlyChart(
             modifier = Modifier.padding(bottom = 2.dp)
         )
         Text(
-            text = "Credits (blue) vs Debits (green) over time",
+            text = "Credits (green) vs Debits (red) over time",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -64,6 +71,10 @@ fun MonthlyChart(
             }
 
             val colorScheme = MaterialTheme.colorScheme
+            val isDark = colorScheme.onSurface.luminance() > 0.5f
+            val creditColor = if (isDark) Green80 else Green40
+            val debitColor = if (isDark) Red80 else Red40
+
             val axisLabel = rememberAxisLabelComponent(
                 style = TextStyle(color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
             )
@@ -71,9 +82,18 @@ fun MonthlyChart(
             val axisTick = rememberAxisTickComponent(fill = Fill(colorScheme.outlineVariant))
             val axisGuideline = rememberAxisGuidelineComponent(fill = Fill(colorScheme.surfaceVariant))
 
+            val lineProvider = LineCartesianLayer.LineProvider.series(
+                LineCartesianLayer.rememberLine(
+                    LineCartesianLayer.LineFill.single(Fill(creditColor))
+                ),
+                LineCartesianLayer.rememberLine(
+                    LineCartesianLayer.LineFill.single(Fill(debitColor))
+                )
+            )
+
             CartesianChartHost(
                 chart = rememberCartesianChart(
-                    rememberLineCartesianLayer(),
+                    rememberLineCartesianLayer(lineProvider = lineProvider),
                     startAxis = VerticalAxis.rememberStart(
                         line = axisLine,
                         label = axisLabel,

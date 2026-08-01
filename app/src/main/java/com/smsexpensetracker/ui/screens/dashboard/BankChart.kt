@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,9 +23,15 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLineComponen
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisTickComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
+import com.smsexpensetracker.ui.theme.Green40
+import com.smsexpensetracker.ui.theme.Green80
+import com.smsexpensetracker.ui.theme.Red40
+import com.smsexpensetracker.ui.theme.Red80
 
 @Composable
 fun BankChart(
@@ -38,7 +45,7 @@ fun BankChart(
             modifier = Modifier.padding(bottom = 2.dp)
         )
         Text(
-            text = "Credits (blue) vs Debits (green) per bank",
+            text = "Credits (green) vs Debits (red) per bank",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -64,6 +71,10 @@ fun BankChart(
             }
 
             val colorScheme = MaterialTheme.colorScheme
+            val isDark = colorScheme.onSurface.luminance() > 0.5f
+            val creditColor = if (isDark) Green80 else Green40
+            val debitColor = if (isDark) Red80 else Red40
+
             val axisLabel = rememberAxisLabelComponent(
                 style = TextStyle(color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
             )
@@ -71,9 +82,14 @@ fun BankChart(
             val axisTick = rememberAxisTickComponent(fill = Fill(colorScheme.outlineVariant))
             val axisGuideline = rememberAxisGuidelineComponent(fill = Fill(colorScheme.surfaceVariant))
 
+            val columnProvider = ColumnCartesianLayer.ColumnProvider.series(
+                rememberLineComponent(fill = Fill(creditColor)),
+                rememberLineComponent(fill = Fill(debitColor))
+            )
+
             CartesianChartHost(
                 chart = rememberCartesianChart(
-                    rememberColumnCartesianLayer(),
+                    rememberColumnCartesianLayer(columnProvider = columnProvider),
                     startAxis = VerticalAxis.rememberStart(
                         line = axisLine,
                         label = axisLabel,
