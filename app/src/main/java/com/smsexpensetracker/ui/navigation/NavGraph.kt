@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.smsexpensetracker.ui.screens.banks.BankDetailScreen
 import com.smsexpensetracker.ui.screens.banks.BankManagementScreen
+import com.smsexpensetracker.ui.screens.banks.RuleEditorScreen
 import com.smsexpensetracker.ui.screens.categories.CategoryManagementScreen
 import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
 import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
@@ -57,8 +58,25 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(
             route = "banks/{bankId}",
             arguments = listOf(navArgument("bankId") { type = NavType.LongType })
+        ) { entry ->
+            val bankId = entry.arguments?.getLong("bankId")
+            BankDetailScreen(
+                onBack = { navController.popBackStack() },
+                onAddRule = { bankId?.let { navController.navigate("banks/$it/rules/edit") } },
+                onEditRule = { ruleId -> bankId?.let { navController.navigate("banks/$it/rules/edit?ruleId=$ruleId") } }
+            )
+        }
+        composable(
+            route = "banks/{bankId}/rules/edit?ruleId={ruleId}",
+            arguments = listOf(
+                navArgument("bankId") { type = NavType.LongType },
+                navArgument("ruleId") { type = NavType.LongType; defaultValue = -1L }
+            )
         ) {
-            BankDetailScreen(onBack = { navController.popBackStack() })
+            RuleEditorScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = { navController.popBackStack() }
+            )
         }
     }
 }

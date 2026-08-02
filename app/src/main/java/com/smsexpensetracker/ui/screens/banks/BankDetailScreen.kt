@@ -44,12 +44,12 @@ import com.smsexpensetracker.ui.components.EmptyState
 @Composable
 fun BankDetailScreen(
     onBack: () -> Unit = {},
+    onAddRule: () -> Unit = {},
+    onEditRule: (Long) -> Unit = {},
     viewModel: BankDetailViewModel = hiltViewModel()
 ) {
     val bank by viewModel.bank.collectAsState()
     val rules by viewModel.rules.collectAsState()
-    var editing by remember { mutableStateOf<SmsRule?>(null) }
-    var showAdd by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<SmsRule?>(null) }
 
     Scaffold(
@@ -64,7 +64,7 @@ fun BankDetailScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAdd = true }) {
+            FloatingActionButton(onClick = onAddRule) {
                 Icon(Icons.Filled.Add, contentDescription = "Add rule")
             }
         }
@@ -106,7 +106,7 @@ fun BankDetailScreen(
                             checked = rule.isActive,
                             onCheckedChange = { viewModel.setRuleActive(rule, it) }
                         )
-                        IconButton(onClick = { editing = rule }) {
+                        IconButton(onClick = { onEditRule(rule.id) }) {
                             Icon(Icons.Filled.Edit, contentDescription = "Edit ${rule.description}")
                         }
                         IconButton(onClick = { deleting = rule }) {
@@ -120,28 +120,6 @@ fun BankDetailScreen(
                 }
             }
         }
-    }
-
-    if (showAdd) {
-        RuleDialog(
-            existing = null,
-            onSave = { description, pattern ->
-                viewModel.addRule(description, pattern)
-                showAdd = false
-            },
-            onDismiss = { showAdd = false }
-        )
-    }
-
-    editing?.let { rule ->
-        RuleDialog(
-            existing = rule,
-            onSave = { description, pattern ->
-                viewModel.updateRule(rule.copy(description = description, pattern = pattern))
-                editing = null
-            },
-            onDismiss = { editing = null }
-        )
     }
 
     deleting?.let { rule ->
