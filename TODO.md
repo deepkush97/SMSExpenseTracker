@@ -142,6 +142,7 @@
 - [x] Implement bank management: list banks, add new, edit sender pattern
 - [x] Implement SMS rule management per bank: list, add, edit, delete, enable/disable rules
   - [x] **Add new bank rules** — user can add a regex rule (bank, `contentRegex` pattern, description) for a new SMS format/bank, not just edit seeded rules; new rules must be picked up by `ParserEngine` (Parser Test screen) without a rebuild
+  - [x] Rule editor tests pattern against a pasted sample SMS before saving
 - [x] Implement category management: list, add, edit, delete
 - [ ] Implement sync controls: trigger re-sync, select range, view last sync time
 - [ ] Implement CSV export/import buttons
