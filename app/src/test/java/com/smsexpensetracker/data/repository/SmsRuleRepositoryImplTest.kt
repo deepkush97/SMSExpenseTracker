@@ -26,8 +26,8 @@ class SmsRuleRepositoryImplTest {
     @Test
     fun `getAllRules maps entities to domain models`() = runTest {
         val entities = listOf<SmsRuleEntity>(
-            SmsRuleEntity(1, 1, "%pattern%", "Pattern description"),
-            SmsRuleEntity(2, 2, "%pattern2%", "Pattern 2 description"),
+            SmsRuleEntity(1, 1, "%pattern%", "Pattern description", isActive = true),
+            SmsRuleEntity(2, 2, "%pattern2%", "Pattern 2 description", isActive = false),
         )
 
         every { smsRuleDao.getAllRules() } returns flowOf(entities)
@@ -40,6 +40,7 @@ class SmsRuleRepositoryImplTest {
             assertEquals(entities[index].bankId, res.bankId)
             assertEquals(entities[index].pattern, res.pattern)
             assertEquals(entities[index].description, res.description)
+            assertEquals(entities[index].isActive, res.isActive)
         }
     }
 
@@ -102,7 +103,8 @@ class SmsRuleRepositoryImplTest {
             1,
             1,
             "%pattern%",
-            "Pattern description"
+            "Pattern description",
+            isActive = false
         )
         coEvery {
             smsRuleDao.insert(
@@ -111,8 +113,9 @@ class SmsRuleRepositoryImplTest {
         } returns 1L
 
         val result =
-            repo.insert(SmsRule(entity.id, entity.bankId, entity.pattern, entity.description))
+            repo.insert(SmsRule(entity.id, entity.bankId, entity.pattern, entity.description, isActive = false))
 
         assertEquals(1L, result)
+        coVerify { smsRuleDao.insert(entity) }
     }
 }

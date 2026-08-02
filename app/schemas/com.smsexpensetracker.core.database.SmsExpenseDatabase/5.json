@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "9d7ef59ffa810aa29c2b8255b302bef0",
+    "identityHash": "72b10edcf468058c4d3fb4ec4eb28666",
     "entities": [
       {
         "tableName": "banks",
@@ -125,7 +125,7 @@
       },
       {
         "tableName": "sms_rules",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bankId` INTEGER NOT NULL, `pattern` TEXT NOT NULL, `description` TEXT NOT NULL, `isActive` INTEGER NOT NULL, FOREIGN KEY(`bankId`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bankId` INTEGER NOT NULL, `pattern` TEXT NOT NULL, `description` TEXT NOT NULL, `isActive` INTEGER NOT NULL DEFAULT 1, FOREIGN KEY(`bankId`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -155,7 +155,8 @@
             "fieldPath": "isActive",
             "columnName": "isActive",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "1"
           }
         ],
         "primaryKey": {
@@ -446,7 +447,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9d7ef59ffa810aa29c2b8255b302bef0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '72b10edcf468058c4d3fb4ec4eb28666')"
     ]
   }
 }

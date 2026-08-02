@@ -48,6 +48,7 @@ class BankManagementViewModelTest {
         val job = launch { viewModel.banks.collect {} }
         advanceUntilIdle()
         assertEquals(listOf(hdfc, icici), viewModel.banks.value)
+        assertEquals(mapOf(1L to 0, 2L to 0), viewModel.transactionCounts.value)
         job.cancel()
     }
 

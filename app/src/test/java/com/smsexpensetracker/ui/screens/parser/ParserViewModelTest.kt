@@ -164,6 +164,19 @@ class ParserViewModelTest {
     }
 
     @Test
+    fun `inactive rules are excluded from display rules`() = runTest(testDispatcher) {
+        viewModel = createViewModel(rules = listOf(hdfcDebitRule.copy(isActive = false)))
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.onSenderChange("AD-HDFCBK-S")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.displayRules.isEmpty())
+    }
+
+    @Test
     fun `blank sms does not produce result`() = runTest(testDispatcher) {
         viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect { } }

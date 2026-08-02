@@ -1,5 +1,6 @@
 package com.smsexpensetracker.core.database.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -23,5 +24,6 @@ data class SmsRuleEntity(
     val bankId: Long,
     val pattern: String,
     val description: String,
+    @ColumnInfo(defaultValue = "1")
     val isActive: Boolean = true
 )

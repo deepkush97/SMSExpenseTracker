@@ -108,7 +108,6 @@ class SmsSyncUseCaseTest {
         val inactiveHdfc = hdfcRule.copy(id = 99L, isActive = false)
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(inactiveHdfc))
-        coEvery { transactionRepository.insertBatch(any()) } returns 0
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
