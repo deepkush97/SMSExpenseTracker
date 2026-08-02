@@ -173,6 +173,18 @@ class RuleEditorViewModelTest {
     }
 
     @Test
+    fun `onSave is a no-op while a save is in flight`() = runTest(testDispatcher) {
+        coEvery { bankRepository.getBankById(1L) } returns hdfc
+        coEvery { ruleRepository.insert(any()) } returns 9L
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onSave()
+        vm.onSave()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { ruleRepository.insert(any()) }
+    }
+
+    @Test
     fun `onSave in edit mode updates existing rule preserving id and isActive`() = runTest(testDispatcher) {
         coEvery { bankRepository.getBankById(1L) } returns hdfc
         coEvery { ruleRepository.getRuleById(7L) } returns existingRule

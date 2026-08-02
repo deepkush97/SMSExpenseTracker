@@ -28,7 +28,8 @@ data class RuleEditorUiState(
     val hasTested: Boolean = false,
     val saved: Boolean = false,
     val saveError: String? = null,
-    val loaded: Boolean = false
+    val loaded: Boolean = false,
+    val isSaving: Boolean = false
 )
 
 @HiltViewModel
@@ -87,7 +88,8 @@ class RuleEditorViewModel @Inject constructor(
 
     fun onSave() {
         val state = _uiState.value
-        if (state.saved || !state.loaded) return
+        if (state.saved || state.isSaving || !state.loaded) return
+        _uiState.update { it.copy(isSaving = true) }
         val existing = existingRule
         viewModelScope.launch {
             try {
@@ -109,11 +111,11 @@ class RuleEditorViewModel @Inject constructor(
                         )
                     )
                 }
-                _uiState.update { it.copy(saved = true) }
+                _uiState.update { it.copy(isSaving = false, saved = true) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _uiState.update { it.copy(saveError = "Could not save rule. Please try again.") }
+                _uiState.update { it.copy(isSaving = false, saveError = "Could not save rule. Please try again.") }
             }
         }
     }
