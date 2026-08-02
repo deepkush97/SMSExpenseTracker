@@ -2,6 +2,7 @@ package com.smsexpensetracker
 
 import android.app.Application
 import com.smsexpensetracker.data.demo.DemoDataSeeder
+import com.smsexpensetracker.data.logging.LoggingSetup
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,8 +18,12 @@ class SmsExpenseApp : Application() {
     @Inject
     lateinit var demoDataSeeder: DemoDataSeeder
 
+    @Inject
+    lateinit var loggingSetup: LoggingSetup
+
     override fun onCreate() {
         super.onCreate()
+        loggingSetup.install()
         appScope.launch { demoDataSeeder.seedIfEmpty() }
     }
 }
