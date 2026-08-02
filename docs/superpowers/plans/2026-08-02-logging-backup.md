@@ -78,14 +78,13 @@ class CsvCodecTest {
     @Test
     fun `encode quotes fields with comma quote newline`() {
         val csv = CsvCodec.encode(listOf(listOf("a,b", "say \"hi\"", "line1\nline2")))
-        assertEquals(""""a,b","say ""hi""","line1
-line2"""", csv)
+        assertEquals("\"a,b\",\"say \"\"hi\"\"\",\"line1\nline2\"", csv)
     }
 
     @Test
     fun `parse quoted fields with embedded comma and quote`() {
-        val rows = CsvCodec.parse(""""a,b","say ""hi""""")
-        assertEquals(listOf(listOf("a,b", """say "hi"""")), rows)
+        val rows = CsvCodec.parse("\"a,b\",\"say \"\"hi\"\"\"")
+        assertEquals(listOf(listOf("a,b", "say \"hi\"")), rows)
     }
 
     @Test
@@ -112,7 +111,7 @@ line2"""", csv)
         )
         assertEquals(
             listOf(
-                "2026-08-02T10:00:00", "125050", "DEBIT", "Acme Inc", "2", "3",
+                "2026-08-02T10:00", "125050", "DEBIT", "Acme Inc", "2", "3",
                 "1750000000000", "SMS", tx.rawSms
             ),
             rows[1]
