@@ -3,8 +3,12 @@ package com.smsexpensetracker.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.smsexpensetracker.ui.screens.banks.BankDetailScreen
+import com.smsexpensetracker.ui.screens.banks.BankManagementScreen
 import com.smsexpensetracker.ui.screens.categories.CategoryManagementScreen
 import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
 import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
@@ -37,11 +41,24 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(BottomNavItem.Parser.route) { ParserScreen() }
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
-                onNavigateToCategories = { navController.navigate("categories") }
+                onNavigateToCategories = { navController.navigate("categories") },
+                onNavigateToBanks = { navController.navigate("banks") }
             )
         }
         composable("categories") {
             CategoryManagementScreen(onBack = { navController.popBackStack() })
+        }
+        composable("banks") {
+            BankManagementScreen(
+                onBack = { navController.popBackStack() },
+                onBankClick = { bank -> navController.navigate("banks/${bank.id}") }
+            )
+        }
+        composable(
+            route = "banks/{bankId}",
+            arguments = listOf(navArgument("bankId") { type = NavType.LongType })
+        ) {
+            BankDetailScreen(onBack = { navController.popBackStack() })
         }
     }
 }
