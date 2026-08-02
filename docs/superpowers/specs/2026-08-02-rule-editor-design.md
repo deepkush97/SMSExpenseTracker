@@ -60,8 +60,7 @@ Layout (top to bottom):
 ```
 
 Notes:
-- Save (TopAppBar action) enabled only when: `descriptionError == null && patternError == null && testResult is a match`.
-- On save success → screen calls `onSaved()` → `navController.popBackStack()` → BankDetail rules flow refreshes automatically (live flow).
+- Save (TopAppBar action) enabled only when: `descriptionError == null && patternError == null && testResult is a match`.- On save success → screen calls `onSaved()` → `navController.popBackStack()` → BankDetail rules flow refreshes automatically (live flow).
 - No bottom navigation bar on this screen (it's a nested destination pushed over the bank detail).
 
 ## 5. ViewModel: `RuleEditorViewModel.kt`
@@ -70,12 +69,13 @@ Notes:
 - `val bank: StateFlow<Bank?>` — `getBankById(bankId)`, `WhileSubscribed(5000)`.
 - Mutable editor state in a `RuleEditorUiState` data class:
   - `sampleSms: String`, `draftPattern: String`, `description: String`
-  - `testResult: RegexMatch?` (null = not yet tested / no match) — reuse the existing `RegexMatch` from `RegexParser.kt` rather than a new type.
+  - `testResult: RegexMatch?` (null = no match) — reuse the existing `RegexMatch` from `RegexParser.kt` rather than a new type.
+  - `hasTested: Boolean` (true once Test has run; false after sample/pattern change) — distinguishes "not tested yet" (no card) from "tested, no match" (red card).
   - `saved: Boolean`
   - `saveError: String?`
 - **Pre-fill**: on init, if `ruleId != null`, load `getRuleById(ruleId)` and populate `draftPattern`/`description` (id=0 fallback if missing).
-- `onSampleSmsChange / onPatternChange / onDescriptionChange` — update state; changing sample or pattern clears `testResult`.
-- `onTest()` — synchronous pure call `RegexParser.parse(sampleSms, draftPattern, bankId)` → sets `testResult`.
+- `onSampleSmsChange / onPatternChange / onDescriptionChange` — update state; changing sample or pattern clears `testResult` and sets `hasTested = false`.
+- `onTest()` — synchronous pure call `RegexParser.parse(sampleSms, draftPattern, bankId)` → sets `testResult` and `hasTested = true`.
 - `onSave()` — `viewModelScope.launch`:
   - add path: `smsRuleRepository.insert(SmsRule(0, bankId, pattern.trim(), description.trim()))`
   - edit path: `smsRuleRepository.update(existing.copy(pattern = ..., description = ...))`
