@@ -384,7 +384,7 @@ class FileLoggerTest {
     @get:Rule
     val tempDir = TemporaryFolder()
 
-    private val logger = FileLogger(mockk<Context>(), tempDir.root)
+    private val logger by lazy { FileLogger(mockk<Context>(), tempDir.root) }
 
     @Test
     fun `logFileName maps each file`() = runTest {
