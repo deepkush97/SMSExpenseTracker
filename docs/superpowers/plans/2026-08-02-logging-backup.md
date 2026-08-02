@@ -564,7 +564,7 @@ git commit -m "feat(data): add FileLogger with 4 log files and FileProvider uris
 - Consumes: `FileLogger`, `LogFile`, `Timber`.
 - Produces:
   - `class FileLoggingTree(private val logger: FileLogger) : Timber.DebugTree()` overriding `log(priority: Int, tag: String?, message: String, t: Throwable?)`. Routing: tag `"PARSE"` → `PARSE_FAILURES`; tag `"UNPARSED"` → `UNPARSED_SMS`; priority `Log.ERROR` or `Log.WARN` → `ERROR_LOG`; else no file write.
-  - `@Singleton class LoggingSetup @Inject constructor(private val fileLogger: FileLogger)` with `fun install()`: plants `DebugTree` + `FileLoggingTree` (only if `Timber.treeCount() == 0`); installs `Thread.setDefaultUncaughtExceptionHandler` that writes `[thread name + stacktrace]` to `CRASH_LOG` then delegates to the previous handler.
+  - `@Singleton class LoggingSetup @Inject constructor(private val fileLogger: FileLogger)` with `fun install()`: plants `DebugTree` + `FileLoggingTree` (only if `Timber.treeCount == 0`); installs `Thread.setDefaultUncaughtExceptionHandler` that writes `[thread name + stacktrace]` to `CRASH_LOG` then delegates to the previous handler.
   - `@Module` `LoggingModule` providing `@Singleton FileLogger(@ApplicationContext context: Context)` = `FileLogger(context, context.filesDir)`.
 
 - [ ] **Step 1: Write the failing test**
@@ -582,6 +582,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -692,7 +693,7 @@ class LoggingSetup @Inject constructor(
 ) {
 
     fun install() {
-        if (Timber.treeCount() == 0) {
+        if (Timber.treeCount == 0) {
             Timber.plant(Timber.DebugTree())
             Timber.plant(FileLoggingTree(fileLogger))
         }
