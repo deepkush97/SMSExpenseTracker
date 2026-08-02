@@ -190,6 +190,27 @@ class RuleEditorViewModelTest {
     }
 
     @Test
+    fun `onSave before pre-fill completes is ignored then saves after load`() = runTest(testDispatcher) {
+        coEvery { bankRepository.getBankById(1L) } returns hdfc
+        coEvery { ruleRepository.getRuleById(7L) } returns existingRule
+        coEvery { ruleRepository.update(any()) } returns Unit
+        val vm = viewModel(mapOf("bankId" to 1L, "ruleId" to 7L))
+        vm.onSave()
+        assertFalse(vm.uiState.value.saved)
+        advanceUntilIdle()
+        coVerify(exactly = 0) { ruleRepository.update(any()) }
+        vm.onDescriptionChange("HDFC CC Debit v2")
+        vm.onSave()
+        advanceUntilIdle()
+        coVerify {
+            ruleRepository.update(
+                existingRule.copy(description = "HDFC CC Debit v2")
+            )
+        }
+        assertTrue(vm.uiState.value.saved)
+    }
+
+    @Test
     fun `save failure sets saveError`() = runTest(testDispatcher) {
         coEvery { bankRepository.getBankById(1L) } returns hdfc
         coEvery { ruleRepository.insert(any()) } throws RuntimeException("db down")

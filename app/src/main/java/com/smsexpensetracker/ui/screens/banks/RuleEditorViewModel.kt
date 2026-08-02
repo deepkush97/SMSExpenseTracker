@@ -27,7 +27,8 @@ data class RuleEditorUiState(
     val testResult: RegexMatch? = null,
     val hasTested: Boolean = false,
     val saved: Boolean = false,
-    val saveError: String? = null
+    val saveError: String? = null,
+    val loaded: Boolean = false
 )
 
 @HiltViewModel
@@ -52,10 +53,12 @@ class RuleEditorViewModel @Inject constructor(
         viewModelScope.launch {
             val existing = ruleId?.let { smsRuleRepository.getRuleById(it) }
             existingRule = existing
-            if (existing != null) {
-                _uiState.update {
-                    it.copy(draftPattern = existing.pattern, description = existing.description)
-                }
+            _uiState.update {
+                it.copy(
+                    draftPattern = existing?.pattern ?: it.draftPattern,
+                    description = existing?.description ?: it.description,
+                    loaded = true
+                )
             }
         }
     }
@@ -84,8 +87,8 @@ class RuleEditorViewModel @Inject constructor(
 
     fun onSave() {
         val state = _uiState.value
+        if (state.saved || !state.loaded) return
         val existing = existingRule
-        if (state.saved) return
         viewModelScope.launch {
             try {
                 if (existing == null) {
