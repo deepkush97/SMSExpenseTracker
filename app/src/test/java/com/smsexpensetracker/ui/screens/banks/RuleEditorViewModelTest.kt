@@ -133,6 +133,25 @@ class RuleEditorViewModelTest {
     }
 
     @Test
+    fun `test with template pattern extracts amount and description`() = runTest(testDispatcher) {
+        coEvery { bankRepository.getBankById(1L) } returns hdfc
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onSampleSmsChange(
+            "Your Pluxee Card xx4910 has been credited with INR 546.00 on Sun Jun 28 2026 22:41:31as a reversal against a previous transaction on Jun 28,2026 21:38:47."
+        )
+        vm.onPatternChange(
+            "Your Pluxee Card xx{card} has been credited with INR {amount} on {date}as {description}."
+        )
+        vm.onTest()
+        val state = vm.uiState.value
+        assertTrue(state.hasTested)
+        assertNotNull(state.testResult)
+        assertEquals(54600L, state.testResult?.amount)
+        assertEquals("a reversal against a previous transaction on Jun 28,2026 21:38:47", state.testResult?.description)
+    }
+
+    @Test
     fun `changing sample clears previous test result`() = runTest(testDispatcher) {
         coEvery { bankRepository.getBankById(1L) } returns hdfc
         val vm = viewModel()

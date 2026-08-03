@@ -134,7 +134,7 @@ fun RuleEditorScreen(
                         if (patternError != null) {
                             Text(patternError)
                         }
-                        Text("Group 1 = amount, Group 2 = description")
+                        Text("Use {amount} and {description}; any other {name} anchors the match")
                     }
                 },
                 textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
@@ -149,24 +149,26 @@ fun RuleEditorScreen(
             AnimatedVisibility(visible = examplesExpanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "The pattern is a regular expression. Group 1 must capture the amount " +
-                            "(e.g. 1250.50) and group 2 the description. Test against a real SMS " +
-                            "before saving.",
+                        "A pattern matches the SMS text. Put {amount} where the money appears " +
+                            "and {description} where the merchant or remark appears. Any other " +
+                            "{name} (like {card}) anchors a variable part of the message. Spaces " +
+                            "are flexible — one space in the pattern matches any spacing. Test " +
+                            "against a real SMS before saving.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "UPI debit:\nICICI Bank Acct \\w+ debited for Rs ([\\d,.]+) on [\\d-]+; (.+?) credited\\. UPI",
+                        "UPI debit:\nICICI Bank Acct {account} debited for Rs {amount} on {date}; {description} credited. UPI",
                         style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "Card spend:\nSpent Rs\\.([\\d,.]+) On HDFC Bank Card \\d{4} At (.+?) On .+",
+                        "Card spend:\nSpent Rs.{amount} On HDFC Bank Card {card} At {description} On {date}",
                         style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "UPI credit:\nAcct \\w+ is credited with Rs ([\\d,.]+) on [\\d-]+ from (.+?)\\. UPI",
+                        "UPI credit:\nAcct {account} is credited with Rs {amount} on {date} from {description}. UPI",
                         style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
