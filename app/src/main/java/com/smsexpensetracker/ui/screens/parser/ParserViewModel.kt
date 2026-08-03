@@ -3,7 +3,7 @@ package com.smsexpensetracker.ui.screens.parser
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smsexpensetracker.core.parser.ParserEngine
-import com.smsexpensetracker.core.parser.SenderDetector
+import com.smsexpensetracker.core.parser.detectBankForSender
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.SmsRule
@@ -72,14 +72,7 @@ class ParserViewModel @Inject constructor(
         refreshDisplayRules()
     }
 
-    fun detectBank(sender: String, banks: List<Bank>): Long? {
-        val cleaned = SenderDetector.detect(sender).value.uppercase()
-        if (cleaned.isBlank()) return null
-        return banks.firstOrNull { bank ->
-            val smsSender = bank.smsSender.uppercase()
-            cleaned == smsSender || cleaned.contains(smsSender) || smsSender.contains(cleaned)
-        }?.id
-    }
+    fun detectBank(sender: String, banks: List<Bank>): Long? = detectBankForSender(sender, banks)
 
     private fun resolveRules(current: ParserUiState): Pair<Long?, List<SmsRule>> {
         val bankId = current.selectedBankId ?: detectBank(current.senderInput, current.banks)
