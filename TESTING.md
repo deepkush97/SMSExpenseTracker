@@ -1,6 +1,6 @@
 # Manual QA Checklist — SMS Expense Tracker
 
-A tap-through test plan. Every item is **Action → Expected result**. Work top to bottom on a fresh install; the app auto-seeds ~60 demo transactions the first time it starts, so you are never testing against a truly empty database (see §11).
+A tap-through test plan. Every item is **Action → Expected result**. Work top to bottom on a fresh install. A fresh install starts with an **empty** transaction list — nothing is auto-seeded. Demo data is opt-in via Settings → Data → **Load demo data** (see §11).
 
 > **Reference numbers:** [U] = covered by an automated unit test today; [M] = manual-only (no unit test). Not every row is marked — the ones that are flag coverage where it matters.
 
@@ -14,7 +14,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ## 1. First Launch & Navigation
 
-- [ ] Fresh install → app opens on **Dashboard**, NOT an onboarding screen.  → Dashboard shows summary cards + charts populated with ~60 demo transactions.
+- [ ] Fresh install → app opens on **Dashboard**, NOT an onboarding screen.  → Dashboard opens with an **empty** transaction list (totals at 0, no demo rows).
 - [ ] Bottom bar shows four pill tabs in order: **Dashboard → Transactions → Parser → Settings**. → Highlights the active tab; hides on sub-screens.
 - [ ] Tap each bottom tab. → Each opens its screen; Dashboard is the start destination.
 - [ ] From Settings, open **Logs / Categories / Banks & Rules**; from Transactions tap the **+ (FAB)**. → Each opens a sub-screen with a back arrow; bottom bar is hidden there; back returns to the parent.
@@ -22,6 +22,8 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 ---
 
 ## 2. Dashboard
+
+> These rows assume data is present — load demo data first (Settings → Data → **Load demo data**, §11).
 
 - [ ] Look at the two summary cards. → "Total Spent" and "Total Received" show animated rupee totals (demo data ≠ 0).
 - [ ] Look at the three charts. → "Spending by Bank" (bar), "Monthly Trend" (line), "Category Breakdown" (pie + legend) all render rather than showing "No … data yet".
@@ -55,9 +57,9 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
   - After granting: → sync runs automatically; the icon shows a spinner, then a snackbar "**Scanned X, added Y, unparsed Z**".
 - [ ] Re-run the sync twice more. → Second run on identical messages reports **added Y = 0** (idempotent — dedup by SHA-256 of the SMS body).
 - [ ] **Emulator test batch** — with SMS permission granted, run `scripts/push_test_sms.sh` (14 real SMS: 7 HDFC, 3 ICICI, 1 DCB, 3 Pluxee), then sync again. [M]
-  → Expect: HDFC + ICICI messages parse and are **added** (they have seeded rules); **DCB and Pluxee are added as parse failures** (no seeded rules exist for those senders) → "unparsed" counts reflect that.
+  → Expect: **all 14 messages parse and are added** — 7 HDFC (incl. CC UPI Debit, CC Refund, NetBanking), 3 ICICI (incl. IMPS Credit), 3 Pluxee, 1 DCB — with **0 unparsed**.
 - [ ] Verify **date grouping** of newly synced items. → All synced transactions appear under **Today** — the app sets the transaction date to today, not the SMS's own date (by design). The SMS's real timestamp is stored but not surfaced in the list.
-- [ ] Settings → **Logs** → open **File Logs**. → `parse_failures.txt` contains lines for the unparsed DCB/Pluxee senders; `unparsed_sms.txt` is empty (the `UNPARSED` tag is never written).
+- [ ] Settings → **Logs** → open **File Logs**. → `parse_failures.txt` is empty (nothing fails to parse); `unparsed_sms.txt` is empty (the `UNPARSED` tag is never written).
 - [ ] Turn off SMS permission in system settings, tap sync. → Snackbar again asks for access with an **Open Settings** shortcut; you can keep using the app (manual entry still works) without permission.
 
 ---
@@ -76,7 +78,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 ## 7. Rule / Bank Management
 
 ### Banks
-- [ ] Settings → **Banks & Rules**. → Lists the 5 seeded banks (HDFC, ICICI, SBI, Axis, Pluxee) with sender IDs and transaction counts.
+- [ ] Settings → **Banks & Rules**. → Lists the 6 seeded banks (HDFC, ICICI, SBI, Axis, Pluxee, DCB) with sender IDs and transaction counts.
 - [ ] **+** add a new bank (name + sender). → Save is only enabled when name ≤30 chars, isn't a duplicate, and sender is non-empty; the sender is stored **uppercased**.
 - [ ] Tap a bank row. → Opens the bank detail screen.
 - [ ] Try to delete a bank **that has transactions** → "Cannot delete — N transactions use this bank" *(cannot delete)*.
@@ -90,7 +92,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 - [ ] Test a pattern that doesn't match the sample → red "No match for this SMS" card.
 - [ ] **Save** gate: Save is disabled until the description is valid, the pattern is valid, **and** you have a successful match. → Fill all three → Save enabled → tap → the rule appears in the bank's rule list with its active **switch ON**.
 - [ ] Toggle a rule's active **switch** OFF → relabel + re-run sync → messages matching only that rule stop being parsed.
-- [ ] Edit a rule that uses a **legacy regex** pattern (e.g. one of the 6 seeded ones) → the editor accepts it (templates and legacy regex both work).
+- [ ] Edit a rule that uses a **legacy regex** pattern (a user-added regex rule) → the editor accepts it (templates and legacy regex both work).
 - [ ] Delete a rule → confirm dialog "No longer used to parse transactions."
 
 ---
@@ -125,7 +127,8 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ## 11. Edge Cases & Known Behavior
 
-- [ ] **Empty state** — clear app data (or delete all transactions) then open Transactions. → "No transactions yet …" with a **Sync SMS** action (demo data auto-reseeds only when the DB is empty on a fresh launch; clearing data then relaunching re-seeds ~60 demo rows).
+- [ ] **Empty state** — clear app data (or delete all transactions) then open Transactions. → "No transactions yet …" with a **Sync SMS** action. Clearing data then relaunching **stays empty** — the app never auto-seeds.
+- [ ] Settings → **Data** → **Load demo data**. → Inserts 60 demo transactions (snackbar "Loaded 60 demo transactions"); tapping again reports "Demo data already loaded" (idempotent — no duplicates).
 - [ ] **Sync re-runs** are cheap/idempotent because of body-hash dedup. Two identical SMS bodies collide — the second is dropped.
 - [ ] **Parser screen "Add as Transaction"** can be tapped repeatedly and will create duplicates (no dedup on that path).
 

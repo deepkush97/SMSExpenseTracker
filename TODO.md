@@ -23,7 +23,7 @@
 - [x] Implement all DAOs with `@Insert`, `@Update`, `@Delete`, `@Query` methods
 - [x] Implement `Converters` class (`@TypeConverter` for enums, `LocalDateTime`, `Long` (paisa))
 - [x] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 1, `exportSchema = true`)
-- [x] Implement `SeedDatabaseCallback` (`RoomDatabase.Callback.onCreate()`) — inserts 5 banks, 14 categories, 6 SMS_RULE seed rows
+- [x] Implement `SeedDatabaseCallback` (`RoomDatabase.Callback.onCreate()`) — inserts 6 banks, 14 categories, 14 SMS_RULE template seed rows
 - [x] Configure Room schema export in `build.gradle.kts`
 - [ ] Implement `MIGRATION_1_2` example and migration test skeleton
 - [ ] **Verify:** Migration test passes; database helper queries return seed data
@@ -144,9 +144,11 @@
   - [x] **Add new bank rules** — user can add a regex rule (bank, `contentRegex` pattern, description) for a new SMS format/bank, not just edit seeded rules; new rules must be picked up by `ParserEngine` (Parser Test screen) without a rebuild
   - [x] Rule editor tests pattern against a pasted sample SMS before saving
   - [x] Rule patterns support {amount}/{description} template syntax (legacy regex still works)
+  - [x] Seed now holds 14 template rules across 6 banks (HDFC 7, ICICI 3, Pluxee 3, DCB 1) covering every `scripts/push_test_sms.sh` pattern — no parse failures out of the box
 - [x] Implement category management: list, add, edit, delete
 - [ ] Implement sync controls: trigger re-sync, select range, view last sync time
 - [x] Implement CSV export/import buttons
+- [x] Demo data is opt-in — the app starts empty (no auto-seed on launch); Settings → Data → **Load demo data** seeds 60 transactions (second tap reports "Demo data already loaded")
 - [x] Implement log viewer: view/share/clear error logs
 - [ ] Implement about section: app version, build info
 - [ ] **Verify:** Settings operations (add bank, edit rule, export CSV) persist correctly
