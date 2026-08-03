@@ -175,6 +175,24 @@ class CsvImporterTest {
     }
 
     @Test
+    fun `importFromText imports valid rows while counting unknown bank row as invalid`() = runTest {
+        stubReferenceData()
+        every { repository.getAllTransactions() } returns flowOf(emptyList())
+        coEvery { repository.insertBatch(any()) } returns 1
+        val text = csvWith(
+            listOf("2026-08-02T10:00:00", "100", "DEBIT", "good", "2", "", "0", "SMS", "raw1"),
+            listOf("2026-08-02T11:00:00", "200", "DEBIT", "bad bank", "99", "", "0", "SMS", "raw2")
+        )
+
+        val result = importer.importFromText(text)
+
+        assertEquals(ImportResult(imported = 1, skipped = 0, invalid = 1), result)
+        io.mockk.coVerify(exactly = 1) {
+            repository.insertBatch(match { list -> list.size == 1 && list.all { it.bankId == 2L } })
+        }
+    }
+
+    @Test
     fun `importFromText nulls unknown categoryId on inserted row`() = runTest {
         stubReferenceData()
         every { repository.getAllTransactions() } returns flowOf(emptyList())
