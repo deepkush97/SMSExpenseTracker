@@ -9,6 +9,9 @@ data class RegexMatch(
 
 object RegexParser {
     fun parse(smsBody: String, pattern: String, bankId: Long): RegexMatch? {
+        if (TemplateCompiler.isTemplate(pattern)) {
+            return TemplateCompiler.extract(smsBody, pattern, bankId)
+        }
         val regex = Regex(pattern, RegexOption.IGNORE_CASE)
         val matchResult = regex.find(smsBody) ?: return null
 

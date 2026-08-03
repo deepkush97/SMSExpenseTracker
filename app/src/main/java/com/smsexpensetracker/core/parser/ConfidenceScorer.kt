@@ -14,8 +14,12 @@ object ConfidenceScorer {
         if (hasAmount) score += 0.4f
         if (hasDescription) score += 0.2f
 
-        val regex = Regex(pattern, RegexOption.IGNORE_CASE)
-        val match = regex.find(smsBody)
+        val compiled = if (TemplateCompiler.isTemplate(pattern)) {
+            TemplateCompiler.compile(pattern)
+        } else {
+            Regex(pattern, RegexOption.IGNORE_CASE)
+        }
+        val match = compiled?.find(smsBody)
         if (match != null) {
             score += 0.3f
             val groups = match.groupValues.size - 1

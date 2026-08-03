@@ -36,6 +36,16 @@ class ConfidenceScorerTest(
                 "Match without amount value",
                 "without",
                 false, true, 0.5f
+            ),
+            arrayOf(
+                "Spent Rs.4831.76 On HDFC Bank Card 1111 At Acme Inc. On 2026-07-26:21:35:51.",
+                "Spent Rs.{amount} On HDFC Bank Card {card} At {description} On {date}",
+                true, true, 1.0f
+            ),
+            arrayOf(
+                "Random text with no match",
+                "Spent Rs.{amount} On HDFC Bank Card {card}",
+                false, false, 0.0f
             )
         )
     }
