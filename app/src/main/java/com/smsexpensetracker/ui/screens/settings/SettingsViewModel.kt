@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smsexpensetracker.core.settings.ThemePreferences
 import com.smsexpensetracker.data.csv.ExportResult
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.usecase.ExportCsvUseCase
 import com.smsexpensetracker.domain.usecase.ImportCsvUseCase
 import com.smsexpensetracker.ui.theme.ThemeMode
@@ -20,14 +21,17 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val csvMessage: String? = null,
     val isCsvBusy: Boolean = false,
-    val pendingExport: ExportResult? = null
+    val pendingExport: ExportResult? = null,
+    val demoMessage: String? = null,
+    val isDemoBusy: Boolean = false
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val themePreferences: ThemePreferences,
     private val exportCsvUseCase: ExportCsvUseCase,
-    private val importCsvUseCase: ImportCsvUseCase
+    private val importCsvUseCase: ImportCsvUseCase,
+    private val demoDataSeeder: DemoDataSeeder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -94,5 +98,29 @@ class SettingsViewModel @Inject constructor(
 
     fun consumePendingExport() {
         _uiState.update { it.copy(pendingExport = null) }
+    }
+
+    fun loadDemoData() {
+        if (_uiState.value.isDemoBusy) return
+        _uiState.update { it.copy(isDemoBusy = true) }
+        viewModelScope.launch {
+            _uiState.update {
+                runCatching { demoDataSeeder.seedIfEmpty() }.fold(
+                    onSuccess = { inserted ->
+                        it.copy(
+                            isDemoBusy = false,
+                            demoMessage = if (inserted > 0) "Loaded $inserted demo transactions" else "Demo data already loaded"
+                        )
+                    },
+                    onFailure = { e ->
+                        it.copy(isDemoBusy = false, demoMessage = "Demo load failed: ${e.message}")
+                    }
+                )
+            }
+        }
+    }
+
+    fun consumeDemoMessage() {
+        _uiState.update { it.copy(demoMessage = null) }
     }
 }

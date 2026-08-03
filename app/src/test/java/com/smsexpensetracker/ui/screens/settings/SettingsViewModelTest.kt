@@ -3,6 +3,7 @@ package com.smsexpensetracker.ui.screens.settings
 import android.net.Uri
 import com.smsexpensetracker.core.settings.ThemePreferences
 import com.smsexpensetracker.data.csv.ExportResult
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.data.csv.ImportResult
 import com.smsexpensetracker.domain.usecase.ExportCsvUseCase
 import com.smsexpensetracker.domain.usecase.ImportCsvUseCase
@@ -35,6 +36,7 @@ class SettingsViewModelTest {
     private val themePreferences = mockk<ThemePreferences>()
     private val exportCsvUseCase = mockk<ExportCsvUseCase>()
     private val importCsvUseCase = mockk<ImportCsvUseCase>()
+    private val demoDataSeeder = mockk<DemoDataSeeder>()
 
     @Before
     fun setup() {
@@ -46,7 +48,8 @@ class SettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = SettingsViewModel(themePreferences, exportCsvUseCase, importCsvUseCase)
+    private fun viewModel() =
+        SettingsViewModel(themePreferences, exportCsvUseCase, importCsvUseCase, demoDataSeeder)
 
     @Test
     fun `exposes persisted theme mode`() = runTest(testDispatcher) {
@@ -145,5 +148,57 @@ class SettingsViewModelTest {
         viewModel.consumeCsvMessage()
 
         assertNull(viewModel.uiState.value.csvMessage)
+    }
+
+    @Test
+    fun `loadDemoData shows loaded message when seeder inserts`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { demoDataSeeder.seedIfEmpty() } returns 60
+        val viewModel = viewModel()
+
+        viewModel.loadDemoData()
+        advanceUntilIdle()
+
+        assertEquals("Loaded 60 demo transactions", viewModel.uiState.value.demoMessage)
+        assertFalse(viewModel.uiState.value.isDemoBusy)
+    }
+
+    @Test
+    fun `loadDemoData shows already-loaded message when seeder skips`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { demoDataSeeder.seedIfEmpty() } returns 0
+        val viewModel = viewModel()
+
+        viewModel.loadDemoData()
+        advanceUntilIdle()
+
+        assertEquals("Demo data already loaded", viewModel.uiState.value.demoMessage)
+        assertFalse(viewModel.uiState.value.isDemoBusy)
+    }
+
+    @Test
+    fun `consumeDemoMessage clears the message`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { demoDataSeeder.seedIfEmpty() } returns 60
+        val viewModel = viewModel()
+        viewModel.loadDemoData()
+        advanceUntilIdle()
+
+        viewModel.consumeDemoMessage()
+
+        assertNull(viewModel.uiState.value.demoMessage)
+    }
+
+    @Test
+    fun `loadDemoData surfaces a failure message`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { demoDataSeeder.seedIfEmpty() } throws RuntimeException("disk full")
+        val viewModel = viewModel()
+
+        viewModel.loadDemoData()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.demoMessage?.contains("Demo load failed") == true)
+        assertFalse(viewModel.uiState.value.isDemoBusy)
     }
 }
