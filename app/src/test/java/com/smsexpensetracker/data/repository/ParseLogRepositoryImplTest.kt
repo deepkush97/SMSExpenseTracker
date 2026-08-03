@@ -83,4 +83,13 @@ class ParseLogRepositoryImplTest {
 
         coVerify { parseLogDao.insert(any()) }
     }
+
+    @Test
+    fun `deleteFailed delegates to dao`() = runTest {
+        coEvery { parseLogDao.deleteFailed() } returns Unit
+
+        repo.deleteFailed()
+
+        coVerify { parseLogDao.deleteFailed() }
+    }
 }

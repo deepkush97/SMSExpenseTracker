@@ -18,6 +18,8 @@ class ParseLogRepositoryImpl @Inject constructor(
         }
 
     override suspend fun insert(log: ParseLog) = parseLogDao.insert(log.toEntity())
+
+    override suspend fun deleteFailed() = parseLogDao.deleteFailed()
     
     private fun ParseLogEntity.toDomain() = ParseLog(
         id,

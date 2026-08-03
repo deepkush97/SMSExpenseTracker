@@ -15,6 +15,9 @@ interface ParseLogDao {
     @Query("SELECT * FROM parse_logs ORDER BY parsedAt DESC")
     fun getAllLogs(): Flow<List<ParseLogEntity>>
 
+    @Query("DELETE FROM parse_logs WHERE status = 'FAILED'")
+    suspend fun deleteFailed()
+
     @Query("DELETE FROM parse_logs where parsedAt < :cutoff")
     suspend fun deleteOldLogs(cutoff: Long)
 

@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface ParseLogRepository {
     fun getAllLogs(): Flow<List<ParseLog>>
     suspend fun insert(log: ParseLog)
+    suspend fun deleteFailed()
 }
