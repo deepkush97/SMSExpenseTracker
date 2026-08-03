@@ -3,6 +3,8 @@ package com.smsexpensetracker.di
 import android.content.Context
 import com.smsexpensetracker.data.csv.CsvExporter
 import com.smsexpensetracker.data.csv.CsvImporter
+import com.smsexpensetracker.domain.repository.BankRepository
+import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import dagger.Module
 import dagger.Provides
@@ -25,6 +27,13 @@ object CsvModule {
     @Singleton
     fun provideCsvImporter(
         @ApplicationContext context: Context,
-        transactionRepository: TransactionRepository
-    ): CsvImporter = CsvImporter(context.contentResolver, transactionRepository)
+        transactionRepository: TransactionRepository,
+        bankRepository: BankRepository,
+        categoryRepository: CategoryRepository
+    ): CsvImporter = CsvImporter(
+        context.contentResolver,
+        transactionRepository,
+        bankRepository,
+        categoryRepository
+    )
 }

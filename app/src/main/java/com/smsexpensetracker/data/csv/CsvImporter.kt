@@ -4,6 +4,8 @@ import android.content.ContentResolver
 import android.net.Uri
 import com.smsexpensetracker.core.csv.CsvCodec
 import com.smsexpensetracker.domain.model.Transaction
+import com.smsexpensetracker.domain.repository.BankRepository
+import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +21,8 @@ data class ImportResult(val imported: Int, val skipped: Int, val invalid: Int)
 class CsvImporter @Inject constructor(
     private val contentResolver: ContentResolver,
     private val transactionRepository: TransactionRepository,
+    private val bankRepository: BankRepository,
+    private val categoryRepository: CategoryRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
@@ -37,6 +41,9 @@ class CsvImporter @Inject constructor(
             .map { Triple(it.amount, it.transactionDate, it.description) }
             .toMutableSet()
 
+        val bankIds = bankRepository.getAllBanks().first().map { it.id }.toSet()
+        val categoryIds = categoryRepository.getAllCategories().first().map { it.id }.toSet()
+
         var skipped = 0
         var invalid = 0
         val candidates = mutableListOf<Transaction>()
@@ -47,6 +54,11 @@ class CsvImporter @Inject constructor(
                 invalid++
                 continue
             }
+            if (row.bankId !in bankIds) {
+                invalid++
+                continue
+            }
+            val safeCategoryId = row.categoryId?.takeIf { it in categoryIds }
             val key = Triple(row.amount, row.transactionDate, row.description)
             if (!seen.add(key)) {
                 skipped++
@@ -59,7 +71,7 @@ class CsvImporter @Inject constructor(
                 transactionType = row.type,
                 description = row.description,
                 transactionDate = row.transactionDate,
-                categoryId = row.categoryId,
+                categoryId = safeCategoryId,
                 rawSms = row.rawSms,
                 smsTimestamp = row.smsTimestamp,
                 createdAt = LocalDateTime.now(),
