@@ -5,6 +5,7 @@ import android.net.Uri
 import com.smsexpensetracker.core.csv.CsvCodec
 import com.smsexpensetracker.domain.model.Transaction
 import com.smsexpensetracker.domain.repository.TransactionRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -17,17 +18,18 @@ data class ImportResult(val imported: Int, val skipped: Int, val invalid: Int)
 @Singleton
 class CsvImporter @Inject constructor(
     private val contentResolver: ContentResolver,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     suspend fun importFrom(uri: Uri): ImportResult {
-        val text = withContext(Dispatchers.IO) {
+        val text = withContext(ioDispatcher) {
             contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: ""
         }
         return importFromText(text)
     }
 
-    internal suspend fun importFromText(text: String): ImportResult {
+    internal suspend fun importFromText(text: String): ImportResult = withContext(ioDispatcher) {
         val rows = CsvCodec.parse(text)
         CsvCodec.requireHeader(rows)
 
@@ -66,6 +68,6 @@ class CsvImporter @Inject constructor(
         }
 
         val imported = if (candidates.isEmpty()) 0 else transactionRepository.insertBatch(candidates)
-        return ImportResult(imported = imported, skipped = skipped, invalid = invalid)
+        ImportResult(imported = imported, skipped = skipped, invalid = invalid)
     }
 }

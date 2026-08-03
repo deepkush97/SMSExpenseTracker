@@ -63,4 +63,18 @@ class CsvExporterTest {
         assertEquals(1, rows.size)
         assertEquals(CsvCodec.HEADER, rows.first())
     }
+
+    @Test
+    fun `buildExportFile performs work off the test thread`() = runTest {
+        var onBackgroundThread = false
+        every { repository.getAllTransactions() } answers {
+            onBackgroundThread = Thread.currentThread().name != "Test worker"
+            flowOf(listOf(tx))
+        }
+        val exporter = CsvExporter(mockk<Context>(), tempDir.root, repository)
+
+        exporter.buildExportFile()
+
+        assertTrue(onBackgroundThread)
+    }
 }

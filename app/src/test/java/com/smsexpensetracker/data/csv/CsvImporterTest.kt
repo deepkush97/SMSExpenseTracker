@@ -13,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 
@@ -115,6 +116,23 @@ class CsvImporterTest {
         val result = importer.importFromText(text)
 
         assertEquals(ImportResult(imported = 0, skipped = 0, invalid = 1), result)
+    }
+
+    @Test
+    fun `importFromText performs work off the test thread`() = runTest {
+        var onBackgroundThread = false
+        every { repository.getAllTransactions() } answers {
+            onBackgroundThread = Thread.currentThread().name != "Test worker"
+            flowOf(emptyList())
+        }
+        coEvery { repository.insertBatch(any()) } returns 1
+        val text = csvWith(
+            listOf("2026-08-02T10:00:00", "100", "DEBIT", "A", "2", "", "0", "SMS", "raw1")
+        )
+
+        importer.importFromText(text)
+
+        assertTrue(onBackgroundThread)
     }
 
     private suspend fun coVerifyInserted(count: Int) {
