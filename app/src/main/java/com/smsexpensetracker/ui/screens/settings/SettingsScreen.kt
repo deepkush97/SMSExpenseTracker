@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.BrightnessAuto
 import androidx.compose.material.icons.outlined.DarkMode
@@ -65,6 +66,13 @@ fun SettingsScreen(
         state.csvMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.consumeCsvMessage()
+        }
+    }
+
+    LaunchedEffect(state.demoMessage) {
+        state.demoMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.consumeDemoMessage()
         }
     }
 
@@ -208,6 +216,11 @@ fun SettingsScreen(
                     arrayOf("text/csv", "text/comma-separated-values", "text/plain")
                 )
             }
+        )
+        SettingsActionRow(
+            icon = Icons.Filled.PlayArrow,
+            label = "Load demo data",
+            onClick = { viewModel.loadDemoData() }
         )
         SettingsActionRow(
             icon = Icons.Filled.Description,
