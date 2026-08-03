@@ -12,6 +12,7 @@ import com.smsexpensetracker.ui.screens.banks.BankManagementScreen
 import com.smsexpensetracker.ui.screens.banks.RuleEditorScreen
 import com.smsexpensetracker.ui.screens.categories.CategoryManagementScreen
 import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
+import com.smsexpensetracker.ui.screens.logs.LogViewerScreen
 import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
 import com.smsexpensetracker.ui.screens.parser.ParserScreen
 import com.smsexpensetracker.ui.screens.settings.SettingsScreen
@@ -43,8 +44,12 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(BottomNavItem.Settings.route) {
             SettingsScreen(
                 onNavigateToCategories = { navController.navigate("categories") },
-                onNavigateToBanks = { navController.navigate("banks") }
+                onNavigateToBanks = { navController.navigate("banks") },
+                onNavigateToLogs = { navController.navigate("logs") }
             )
+        }
+        composable("logs") {
+            LogViewerScreen(onBack = { navController.popBackStack() })
         }
         composable("categories") {
             CategoryManagementScreen(onBack = { navController.popBackStack() })

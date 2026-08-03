@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
 import com.smsexpensetracker.data.csv.FILE_PROVIDER_AUTHORITY
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -17,7 +18,8 @@ enum class LogFile { ERROR_LOG, PARSE_FAILURES, UNPARSED_SMS, CRASH_LOG }
 @Singleton
 class FileLogger @Inject constructor(
     private val context: Context,
-    private val baseDir: File
+    private val baseDir: File,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     private val timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -38,23 +40,23 @@ class FileLogger @Inject constructor(
         target.appendText("[$timestamp] $line\n", Charsets.UTF_8)
     }
 
-    suspend fun append(file: LogFile, line: String) = withContext(Dispatchers.IO) {
+    suspend fun append(file: LogFile, line: String) = withContext(ioDispatcher) {
         appendBlocking(file, line)
     }
 
-    suspend fun read(file: LogFile): String = withContext(Dispatchers.IO) {
+    suspend fun read(file: LogFile): String = withContext(ioDispatcher) {
         val target = logFile(file)
         if (target.exists()) target.readText(Charsets.UTF_8) else ""
     }
 
-    suspend fun readAll(): Map<LogFile, String> = withContext(Dispatchers.IO) {
+    suspend fun readAll(): Map<LogFile, String> = withContext(ioDispatcher) {
         LogFile.entries.associateWith { file ->
             val target = logFile(file)
             if (target.exists()) target.readText(Charsets.UTF_8) else ""
         }
     }
 
-    suspend fun clear(file: LogFile) = withContext(Dispatchers.IO) {
+    suspend fun clear(file: LogFile) = withContext(ioDispatcher) {
         logFile(file).writeText("", Charsets.UTF_8)
     }
 

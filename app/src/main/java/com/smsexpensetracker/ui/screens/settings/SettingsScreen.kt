@@ -37,7 +37,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateToCategories: () -> Unit = {},
-    onNavigateToBanks: () -> Unit = {}
+    onNavigateToBanks: () -> Unit = {},
+    onNavigateToLogs: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
