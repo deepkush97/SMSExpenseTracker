@@ -77,12 +77,12 @@
 - [ ] Implement `SmsSyncWorker` (WorkManager) — periodic background sync with constraints (battery not low) _(deferred — full-scan + hash-dedup chosen; background worker is a separate sub-project)_
 - [~] **Verify:** End-to-end sync test with mock SMS data produces correct transactions (needs device/emulator smoke test)
 
-### [ ] 8. Infrastructure: Logging & Backup
-- [ ] Implement `FileLogger` — write to `filesDir/logs/{error_log, parse_failures, unparsed_sms, crash_log}.txt`
-- [ ] Implement `FileLoggingTree` (Timber.Tree) — forwards log calls to FileLogger
-- [ ] Implement `BackupManager` — CSV export (query all transactions, format as CSV, write to Downloads/), CSV import (read CSV, validate, deduplicate, bulk insert)
-- [ ] Implement log viewer UI in Settings or Parser Test screen
-- [ ] **Verify:** CSV export writes valid file; CSV import round-trips correctly
+### [x] 8. Infrastructure: Logging & Backup
+- [x] Implement `FileLogger` — write to `filesDir/logs/{error_log, parse_failures, unparsed_sms, crash_log}.txt`
+- [x] Implement `FileLoggingTree` (Timber.Tree) — forwards log calls to FileLogger
+- [x] Implement `CsvExporter` / `CsvImporter` — CSV export (query all transactions, format as CSV, share via FileProvider), CSV import (read CSV, validate, deduplicate, bulk insert)
+- [x] Implement log viewer UI in Settings (File Logs + Parse Log sections)
+- [x] **Verify:** CSV export writes valid file; CSV import round-trips correctly
 
 ---
 
@@ -145,8 +145,8 @@
   - [x] Rule editor tests pattern against a pasted sample SMS before saving
 - [x] Implement category management: list, add, edit, delete
 - [ ] Implement sync controls: trigger re-sync, select range, view last sync time
-- [ ] Implement CSV export/import buttons
-- [ ] Implement log viewer: view/share/clear error logs
+- [x] Implement CSV export/import buttons
+- [x] Implement log viewer: view/share/clear error logs
 - [ ] Implement about section: app version, build info
 - [ ] **Verify:** Settings operations (add bank, edit rule, export CSV) persist correctly
 

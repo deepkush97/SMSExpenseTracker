@@ -25,6 +25,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
+import timber.log.Timber
 
 @Singleton
 class SmsSyncUseCase @Inject constructor(
@@ -63,6 +64,9 @@ class SmsSyncUseCase @Inject constructor(
                             rules.map { it.bankId to it.pattern }
                         )
                         if (parsed.errorMessage != null) {
+                            Timber.tag("PARSE").w(
+                                "Parse failed [${msg.sender}]: ${parsed.errorMessage}"
+                            )
                             parseLogRepository.insert(
                                 ParseLog(
                                     id = 0L,
