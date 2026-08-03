@@ -19,7 +19,8 @@ class SeedDatabaseCallback : RoomDatabase.Callback() {
             "ICICI Bank" to "ICICIB",
             "State Bank of India" to "SBI",
             "Axis Bank" to "AXISB",
-            "Pluxee" to "PLXEE"
+            "Pluxee" to "PLXEE",
+            "DCB Bank" to "DCBANK"
         )
         banks.forEachIndexed { index, (name, sender) ->
             db.execSQL(
@@ -64,12 +65,20 @@ class SeedDatabaseCallback : RoomDatabase.Callback() {
     private fun seedSmsRules(db: SupportSQLiteDatabase) {
 
         val rules = listOf(
-            "HDFC CC Debit" to 1L to "Spent Rs\\.([\\d,.]+) On HDFC Bank Card \\d{4} At (.+?) On .+",
-            "HDFC UPI Credit" to 1L to "Rs\\.([\\d,.]+) credited to HDFC Bank A/c \\w+ on [\\d-]+ from VPA (.+?) \\(UPI",
-            "HDFC e-Mandate" to 1L to "INR ([\\d,.]+) deducted from HDFC Bank A/C No \\w+ towards (.+?) UMRN",
-            "HDFC NEFT Credit" to 1L to "INR ([\\d,.]+) deposited in HDFC Bank A/c \\w+ on [\\w-]+ for NEFT Cr-(.+?)\\.?Avl bal",
-            "ICICI UPI Debit" to 2L to "ICICI Bank Acct \\w+ debited for Rs ([\\d,.]+) on [\\d-]+; (.+?) credited\\. UPI",
-            "ICICI UPI Credit" to 2L to "Acct \\w+ is credited with Rs ([\\d,.]+) on [\\d-]+ from (.+?)\\. UPI"
+            "HDFC CC Debit" to 1L to "Spent Rs.{amount} On HDFC Bank Card {card} At {description} On {date}",
+            "HDFC CC UPI Debit" to 1L to "Txn Rs.{amount} On HDFC Bank Card {card} At {description} by UPI {upi} On {date}",
+            "HDFC CC Refund" to 1L to "Alert! Rs. {amount} refunded by {description} on {date} & adjusted against HDFC Bank Credit Card {card}",
+            "HDFC UPI Credit" to 1L to "Rs.{amount} credited to HDFC Bank A/c {account} on {date} from VPA {description} (UPI",
+            "HDFC e-Mandate" to 1L to "INR {amount} deducted from HDFC Bank A/C No {account} towards {description} UMRN",
+            "HDFC NetBanking" to 1L to "Rs. {amount} from A/c {account} to {description} via HDFC Bank NetBanking",
+            "HDFC NEFT Credit" to 1L to "INR {amount} deposited in HDFC Bank A/c {account} on {date} for NEFT Cr-{description}.Avl bal",
+            "ICICI UPI Debit" to 2L to "ICICI Bank Acct {account} debited for Rs {amount} on {date}; {description} credited. UPI",
+            "ICICI UPI Credit" to 2L to "Acct {account} is credited with Rs {amount} on {date} from {description}. UPI",
+            "ICICI IMPS Credit" to 2L to "ICICI Bank Account {account} is credited with Rs {amount} on {date} by {description}. IMPS",
+            "Pluxee Meal Spend" to 5L to "Rs. {amount} spent from Pluxee Meal Card wallet, card no.{card} on {date} at {description}. Avl bal",
+            "Pluxee Reversal" to 5L to "Your Pluxee Card xx{card} has been credited with INR {amount} on {date}as {description}.",
+            "Pluxee Wallet Load" to 5L to "credited with Rs.{amount} towards{wallet} on {description}. Your",
+            "DCB POS/Ecom Debit" to 6L to "INR {amount} debited DCB Bank a/c*{card} POS/Ecom txn to {description} on {date}"
         )
         rules.forEachIndexed { index, (descBankId, pattern) ->
             val (desc, bankId) = descBankId
