@@ -8,9 +8,12 @@ import javax.inject.Singleton
 class DemoDataSeeder @Inject constructor(
     private val transactionDao: TransactionDao
 ) {
-    suspend fun seedIfEmpty() {
+    suspend fun seedIfEmpty(): Int {
         if (transactionDao.count() == 0) {
-            transactionDao.insertAll(DemoTransactionGenerator.generate())
+            val transactions = DemoTransactionGenerator.generate()
+            transactionDao.insertAll(transactions)
+            return transactions.size
         }
+        return 0
     }
 }
