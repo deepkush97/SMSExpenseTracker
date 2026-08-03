@@ -76,6 +76,17 @@ class TemplateCompilerTest {
     }
 
     @Test
+    fun `extract terminal description captures across newlines`() {
+        val result = TemplateCompiler.extract(
+            "INR 1000.00 deducted from HDFC Bank A/C No 1234 towards Some CORP\nUMRN 123456789",
+            "INR {amount} deducted from HDFC Bank A/C No {account} towards {description}",
+            1L
+        )
+        assertEquals(100000L, result?.amount)
+        assertEquals("Some CORP\nUMRN 123456789", result?.description)
+    }
+
+    @Test
     fun `extract returns null when amount is not parseable`() {
         assertNull(
             TemplateCompiler.extract("Spent abc On HDFC Bank Card", "Spent {amount} On HDFC Bank Card", 1L)

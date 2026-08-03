@@ -58,9 +58,10 @@ fieldName   := [a-zA-Z][a-zA-Z0-9]*
    - Drop leading and trailing whitespace (they are meaningless anchors).
 3. **Placeholder → named capture group** (compiled with `RegexOption.IGNORE_CASE`, matched via `.find`):
    - `{amount}` → `(?<amount>[\d,]+(?:\.\d{1,2})?)`; first occurrence wins if repeated.
-   - `{description}` (first) → `(?<description>.+?)`; second occurrence → `(?<description2>.+?)`, third → `(?<description3>.+?)`, etc.
-   - Any other `{name}` → `(?<a{n}>.+?)` anchor, matched but discarded.
-   - **Terminal placeholder:** if the template ends with a placeholder (no trailing literal), compile it **greedy** (`.+`) instead of non-greedy, so it captures to the end of the match rather than a single character.
+   - `{description}` (first) → `(?<description>[\s\S]+?)`; second occurrence → `(?<description2>[\s\S]+?)`, third → `(?<description3>[\s\S]+?)`, etc.
+   - Any other `{name}` → `(?<a{n}>[\s\S]+?)` anchor, matched but discarded.
+   - **Terminal placeholder:** if the template ends with a placeholder (no trailing literal), compile it **greedy** (`[\s\S]+`) instead of non-greedy, so it captures to the end of the match rather than a single character.
+   - Description and anchor groups use `[\s\S]` instead of `.` because `.` does not match newlines; a multi-line SMS would otherwise truncate these captures at the first line break. The `{amount}` group keeps its explicit character class (`[\d,]`) and never spans line breaks.
 4. Return `null` if the template is malformed (unbalanced braces, empty `{}`, invalid name) or no `{amount}` is present.
 
 ### 4.3 Match semantics

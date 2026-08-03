@@ -127,7 +127,7 @@ fun RuleEditorScreen(
             OutlinedTextField(
                 value = state.draftPattern,
                 onValueChange = viewModel::onPatternChange,
-                label = { Text("Pattern (regex)") },
+                label = { Text("Pattern (template)") },
                 isError = patternError != null && state.draftPattern.isNotEmpty(),
                 supportingText = {
                     Column {
@@ -152,7 +152,8 @@ fun RuleEditorScreen(
                         "A pattern matches the SMS text. Put {amount} where the money appears " +
                             "and {description} where the merchant or remark appears. Any other " +
                             "{name} (like {card}) anchors a variable part of the message. Spaces " +
-                            "are flexible — one space in the pattern matches any spacing. Test " +
+                            "are flexible — one space in the pattern matches any run of one or more " +
+                            "spaces. Test " +
                             "against a real SMS before saving.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

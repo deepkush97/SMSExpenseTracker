@@ -38,7 +38,7 @@ object TemplateCompiler {
                 name == "description" -> {
                     descriptionCount++
                     val groupName = if (descriptionCount == 1) "description" else "description$descriptionCount"
-                    if (isTerminal) "(?<$groupName>.+)" else "(?<$groupName>.+?)"
+                    if (isTerminal) "(?<$groupName>[\\s\\S]+)" else "(?<$groupName>[\\s\\S]+?)"
                 }
                 else -> anchorGroup(++anchorCount, isTerminal)
             }
@@ -72,7 +72,7 @@ object TemplateCompiler {
     }
 
     private fun anchorGroup(count: Int, isTerminal: Boolean): String =
-        if (isTerminal) "(?<a$count>.+)" else "(?<a$count>.+?)"
+        if (isTerminal) "(?<a$count>[\\s\\S]+)" else "(?<a$count>[\\s\\S]+?)"
 
     private fun appendLiteral(builder: StringBuilder, literal: String) {
         var i = 0

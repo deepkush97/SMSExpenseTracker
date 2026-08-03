@@ -1,8 +1,10 @@
 package com.smsexpensetracker.ui.util
 
+import com.smsexpensetracker.core.parser.TemplateCompiler
 import com.smsexpensetracker.domain.model.Bank
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BankRulesValidationTest {
@@ -124,5 +126,21 @@ class BankRulesValidationTest {
     @Test
     fun `template pattern with amount is allowed`() {
         assertNull(validatePattern("Rs.{amount} On {date}"))
+    }
+
+    @Test
+    fun `valid template patterns also compile`() {
+        val templates = listOf(
+            "Spent Rs.{amount} On HDFC Bank Card {card} At {description} On {date}",
+            "Your Pluxee Card xx{card} has been credited with INR {amount} on {date}as a {description}.",
+            "INR {amount} deducted from HDFC Bank A/C No {account} towards {description}",
+            "{amount} debited at {description} ref {description}",
+            "Acct {account} is credited with Rs {amount} on {date} from {description}. UPI",
+            "Rs.{amount} On {date}"
+        )
+        templates.forEach { template ->
+            assertNull(validatePattern(template))
+            assertTrue(TemplateCompiler.compile(template) != null)
+        }
     }
 }
