@@ -88,4 +88,41 @@ class BankRulesValidationTest {
     fun `pattern valid regex is allowed`() {
         assertNull(validatePattern("Spent Rs\\.([\\d,.]+) On HDFC Bank Card"))
     }
+
+    @Test
+    fun `template pattern without amount is rejected`() {
+        assertEquals(
+            "Pattern must include an {amount} placeholder",
+            validatePattern("Your Card {card} credited")
+        )
+    }
+
+    @Test
+    fun `template pattern with unbalanced braces is rejected`() {
+        assertEquals(
+            "Pattern has unbalanced braces",
+            validatePattern("Rs.{amount} On {date")
+        )
+    }
+
+    @Test
+    fun `template pattern with empty placeholder is rejected`() {
+        assertEquals(
+            "Pattern contains an empty {} placeholder",
+            validatePattern("Rs.{amount} {}")
+        )
+    }
+
+    @Test
+    fun `template pattern with invalid name is rejected`() {
+        assertEquals(
+            "Placeholder names may only contain letters and digits, and must start with a letter",
+            validatePattern("Rs.{amount} {ab-cd}")
+        )
+    }
+
+    @Test
+    fun `template pattern with amount is allowed`() {
+        assertNull(validatePattern("Rs.{amount} On {date}"))
+    }
 }

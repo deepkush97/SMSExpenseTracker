@@ -1,5 +1,6 @@
 package com.smsexpensetracker.ui.util
 
+import com.smsexpensetracker.core.parser.TemplateCompiler
 import com.smsexpensetracker.domain.model.Bank
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -28,6 +29,24 @@ fun validateRuleDescription(description: String): String? {
 fun validatePattern(pattern: String): String? {
     val trimmed = pattern.trim()
     if (trimmed.isEmpty()) return "Pattern is required"
+    if (TemplateCompiler.isTemplate(trimmed)) {
+        if (trimmed.count { it == '{' } != trimmed.count { it == '}' }) {
+            return "Pattern has unbalanced braces"
+        }
+        if ("{}" in trimmed) {
+            return "Pattern contains an empty {} placeholder"
+        }
+        val names = TemplateCompiler.findPlaceholders(trimmed)
+        var rest = trimmed
+        names.forEach { rest = rest.replace("{$it}", "") }
+        if ('{' in rest || '}' in rest) {
+            return "Placeholder names may only contain letters and digits, and must start with a letter"
+        }
+        if (names.none { it == "amount" }) {
+            return "Pattern must include an {amount} placeholder"
+        }
+        return null
+    }
     return try {
         Pattern.compile(trimmed)
         null
