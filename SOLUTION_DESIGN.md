@@ -144,9 +144,9 @@ All amounts as **paisa** (`Long`). `parsePaisa("100.50")` → `10050L`. Never `D
 ### 5.3 Seed Data
 
 On first `onCreate`, database is seeded with:
-- 5 banks: HDFC Bank, ICICI Bank, DCB Bank, Pluxee, SBI
+- 6 banks: HDFC Bank, ICICI Bank, DCB Bank, Pluxee, SBI, Axis Bank
 - 14 categories: Food & Dining, Groceries, Fuel, Bills & Utilities, Shopping, Transport, Entertainment, Health, Education, Salary, Rent, EMI/Loans, Investment, Others
-- 6 SMS rules for the seeded banks
+- 14 SMS rules for the seeded banks
 
 ### 5.4 Schema Export
 

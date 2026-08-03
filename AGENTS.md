@@ -33,7 +33,7 @@ com.smsexpensetracker
 
 ## Database
 - Room + KSP, schema exported to `app/schemas/` (committed)
-- Seed callback inserts 5 banks, 14 categories, 6 SMS rules on `onCreate`
+- Seed callback inserts 6 banks, 14 categories, 14 SMS rules on `onCreate`
 - `Converters`: enums, `LocalDateTime`, paisa Long
 
 ## Testing

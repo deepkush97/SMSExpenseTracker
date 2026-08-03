@@ -136,9 +136,9 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 306 tests cover |
+| Layer | What the 310 tests cover |
 |---|---|
-| Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 16 real-SMS template rows |
+| Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |
 | Data | ParserEngine, SmsReader query, repository dedup, repositories |
 | ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip |
