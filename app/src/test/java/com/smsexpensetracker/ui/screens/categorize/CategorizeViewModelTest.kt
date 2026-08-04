@@ -193,4 +193,23 @@ class CategorizeViewModelTest {
 
         assertEquals(listOf(food, travel), vm.uiState.value.categories)
     }
+
+    @Test
+    fun `assignCategory updates queue transaction so reset shows the assigned category`() = runTest(testDispatcher) {
+        every { transactionRepository.getAllTransactions() } returns flowOf(listOf(tx(1), tx(2)))
+        every { categoryRepository.getAllCategories() } returns flowOf(listOf(food, travel))
+        every { bankRepository.getAllBanks() } returns flowOf(listOf(hdfc))
+        coEvery { transactionRepository.updateTransactionCategory(1L, 3L) } returns Unit
+
+        val vm = CategorizeViewModel(transactionRepository, categoryRepository, bankRepository)
+        advanceUntilIdle()
+
+        vm.assignCategory(3L)
+        advanceUntilIdle()
+
+        vm.reset()
+
+        assertEquals(0, vm.uiState.value.index)
+        assertEquals(3L, vm.uiState.value.current?.categoryId)
+    }
 }

@@ -65,7 +65,13 @@ class CategorizeViewModel @Inject constructor(
         viewModelScope.launch {
             transactionRepository.updateTransactionCategory(current.id, categoryId)
             _uiState.update {
-                it.copy(index = it.index + 1, assignedCount = it.assignedCount + 1)
+                it.copy(
+                    queue = it.queue.mapIndexed { i, tx ->
+                        if (i == it.index) tx.copy(categoryId = categoryId) else tx
+                    },
+                    index = it.index + 1,
+                    assignedCount = it.assignedCount + 1
+                )
             }
         }
     }
