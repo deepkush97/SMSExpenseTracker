@@ -1,6 +1,7 @@
 package com.smsexpensetracker.domain.usecase
 
 import com.smsexpensetracker.core.parser.ParserEngine
+import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.data.sms.SmsReader
 import com.smsexpensetracker.domain.model.ParseLog
 import com.smsexpensetracker.domain.model.ParseMethod
@@ -34,6 +35,7 @@ class SmsSyncUseCase @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val parseLogRepository: ParseLogRepository,
     private val syncMetaRepository: SyncMetaRepository,
+    private val demoDataPreferences: DemoDataPreferences,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     private val _progress = MutableStateFlow(SyncProgress())
@@ -43,6 +45,9 @@ class SmsSyncUseCase @Inject constructor(
 
     suspend fun sync(): SyncResult {
         if (isRunning) return SyncResult()
+        if (demoDataPreferences.demoDataLoaded.first()) {
+            return SyncResult(error = "Delete demo data before syncing real SMS.")
+        }
         isRunning = true
         _progress.value = SyncProgress()
         return try {

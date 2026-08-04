@@ -1,5 +1,6 @@
 package com.smsexpensetracker.domain.usecase
 
+import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.data.sms.SmsMessage
 import com.smsexpensetracker.data.sms.SmsReader
 import com.smsexpensetracker.domain.model.ParseStatus
@@ -18,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -40,6 +42,7 @@ class SmsSyncUseCaseTest {
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var parseLogRepository: ParseLogRepository
     private lateinit var syncMetaRepository: SyncMetaRepository
+    private lateinit var demoDataPreferences: DemoDataPreferences
     private lateinit var useCase: SmsSyncUseCase
 
     private val hdfcRule = SmsRule(
@@ -64,12 +67,15 @@ class SmsSyncUseCaseTest {
         transactionRepository = mockk()
         parseLogRepository = mockk()
         syncMetaRepository = mockk()
+        demoDataPreferences = mockk()
+        every { demoDataPreferences.demoDataLoaded } returns flowOf(false)
         useCase = SmsSyncUseCase(
             smsReader,
             smsRuleRepository,
             transactionRepository,
             parseLogRepository,
             syncMetaRepository,
+            demoDataPreferences,
             testDispatcher
         )
     }
@@ -196,5 +202,18 @@ class SmsSyncUseCaseTest {
         val result = useCase.sync()
 
         assertNotNull(result.error)
+    }
+
+    @Test
+    fun `sync returns backstop error when demo data is loaded`() = runTest {
+        every { demoDataPreferences.demoDataLoaded } returns MutableStateFlow(true)
+
+        val result = useCase.sync()
+
+        assertEquals(
+            SyncResult(error = "Delete demo data before syncing real SMS."),
+            result
+        )
+        coVerify(exactly = 0) { smsReader.readSms() }
     }
 }
