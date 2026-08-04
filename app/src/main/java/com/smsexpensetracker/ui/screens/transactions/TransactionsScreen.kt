@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.smsexpensetracker.data.sms.PermissionManager
+import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import com.smsexpensetracker.ui.components.EmptyState
 import com.smsexpensetracker.ui.components.TransactionRow
 import com.smsexpensetracker.ui.components.rememberSpringPressScale
@@ -72,6 +73,7 @@ fun TransactionsScreen(
     viewModel: TransactionsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val showDemoBarrier by viewModel.showDemoBarrier.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -277,6 +279,13 @@ fun TransactionsScreen(
             categories = state.categories,
             onCategoryChange = viewModel::onCategoryChange,
             onDismiss = viewModel::onDismissSheet
+        )
+    }
+
+    if (showDemoBarrier) {
+        DemoDataBarrierDialog(
+            onConfirmDelete = viewModel::confirmDeleteDemoData,
+            onDismiss = viewModel::dismissDemoBarrier
         )
     }
 }

@@ -1,5 +1,7 @@
 package com.smsexpensetracker.ui.screens.transactions
 
+import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Transaction
 import com.smsexpensetracker.domain.model.TransactionType
 import com.smsexpensetracker.domain.repository.BankRepository
@@ -22,6 +24,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -38,6 +41,9 @@ class TransactionsViewModelTest {
     private lateinit var categoryRepository: CategoryRepository
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var smsSyncUseCase: SmsSyncUseCase
+    private lateinit var demoDataPreferences: DemoDataPreferences
+    private lateinit var demoDataSeeder: DemoDataSeeder
+    private val demoDataLoadedFlow = MutableStateFlow(false)
     private lateinit var viewModel: TransactionsViewModel
 
     @Before
@@ -48,6 +54,9 @@ class TransactionsViewModelTest {
         categoryRepository = mockk()
         transactionRepository = mockk()
         smsSyncUseCase = mockk()
+        demoDataPreferences = mockk()
+        demoDataSeeder = mockk()
+        every { demoDataPreferences.demoDataLoaded } returns demoDataLoadedFlow
     }
 
     @After
@@ -79,7 +88,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         viewModel.onMonthChange(YearMonth.of(2026, 1))
@@ -99,7 +108,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         viewModel.onSearchQueryChange("Zomato")
@@ -119,7 +128,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         viewModel.onFilterTypeChange(TransactionType.CREDIT)
@@ -135,7 +144,7 @@ class TransactionsViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
         val futureMonth = YearMonth.now().plusMonths(1)
@@ -152,7 +161,7 @@ class TransactionsViewModelTest {
         every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
         coEvery { transactionRepository.updateTransactionCategory(any(), any()) } returns Unit
 
-        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase)
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
         viewModel.onCategoryChange(1L, 5L)
         advanceUntilIdle()
 
@@ -167,7 +176,8 @@ class TransactionsViewModelTest {
         coEvery { smsSyncUseCase.sync() } returns SyncResult(scanned = 5, inserted = 2, unparsed = 1)
 
         viewModel = TransactionsViewModel(
-            getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase
+            getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase,
+            demoDataPreferences, demoDataSeeder
         )
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
@@ -182,5 +192,44 @@ class TransactionsViewModelTest {
         viewModel.consumeSyncMessage()
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.syncMessage == null)
+    }
+
+    @Test
+    fun `sync opens demo barrier instead of syncing when demo data present`() = runTest(testDispatcher) {
+        demoDataLoadedFlow.value = true
+        coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+        every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+        every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+        viewModel = TransactionsViewModel(
+            getTransactionsUseCase, bankRepository, categoryRepository,
+            transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder
+        )
+        advanceUntilIdle()
+
+        viewModel.sync()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.showDemoBarrier.value)
+        coVerify(exactly = 0) { smsSyncUseCase.sync() }
+    }
+
+    @Test
+    fun `confirmDeleteDemoData deletes demo and closes barrier`() = runTest(testDispatcher) {
+        demoDataLoadedFlow.value = true
+        coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+        every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+        every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+        viewModel = TransactionsViewModel(
+            getTransactionsUseCase, bankRepository, categoryRepository,
+            transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder
+        )
+        advanceUntilIdle()
+        coEvery { demoDataSeeder.deleteDemoData() } returns Unit
+
+        viewModel.confirmDeleteDemoData()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { demoDataSeeder.deleteDemoData() }
+        assertFalse(viewModel.showDemoBarrier.value)
     }
 }

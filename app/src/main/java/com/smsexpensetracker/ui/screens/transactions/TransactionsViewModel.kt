@@ -2,6 +2,8 @@ package com.smsexpensetracker.ui.screens.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.Transaction
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -48,7 +51,9 @@ class TransactionsViewModel @Inject constructor(
     private val bankRepository: BankRepository,
     private val categoryRepository: CategoryRepository,
     private val transactionRepository: TransactionRepository,
-    private val smsSyncUseCase: SmsSyncUseCase
+    private val smsSyncUseCase: SmsSyncUseCase,
+    private val demoDataPreferences: DemoDataPreferences,
+    private val demoDataSeeder: DemoDataSeeder
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -68,6 +73,16 @@ class TransactionsViewModel @Inject constructor(
 
     private val _isSyncing = MutableStateFlow(false)
     private val _syncMessage = MutableStateFlow<String?>(null)
+
+    private val _demoDataLoaded = MutableStateFlow(false)
+    private val _showDemoBarrier = MutableStateFlow(false)
+    val showDemoBarrier: StateFlow<Boolean> = _showDemoBarrier.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            demoDataPreferences.demoDataLoaded.collect { _demoDataLoaded.value = it }
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<TransactionsUiState> = combine(
@@ -153,6 +168,10 @@ class TransactionsViewModel @Inject constructor(
 
     fun sync() {
         if (_isSyncing.value) return
+        if (_demoDataLoaded.value) {
+            _showDemoBarrier.value = true
+            return
+        }
         _isSyncing.value = true
         viewModelScope.launch {
             val result = smsSyncUseCase.sync()
@@ -162,6 +181,17 @@ class TransactionsViewModel @Inject constructor(
                 "Scanned ${result.scanned}, added ${result.inserted}, unparsed ${result.unparsed}"
             }
             _isSyncing.value = false
+        }
+    }
+
+    fun dismissDemoBarrier() {
+        _showDemoBarrier.value = false
+    }
+
+    fun confirmDeleteDemoData() {
+        viewModelScope.launch {
+            demoDataSeeder.deleteDemoData()
+            _showDemoBarrier.value = false
         }
     }
 
