@@ -41,13 +41,21 @@ class CategorizeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val transactions = transactionRepository.getAllTransactions().first()
-            val categories = categoryRepository.getAllCategories().first()
-            val banks = bankRepository.getAllBanks().first()
             val queue = transactions.sortedWith(
                 compareBy<Transaction> { it.categoryId != null }
                     .thenByDescending { it.transactionDate }
             )
-            _uiState.update { it.copy(queue = queue, categories = categories, banks = banks) }
+            _uiState.update { it.copy(queue = queue) }
+        }
+        viewModelScope.launch {
+            categoryRepository.getAllCategories().collect { categories ->
+                _uiState.update { it.copy(categories = categories) }
+            }
+        }
+        viewModelScope.launch {
+            bankRepository.getAllBanks().collect { banks ->
+                _uiState.update { it.copy(banks = banks) }
+            }
         }
     }
 

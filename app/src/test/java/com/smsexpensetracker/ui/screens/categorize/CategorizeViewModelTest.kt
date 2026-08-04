@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -174,5 +175,22 @@ class CategorizeViewModelTest {
 
         assertEquals(0, vm.uiState.value.index)
         assertEquals(0, vm.uiState.value.assignedCount)
+    }
+
+    @Test
+    fun `categories update live when category list changes`() = runTest(testDispatcher) {
+        every { transactionRepository.getAllTransactions() } returns flowOf(listOf(tx(1)))
+        val categoriesFlow = MutableStateFlow(listOf(food))
+        every { categoryRepository.getAllCategories() } returns categoriesFlow
+        every { bankRepository.getAllBanks() } returns flowOf(listOf(hdfc))
+
+        val vm = CategorizeViewModel(transactionRepository, categoryRepository, bankRepository)
+        advanceUntilIdle()
+        assertEquals(listOf(food), vm.uiState.value.categories)
+
+        categoriesFlow.value = listOf(food, travel)
+        advanceUntilIdle()
+
+        assertEquals(listOf(food, travel), vm.uiState.value.categories)
     }
 }
