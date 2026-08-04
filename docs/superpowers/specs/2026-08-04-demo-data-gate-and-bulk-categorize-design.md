@@ -138,9 +138,9 @@ Single-purpose screen — no other utilities move into it.
   date, and a category dropdown (ExposedDropdownMenu, same pattern as
   `TransactionDetailSheet` — user chose dropdown over chip grid). "None" as the first
   option.
-- Actions: **Skip** (TextButton) and **Save & Next** (the dropdown selection applies
-  immediately via `assignCategory`, or a Save button applies then advances — design
-  detail: dropdown selection applies on confirm via Save button).
+- Actions: selecting a category in the dropdown calls `assignCategory` immediately
+  (writes via `updateTransactionCategory`, then advances `index`). **Skip**
+  (TextButton) advances without writing.
 - Progress: "3 of 12" (1-based index over queue size).
 - Done state: "All done — N categorized." with a button to reset/restart.
 - Empty state: "No transactions yet" when the queue is empty.
