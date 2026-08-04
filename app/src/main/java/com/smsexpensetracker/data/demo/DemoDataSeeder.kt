@@ -13,8 +13,8 @@ class DemoDataSeeder @Inject constructor(
     suspend fun seedIfEmpty(): Int {
         if (transactionDao.count() == 0) {
             val transactions = DemoTransactionGenerator.generate()
-            transactionDao.insertAll(transactions)
             demoDataPreferences.setDemoDataLoaded(true)
+            transactionDao.insertAll(transactions)
             return transactions.size
         }
         return 0

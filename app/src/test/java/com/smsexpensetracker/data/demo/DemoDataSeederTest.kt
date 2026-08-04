@@ -4,6 +4,7 @@ import com.smsexpensetracker.core.database.dao.TransactionDao
 import com.smsexpensetracker.core.settings.DemoDataPreferences
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -22,6 +23,10 @@ class DemoDataSeederTest {
         val inserted = DemoDataSeeder(transactionDao, demoDataPreferences).seedIfEmpty()
         coVerify { transactionDao.insertAll(any()) }
         coVerify(exactly = 1) { demoDataPreferences.setDemoDataLoaded(true) }
+        coVerifyOrder {
+            demoDataPreferences.setDemoDataLoaded(true)
+            transactionDao.insertAll(any())
+        }
         assertEquals(DemoTransactionGenerator.generate().size, inserted)
     }
 
