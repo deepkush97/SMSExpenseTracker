@@ -3,8 +3,12 @@ package com.smsexpensetracker.ui.screens.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smsexpensetracker.domain.model.Bank
+import com.smsexpensetracker.domain.model.BankSummary
 import com.smsexpensetracker.domain.model.Category
+import com.smsexpensetracker.domain.model.CategorySummary
+import com.smsexpensetracker.domain.model.MonthlySummary
 import com.smsexpensetracker.domain.model.Transaction
+import com.smsexpensetracker.domain.model.TransactionType
 import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.usecase.GetDashboardDataUseCase
@@ -51,9 +55,9 @@ class DashboardViewModel @Inject constructor(
     ) { array ->
         val spent = array[0] as? Long
         val received = array[1] as? Long
-        val bankSums = array[2] as? List<com.smsexpensetracker.domain.model.BankSummary> ?: emptyList()
-        val monthlySums = array[3] as? List<com.smsexpensetracker.domain.model.MonthlySummary> ?: emptyList()
-        val catSums = array[4] as? List<com.smsexpensetracker.domain.model.CategorySummary> ?: emptyList()
+        val bankSums = array[2] as? List<BankSummary> ?: emptyList()
+        val monthlySums = array[3] as? List<MonthlySummary> ?: emptyList()
+        val catSums = array[4] as? List<CategorySummary> ?: emptyList()
         val recent = array[5] as? List<Transaction> ?: emptyList()
         val banks = array[6] as? List<Bank> ?: emptyList()
         val cats = array[7] as? List<Category> ?: emptyList()
@@ -72,31 +76,31 @@ class DashboardViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardUiState())
 
-    private fun List<com.smsexpensetracker.domain.model.BankSummary>.toBankBarItems(
+    private fun List<BankSummary>.toBankBarItems(
         bankMap: Map<Long, Bank>
     ): List<BankBarItem> {
         val byBank = groupBy { it.bankId }
         return byBank.map { (bankId, summaries) ->
             BankBarItem(
                 bankName = bankMap[bankId]?.name ?: "Bank $bankId",
-                credit = summaries.find { it.type == com.smsexpensetracker.domain.model.TransactionType.CREDIT }?.total ?: 0,
-                debit = summaries.find { it.type == com.smsexpensetracker.domain.model.TransactionType.DEBIT }?.total ?: 0
+                credit = summaries.find { it.type == TransactionType.CREDIT }?.total ?: 0,
+                debit = summaries.find { it.type == TransactionType.DEBIT }?.total ?: 0
             )
         }
     }
 
-    private fun List<com.smsexpensetracker.domain.model.MonthlySummary>.toMonthlyLineItems(): List<MonthlyLineItem> {
+    private fun List<MonthlySummary>.toMonthlyLineItems(): List<MonthlyLineItem> {
         val byMonth = groupBy { it.yearMonth }
         return byMonth.map { (month, summaries) ->
             MonthlyLineItem(
                 month = month,
-                credit = summaries.find { it.type == com.smsexpensetracker.domain.model.TransactionType.CREDIT }?.total ?: 0,
-                debit = summaries.find { it.type == com.smsexpensetracker.domain.model.TransactionType.DEBIT }?.total ?: 0
+                credit = summaries.find { it.type == TransactionType.CREDIT }?.total ?: 0,
+                debit = summaries.find { it.type == TransactionType.DEBIT }?.total ?: 0
             )
         }.sortedBy { it.month }
     }
 
-    private fun List<com.smsexpensetracker.domain.model.CategorySummary>.toCategoryPieItems(
+    private fun List<CategorySummary>.toCategoryPieItems(
         catMap: Map<Long, Category>
     ): List<CategoryPieItem> {
         return map { cs ->
