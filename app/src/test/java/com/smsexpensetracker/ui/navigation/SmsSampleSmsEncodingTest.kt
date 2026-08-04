@@ -1,43 +1,40 @@
 package com.smsexpensetracker.ui.navigation
 
-import android.net.Uri
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 
 class SmsSampleSmsEncodingTest {
 
     private val hexDigits = "0123456789ABCDEF".toCharArray()
 
-    @Before
-    fun setup() {
-        mockkStatic(Uri::class)
-        every { Uri.encode(any()) } answers { androidEncode(firstArg()) }
-        every { Uri.decode(any()) } answers { androidDecode(firstArg()) }
-    }
-
-    @After
-    fun tearDown() {
-        unmockkAll()
+    @Test
+    fun `encode matches AOSP output for reserved chars`() {
+        assertEquals(
+            "50%25%20off%20at%20Store%20%26%20Cafe%20%2F%20corner%2C%20100%25%2B%20great%20%231",
+            androidEncode("50% off at Store & Cafe / corner, 100%+ great #1")
+        )
+        assertEquals(
+            "Spent%20Rs.1250.50%20On%20HDFC%20Bank%20Card%201234%20At%20Coffee%20Shop%20On%2001-Aug",
+            androidEncode("Spent Rs.1250.50 On HDFC Bank Card 1234 At Coffee Shop On 01-Aug")
+        )
     }
 
     @Test
-    fun `encode then decode is lossless for SMS bodies with reserved characters`() {
+    fun `encode then decode is lossless for SMS bodies`() {
         val bodies = listOf(
             "Spent Rs.1250.50 On HDFC Bank Card 1234 At Coffee Shop On 01-Aug",
             "Acct 1234 debited Rs 500.00 for Swiggy; payee+ref=ABC&DEF #3",
             "50% off at Store & Cafe / corner, 100%+ great #1"
         )
         bodies.forEach { body ->
-            val roundTripped = Uri.decode(Uri.encode(body))
-            assertEquals(body, roundTripped)
+            assertEquals(body, androidDecode(androidEncode(body)))
         }
     }
 
+    // The port mirrors Uri.decode (convertPlus=false): a literal '+' is NOT decoded
+    // to a space. That is safe here because Uri.encode emits %2B for '+', so no raw
+    // '+' reaches the navigation parser, which decodes with convertPlus=true via
+    // Uri.getQueryParameter.
     private fun androidEncode(s: String): String {
         if (s.isEmpty()) return s
         val encoded = StringBuilder()
