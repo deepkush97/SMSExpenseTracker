@@ -1,5 +1,7 @@
 package com.smsexpensetracker.ui.screens.manualentry
 
+import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.ParseMethod
@@ -14,6 +16,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -37,6 +40,9 @@ class ManualEntryViewModelTest {
     private val bankRepository = mockk<BankRepository>()
     private val categoryRepository = mockk<CategoryRepository>()
     private val transactionRepository = mockk<TransactionRepository>()
+    private val demoDataPreferences = mockk<DemoDataPreferences>()
+    private val demoDataSeeder = mockk<DemoDataSeeder>()
+    private val demoDataLoadedFlow = MutableStateFlow(false)
 
     private val hdfc = Bank(id = 1, name = "HDFC Bank", smsSender = "HDFCBK")
     private val icici = Bank(id = 2, name = "ICICI Bank", smsSender = "ICICIB")
@@ -47,6 +53,7 @@ class ManualEntryViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { bankRepository.getAllBanks() } returns flowOf(listOf(hdfc, icici))
         every { categoryRepository.getAllCategories() } returns flowOf(listOf(food))
+        every { demoDataPreferences.demoDataLoaded } returns demoDataLoadedFlow
         coEvery { transactionRepository.insert(any()) } returns 1L
     }
 
@@ -56,7 +63,10 @@ class ManualEntryViewModelTest {
     }
 
     private fun createViewModel(): ManualEntryViewModel =
-        ManualEntryViewModel(bankRepository, categoryRepository, transactionRepository)
+        ManualEntryViewModel(
+            bankRepository, categoryRepository, transactionRepository,
+            demoDataPreferences, demoDataSeeder
+        )
 
     @Test
     fun `init defaults bank to first bank`() = runTest(testDispatcher) {
@@ -234,5 +244,35 @@ class ManualEntryViewModelTest {
 
         assertFalse(vm.uiState.value.isSaving)
         assertNotNull(vm.uiState.value.saveError)
+    }
+
+    @Test
+    fun `save opens demo barrier instead of inserting when demo data present`() = runTest(testDispatcher) {
+        demoDataLoadedFlow.value = true
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.onAmountChange("100.00")
+        vm.onPayeeChange("Cafe")
+        vm.onBankChange(1L)
+
+        vm.save()
+        advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.showDemoBarrier)
+        coVerify(exactly = 0) { transactionRepository.insert(any()) }
+    }
+
+    @Test
+    fun `confirmDeleteDemoData deletes demo and closes barrier`() = runTest(testDispatcher) {
+        demoDataLoadedFlow.value = true
+        coEvery { demoDataSeeder.deleteDemoData() } returns Unit
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.confirmDeleteDemoData()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { demoDataSeeder.deleteDemoData() }
+        assertFalse(vm.uiState.value.showDemoBarrier)
     }
 }

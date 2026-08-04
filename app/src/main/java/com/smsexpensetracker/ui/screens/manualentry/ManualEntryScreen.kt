@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.smsexpensetracker.domain.model.TransactionType
+import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -251,5 +252,12 @@ fun ManualEntryScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (state.showDemoBarrier) {
+        DemoDataBarrierDialog(
+            onConfirmDelete = viewModel::confirmDeleteDemoData,
+            onDismiss = viewModel::dismissDemoBarrier
+        )
     }
 }

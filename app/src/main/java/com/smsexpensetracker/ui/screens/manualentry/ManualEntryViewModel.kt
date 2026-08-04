@@ -3,6 +3,8 @@ package com.smsexpensetracker.ui.screens.manualentry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smsexpensetracker.core.parser.parsePaisa
+import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.ParseMethod
@@ -16,6 +18,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,14 +44,18 @@ data class ManualEntryUiState(
     val errors: FormErrors = FormErrors(),
     val isSaving: Boolean = false,
     val showSavedSnackbar: Boolean = false,
-    val saveError: String? = null
+    val saveError: String? = null,
+    val demoDataLoaded: Boolean = false,
+    val showDemoBarrier: Boolean = false
 )
 
 @HiltViewModel
 class ManualEntryViewModel @Inject constructor(
     private val bankRepository: BankRepository,
     private val categoryRepository: CategoryRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val demoDataPreferences: DemoDataPreferences,
+    private val demoDataSeeder: DemoDataSeeder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ManualEntryUiState())
@@ -64,6 +71,11 @@ class ManualEntryViewModel @Inject constructor(
                     categories = categories,
                     bankId = it.bankId ?: banks.firstOrNull()?.id
                 )
+            }
+        }
+        viewModelScope.launch {
+            demoDataPreferences.demoDataLoaded.collect { loaded ->
+                _uiState.update { it.copy(demoDataLoaded = loaded) }
             }
         }
     }
@@ -92,6 +104,11 @@ class ManualEntryViewModel @Inject constructor(
     fun save() {
         val current = _uiState.value
         if (current.isSaving) return
+
+        if (current.demoDataLoaded) {
+            _uiState.update { it.copy(showDemoBarrier = true) }
+            return
+        }
 
         val amountPaisa = parsePaisa(current.amountInput)
         val errors = FormErrors(
@@ -165,4 +182,13 @@ class ManualEntryViewModel @Inject constructor(
     fun consumeSavedSnackbar() = _uiState.update { it.copy(showSavedSnackbar = false) }
 
     fun consumeSaveError() = _uiState.update { it.copy(saveError = null) }
+
+    fun dismissDemoBarrier() = _uiState.update { it.copy(showDemoBarrier = false) }
+
+    fun confirmDeleteDemoData() {
+        viewModelScope.launch {
+            demoDataSeeder.deleteDemoData()
+            _uiState.update { it.copy(showDemoBarrier = false, demoDataLoaded = false) }
+        }
+    }
 }
