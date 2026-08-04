@@ -133,7 +133,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 - [ ] Each card shows the **full SMS body** (monospace, wrapped), sender, bank name (if the sender matches a bank), a red **FAILED** badge, "Failed N×", and the last attempt time.
 - [ ] Duplicate bodies appear **once** with a count (e.g. same SMS pushed twice → "Failed 2x").
 - [ ] Toggle the **All | Failed** chips. → Failed shows deduped cards; All shows raw parse-log rows (one per log entry).
-- [ ] An SMS whose sender matches no bank → "Fix" is **disabled** and the hint "No matching bank — add it in Banks & Rules first." shows.
+- [ ] An SMS whose sender matches no bank → **no Fix button** appears and the hint "No matching bank — add it in Banks & Rules first." shows.
 - [ ] Tap **Fix** on a failing SMS → the **Rule Editor** opens with the **Sample SMS** field pre-filled and the bank selected; write a matching template, **Test** → green "Matches", **Save**.
 - [ ] Return to the review screen and tap **Re-sync now** → snackbar "Scanned X, added Y, unparsed Z"; the fixed SMS **no longer appears** (old FAILED rows were cleared first).
 - [ ] Tap **Re-sync now** with SMS permission revoked → snackbar "Sync failed. Try again."; **Re-sync now** is disabled (spinner) while syncing.

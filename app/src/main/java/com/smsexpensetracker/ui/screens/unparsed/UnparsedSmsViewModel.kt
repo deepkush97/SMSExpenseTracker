@@ -80,7 +80,7 @@ class UnparsedSmsViewModel @Inject constructor(
 
     fun resync() {
         if (_uiState.value.isSyncing) return
-        _uiState.update { it.copy(isSyncing = true) }
+        _uiState.update { it.copy(isSyncing = true, syncMessage = null) }
         viewModelScope.launch {
             try {
                 parseLogRepository.deleteFailed()

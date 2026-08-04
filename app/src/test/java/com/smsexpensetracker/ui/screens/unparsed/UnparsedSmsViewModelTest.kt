@@ -200,6 +200,24 @@ class UnparsedSmsViewModelTest {
     }
 
     @Test
+    fun `resync resets a stale sync message before syncing`() = runTest(testDispatcher) {
+        every { parseLogRepository.getAllLogs() } returns flowOf(emptyList())
+        every { bankRepository.getAllBanks() } returns flowOf(emptyList())
+        coEvery { parseLogRepository.deleteFailed() } returns Unit
+        coEvery { smsSyncUseCase.sync() } returns SyncResult()
+        val vm = viewModel()
+
+        vm.resync()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.isSyncing)
+
+        vm.resync()
+        assertNull(vm.uiState.value.syncMessage)
+        advanceUntilIdle()
+        assertEquals("Scanned 0, added 0, unparsed 0", vm.uiState.value.syncMessage)
+    }
+
+    @Test
     fun `consumeSyncMessage clears the message`() = runTest(testDispatcher) {
         every { parseLogRepository.getAllLogs() } returns flowOf(emptyList())
         every { bankRepository.getAllBanks() } returns flowOf(emptyList())
