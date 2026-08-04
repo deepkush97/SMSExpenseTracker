@@ -72,10 +72,11 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             )
         }
         composable(
-            route = "banks/{bankId}/rules/edit?ruleId={ruleId}",
+            route = "banks/{bankId}/rules/edit?ruleId={ruleId}&sampleSms={sampleSms}",
             arguments = listOf(
                 navArgument("bankId") { type = NavType.LongType },
-                navArgument("ruleId") { type = NavType.LongType; defaultValue = -1L }
+                navArgument("ruleId") { type = NavType.LongType; defaultValue = -1L },
+                navArgument("sampleSms") { type = NavType.StringType; defaultValue = "" }
             )
         ) {
             RuleEditorScreen(

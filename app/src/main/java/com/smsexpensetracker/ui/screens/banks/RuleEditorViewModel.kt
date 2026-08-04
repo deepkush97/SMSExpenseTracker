@@ -43,7 +43,9 @@ class RuleEditorViewModel @Inject constructor(
     private val ruleId: Long? = savedStateHandle.get<Long>("ruleId").takeIf { it != -1L }
     private var existingRule: SmsRule? = null
 
-    private val _uiState = MutableStateFlow(RuleEditorUiState())
+    private val _uiState = MutableStateFlow(
+        RuleEditorUiState(sampleSms = savedStateHandle.get<String>("sampleSms").orEmpty())
+    )
     val uiState: StateFlow<RuleEditorUiState> = _uiState.asStateFlow()
 
     val bank: StateFlow<Bank?> = kotlinx.coroutines.flow.flow {

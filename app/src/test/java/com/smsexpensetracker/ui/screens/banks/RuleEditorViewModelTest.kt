@@ -81,6 +81,14 @@ class RuleEditorViewModelTest {
     }
 
     @Test
+    fun `sampleSms nav arg pre-fills the sample sms field`() = runTest(testDispatcher) {
+        coEvery { bankRepository.getBankById(1L) } returns hdfc
+        val vm = viewModel(mapOf("bankId" to 1L, "ruleId" to -1L, "sampleSms" to smsBody))
+        advanceUntilIdle()
+        assertEquals(smsBody, vm.uiState.value.sampleSms)
+    }
+
+    @Test
     fun `edit mode pre-fills pattern and description from existing rule`() = runTest(testDispatcher) {
         coEvery { bankRepository.getBankById(1L) } returns hdfc
         coEvery { ruleRepository.getRuleById(7L) } returns existingRule
