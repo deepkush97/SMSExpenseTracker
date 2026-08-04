@@ -150,6 +150,7 @@
 - [x] Implement CSV export/import buttons
 - [x] Demo data is opt-in — the app starts empty (no auto-seed on launch); Settings → Data → **Load demo data** seeds 60 transactions (second tap reports "Demo data already loaded")
 - [x] Implement log viewer: view/share/clear error logs
+  - [x] **Unparsed SMS review screen** — Settings → "Unparsed SMS" lists failed SMS bodies (deduped, with count/bank/sender), "Fix" opens the Rule Editor pre-filled with the SMS body + detected bank, and "Re-sync now" clears stale FAILED parse logs before re-running sync
 - [ ] Implement about section: app version, build info
 - [ ] **Verify:** Settings operations (add bank, edit rule, export CSV) persist correctly
 
@@ -173,7 +174,7 @@
 - [ ] Implement incremental dashboard updates as batches complete
 - [ ] Implement sync complete banner: "X SMS scanned, Y transactions found, Z unparsed"
 - [ ] Handle sync failure: error banner with retry
-- [ ] Implement unparsed SMS list (tappable from completion banner)
+- [~] Implement unparsed SMS list (tappable from completion banner) _(shipped as Settings → Unparsed SMS instead — the completion-banner entry point is deferred)_
 - [ ] Implement re-sync option in Settings
 - [ ] **Verify:** Progress banner updates live; dashboard populates incrementally
 

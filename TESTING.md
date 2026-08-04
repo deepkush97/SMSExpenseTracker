@@ -1,6 +1,6 @@
 # Manual QA Checklist — SMS Expense Tracker
 
-A tap-through test plan. Every item is **Action → Expected result**. Work top to bottom on a fresh install. A fresh install starts with an **empty** transaction list — nothing is auto-seeded. Demo data is opt-in via Settings → Data → **Load demo data** (see §11).
+A tap-through test plan. Every item is **Action → Expected result**. Work top to bottom on a fresh install. A fresh install starts with an **empty** transaction list — nothing is auto-seeded. Demo data is opt-in via Settings → Data → **Load demo data** (see §12).
 
 > **Reference numbers:** [U] = covered by an automated unit test today; [M] = manual-only (no unit test). Not every row is marked — the ones that are flag coverage where it matters.
 
@@ -23,7 +23,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ## 2. Dashboard
 
-> These rows assume data is present — load demo data first (Settings → Data → **Load demo data**, §11).
+> These rows assume data is present — load demo data first (Settings → Data → **Load demo data**, §12).
 
 - [ ] Look at the two summary cards. → "Total Spent" and "Total Received" show animated rupee totals (demo data ≠ 0).
 - [ ] Look at the three charts. → "Spending by Bank" (bar), "Monthly Trend" (line), "Category Breakdown" (pie + legend) all render rather than showing "No … data yet".
@@ -125,7 +125,22 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ---
 
-## 11. Edge Cases & Known Behavior
+## 11. Unparsed SMS Review
+
+> Requires SMS permission and at least one SMS that fails to parse. To produce failures reliably: `scripts/push_test_sms.sh`, then temporarily disable a seeded rule (or sync before the 14-rule seed shipped) so some SMS don't match.
+
+- [ ] Settings → **Unparsed SMS** (row sits directly above **Logs**). → Screen opens with the **Failed** filter selected.
+- [ ] Each card shows the **full SMS body** (monospace, wrapped), sender, bank name (if the sender matches a bank), a red **FAILED** badge, "Failed N×", and the last attempt time.
+- [ ] Duplicate bodies appear **once** with a count (e.g. same SMS pushed twice → "Failed 2x").
+- [ ] Toggle the **All | Failed** chips. → Failed shows deduped cards; All shows raw parse-log rows (one per log entry).
+- [ ] An SMS whose sender matches no bank → "Fix" is **disabled** and the hint "No matching bank — add it in Banks & Rules first." shows.
+- [ ] Tap **Fix** on a failing SMS → the **Rule Editor** opens with the **Sample SMS** field pre-filled and the bank selected; write a matching template, **Test** → green "Matches", **Save**.
+- [ ] Return to the review screen and tap **Re-sync now** → snackbar "Scanned X, added Y, unparsed Z"; the fixed SMS **no longer appears** (old FAILED rows were cleared first).
+- [ ] Tap **Re-sync now** with SMS permission revoked → snackbar "Sync failed. Try again."; **Re-sync now** is disabled (spinner) while syncing.
+
+---
+
+## 12. Edge Cases & Known Behavior
 
 - [ ] **Empty state** — clear app data (or delete all transactions) then open Transactions. → "No transactions yet …" with a **Sync SMS** action. Clearing data then relaunching **stays empty** — the app never auto-seeds.
 - [ ] Settings → **Data** → **Load demo data**. → Inserts 60 demo transactions (snackbar "Loaded 60 demo transactions"); tapping again reports "Demo data already loaded" (idempotent — no duplicates).
@@ -136,11 +151,11 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 310 tests cover |
+| Layer | What the 329 tests cover |
 |---|---|
 | Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |
 | Data | ParserEngine, SmsReader query, repository dedup, repositories |
-| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip |
+| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel |
 | Validation | `BankRulesValidation` (bank/rule/category names, template pattern) |
 | **Not covered (manual-only)** | Anything touching the Android runtime — `ContentResolver`/Room/the emulator or real SMS: actual sync, SMS permission flow, share sheet, file picker, DataStore theme, and all Compose UI interaction such as chip filters, dialogs, navigation, charts |
