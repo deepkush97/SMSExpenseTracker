@@ -12,6 +12,7 @@ import com.smsexpensetracker.ui.screens.banks.BankDetailScreen
 import com.smsexpensetracker.ui.screens.banks.BankManagementScreen
 import com.smsexpensetracker.ui.screens.banks.RuleEditorScreen
 import com.smsexpensetracker.ui.screens.categories.CategoryManagementScreen
+import com.smsexpensetracker.ui.screens.categorize.CategorizeScreen
 import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
 import com.smsexpensetracker.ui.screens.logs.LogViewerScreen
 import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
@@ -41,6 +42,9 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         }
         composable("manual_entry") {
             ManualEntryScreen(onBack = { navController.popBackStack() })
+        }
+        composable(BottomNavItem.Categorize.route) {
+            CategorizeScreen()
         }
         composable(BottomNavItem.Parser.route) { ParserScreen() }
         composable(BottomNavItem.Settings.route) {
