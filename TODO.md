@@ -149,6 +149,7 @@
 - [ ] Implement sync controls: trigger re-sync, select range, view last sync time
 - [x] Implement CSV export/import buttons
 - [x] Demo data is opt-in — the app starts empty (no auto-seed on launch); Settings → Data → **Load demo data** seeds 60 transactions (second tap reports "Demo data already loaded")
+  - [x] **Demo-data gate** — while demo data is present, real entry is blocked (Transactions sync, Manual Entry save, Parser add-as-transaction, CSV import) with a "Demo data present" dialog; Settings → **Delete demo data** wipes the demo rows and unblocks everything
 - [x] Implement log viewer: view/share/clear error logs
   - [x] **Unparsed SMS review screen** — Settings → "Unparsed SMS" lists failed SMS bodies (deduped, with count/bank/sender), "Fix" opens the Rule Editor pre-filled with the SMS body + detected bank, and "Re-sync now" clears stale FAILED parse logs before re-running sync
 - [ ] Implement about section: app version, build info

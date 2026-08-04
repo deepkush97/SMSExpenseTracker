@@ -149,13 +149,29 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ---
 
+## 13. Demo-Data Gate
+
+A tap-through test plan. Every item is **Action → Expected result**.
+
+- [ ] Settings → **Load demo data** with an empty DB → "Loaded N demo transactions".
+- [ ] Transactions screen → tap **Sync** (or the refresh icon) → **Demo data present** dialog appears; **Cancel** dismisses; no sync runs.
+- [ ] In the same dialog, tap **Delete demo data** → dialog closes; re-tap **Sync** → sync runs normally (permission prompt if not granted).
+- [ ] Manual entry → fill valid amount + payee → **Save** → **Demo data present** dialog appears (transaction NOT saved). Delete demo data, re-tap Save → "Transaction saved".
+- [ ] Settings → **Import CSV** → **Demo data present** dialog appears (import does NOT run). After deleting demo data, Import CSV works.
+- [ ] Parser screen → paste a parseable bank SMS, **Test Parse** → **Add as Transaction** → **Demo data present** dialog appears; no transaction inserted.
+- [ ] Settings → **Delete demo data** row is visible only while demo data is loaded. Tap it → **Demo data present** dialog → Delete → snackbar "Demo data deleted"; row disappears.
+- [ ] **Delete demo data** wipes ALL transactions (demo rows are the only rows that can exist). Dashboard shows empty state.
+- [ ] Real data path is never blocked once the flag is cleared.
+
+---
+
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 329 tests cover |
+| Layer | What the 346 tests cover |
 |---|---|
 | Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |
-| Data | ParserEngine, SmsReader query, repository dedup, repositories |
-| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel |
+| Data | ParserEngine, SmsReader query, repository dedup, repositories, `DemoDataSeeder`, `deleteAll`, demo-flag lifecycle in `SmsSyncUseCase` |
+| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel, demo-data barrier gate (Transactions/ManualEntry/Parser/Settings) |
 | Validation | `BankRulesValidation` (bank/rule/category names, template pattern) |
 | **Not covered (manual-only)** | Anything touching the Android runtime — `ContentResolver`/Room/the emulator or real SMS: actual sync, SMS permission flow, share sheet, file picker, DataStore theme, and all Compose UI interaction such as chip filters, dialogs, navigation, charts |
