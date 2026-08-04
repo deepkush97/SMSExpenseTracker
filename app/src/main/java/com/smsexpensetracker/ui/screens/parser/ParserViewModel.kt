@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smsexpensetracker.core.parser.ParserEngine
 import com.smsexpensetracker.core.parser.detectBankForSender
+import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.SmsRule
@@ -17,6 +19,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,14 +37,18 @@ data class ParserUiState(
     val isParsing: Boolean = false,
     val isSaving: Boolean = false,
     val showSavedSnackbar: Boolean = false,
-    val saveError: String? = null
+    val saveError: String? = null,
+    val demoDataLoaded: Boolean = false,
+    val showDemoBarrier: Boolean = false
 )
 
 @HiltViewModel
 class ParserViewModel @Inject constructor(
     private val bankRepository: BankRepository,
     private val smsRuleRepository: SmsRuleRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val demoDataPreferences: DemoDataPreferences,
+    private val demoDataSeeder: DemoDataSeeder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ParserUiState())
@@ -55,6 +62,12 @@ class ParserViewModel @Inject constructor(
             allRules = smsRuleRepository.getAllRules().first()
             _uiState.update { it.copy(banks = banks) }
             refreshDisplayRules()
+        }
+
+        viewModelScope.launch {
+            demoDataPreferences.demoDataLoaded.collect { loaded ->
+                _uiState.update { it.copy(demoDataLoaded = loaded) }
+            }
         }
     }
 
@@ -103,6 +116,11 @@ class ParserViewModel @Inject constructor(
         val bankId = result?.bankId
         if (current.isSaving || result == null || bankId == null || result.amount <= 0) return
 
+        if (current.demoDataLoaded) {
+            _uiState.update { it.copy(showDemoBarrier = true) }
+            return
+        }
+
         _uiState.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
@@ -138,4 +156,13 @@ class ParserViewModel @Inject constructor(
     fun consumeSavedSnackbar() = _uiState.update { it.copy(showSavedSnackbar = false) }
 
     fun consumeSaveError() = _uiState.update { it.copy(saveError = null) }
+
+    fun dismissDemoBarrier() = _uiState.update { it.copy(showDemoBarrier = false) }
+
+    fun confirmDeleteDemoData() {
+        viewModelScope.launch {
+            demoDataSeeder.deleteDemoData()
+            _uiState.update { it.copy(showDemoBarrier = false, demoDataLoaded = false) }
+        }
+    }
 }

@@ -1,5 +1,7 @@
 package com.smsexpensetracker.ui.screens.parser
 
+import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Bank
 import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.SmsRule
@@ -38,6 +40,10 @@ class ParserViewModelTest {
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var viewModel: ParserViewModel
 
+    private val demoDataPreferences = mockk<DemoDataPreferences>()
+    private val demoDataSeeder = mockk<DemoDataSeeder>()
+    private val demoDataLoadedFlow = MutableStateFlow(false)
+
     private val hdfcBank = Bank(id = 1L, name = "HDFC Bank", smsSender = "HDFCBK")
     private val iciciBank = Bank(id = 2L, name = "ICICI Bank", smsSender = "ICICIB")
 
@@ -68,6 +74,7 @@ class ParserViewModelTest {
         bankRepository = mockk()
         smsRuleRepository = mockk()
         transactionRepository = mockk()
+        every { demoDataPreferences.demoDataLoaded } returns demoDataLoadedFlow
     }
 
     @After
@@ -82,7 +89,10 @@ class ParserViewModelTest {
         every { bankRepository.getAllBanks() } returns MutableStateFlow(banks)
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(rules)
         coEvery { transactionRepository.insert(any()) } returns 1L
-        return ParserViewModel(bankRepository, smsRuleRepository, transactionRepository)
+        return ParserViewModel(
+            bankRepository, smsRuleRepository, transactionRepository,
+            demoDataPreferences, demoDataSeeder
+        )
     }
 
     @Test
@@ -219,6 +229,28 @@ class ParserViewModelTest {
             )
         }
         assertNull(viewModel.uiState.value.result)
+    }
+
+    @Test
+    fun `addAsTransaction opens demo barrier instead of inserting when demo data present`() = runTest(testDispatcher) {
+        demoDataLoadedFlow.value = true
+        viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.onSmsChange(
+            "Spent Rs.4831.76 On HDFC Bank Card 1111 At Acme Inc. On 2026-07-26:21:35:51.Not You? To Block+Reissue Call 18002586161"
+        )
+        viewModel.onSenderChange("AD-HDFCBK-S")
+        advanceUntilIdle()
+        viewModel.parse()
+        advanceUntilIdle()
+
+        viewModel.addAsTransaction()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showDemoBarrier)
+        coVerify(exactly = 0) { transactionRepository.insert(any()) }
     }
 
     @Test

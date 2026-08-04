@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.smsexpensetracker.domain.model.TransactionType
+import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import com.smsexpensetracker.ui.theme.Amber40
 import com.smsexpensetracker.ui.theme.Amber80
 import com.smsexpensetracker.ui.theme.Green40
@@ -206,6 +207,13 @@ fun ParserScreen(
                 }
             }
         }
+    }
+
+    if (state.showDemoBarrier) {
+        DemoDataBarrierDialog(
+            onConfirmDelete = viewModel::confirmDeleteDemoData,
+            onDismiss = viewModel::dismissDemoBarrier
+        )
     }
 }
 
