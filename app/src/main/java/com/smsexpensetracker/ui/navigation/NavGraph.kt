@@ -1,5 +1,6 @@
 package com.smsexpensetracker.ui.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -17,6 +18,7 @@ import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
 import com.smsexpensetracker.ui.screens.parser.ParserScreen
 import com.smsexpensetracker.ui.screens.settings.SettingsScreen
 import com.smsexpensetracker.ui.screens.transactions.TransactionsScreen
+import com.smsexpensetracker.ui.screens.unparsed.UnparsedSmsScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -45,11 +47,20 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             SettingsScreen(
                 onNavigateToCategories = { navController.navigate("categories") },
                 onNavigateToBanks = { navController.navigate("banks") },
-                onNavigateToLogs = { navController.navigate("logs") }
+                onNavigateToLogs = { navController.navigate("logs") },
+                onNavigateToUnparsedSms = { navController.navigate("unparsed_sms") }
             )
         }
         composable("logs") {
             LogViewerScreen(onBack = { navController.popBackStack() })
+        }
+        composable("unparsed_sms") {
+            UnparsedSmsScreen(
+                onBack = { navController.popBackStack() },
+                onFix = { bankId, smsBody ->
+                    navController.navigate("banks/$bankId/rules/edit?sampleSms=${Uri.encode(smsBody)}")
+                }
+            )
         }
         composable("categories") {
             CategoryManagementScreen(onBack = { navController.popBackStack() })

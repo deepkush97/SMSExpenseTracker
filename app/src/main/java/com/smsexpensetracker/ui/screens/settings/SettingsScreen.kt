@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SmsFailed
 import androidx.compose.material.icons.outlined.BrightnessAuto
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Nightlight
@@ -51,7 +52,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateToCategories: () -> Unit = {},
     onNavigateToBanks: () -> Unit = {},
-    onNavigateToLogs: () -> Unit = {}
+    onNavigateToLogs: () -> Unit = {},
+    onNavigateToUnparsedSms: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -221,6 +223,11 @@ fun SettingsScreen(
             icon = Icons.Filled.PlayArrow,
             label = "Load demo data",
             onClick = { viewModel.loadDemoData() }
+        )
+        SettingsActionRow(
+            icon = Icons.Filled.SmsFailed,
+            label = "Unparsed SMS",
+            onClick = onNavigateToUnparsedSms
         )
         SettingsActionRow(
             icon = Icons.Filled.Description,
