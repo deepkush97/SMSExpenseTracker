@@ -23,4 +23,5 @@ interface TransactionRepository {
     fun getCategorySummary(): Flow<List<CategorySummary>>
     fun getTotalByType(type: TransactionType): Flow<Long?>
     fun getRecentTransactions(): Flow<List<Transaction>>
+    suspend fun deleteAll()
 }

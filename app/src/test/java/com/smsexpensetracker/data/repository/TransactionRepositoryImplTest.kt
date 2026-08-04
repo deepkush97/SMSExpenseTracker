@@ -236,6 +236,16 @@ class TransactionRepositoryImplTest {
         }
     }
 
+    @Test
+    fun `deleteAll delegates to the dao`() = runTest {
+        coEvery { transactionDao.deleteAll() } returns Unit
+        val repo = TransactionRepositoryImpl(transactionDao)
+
+        repo.deleteAll()
+
+        coVerify(exactly = 1) { transactionDao.deleteAll() }
+    }
+
     private fun assertTransaction(expected: TransactionEntity, actual: Transaction) {
         assertEquals(expected.id, actual.id)
         assertEquals(expected.bankId, actual.bankId)
