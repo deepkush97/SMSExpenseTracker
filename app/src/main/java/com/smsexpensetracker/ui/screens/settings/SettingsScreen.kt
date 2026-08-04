@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
@@ -44,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import com.smsexpensetracker.ui.theme.ThemeMode
 
 @Composable
@@ -224,6 +226,13 @@ fun SettingsScreen(
             label = "Load demo data",
             onClick = { viewModel.loadDemoData() }
         )
+        if (state.demoDataLoaded) {
+            SettingsActionRow(
+                icon = Icons.Filled.DeleteForever,
+                label = "Delete demo data",
+                onClick = { viewModel.requestDeleteDemo() }
+            )
+        }
         SettingsActionRow(
             icon = Icons.Filled.SmsFailed,
             label = "Unparsed SMS",
@@ -259,6 +268,13 @@ fun SettingsScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+
+        if (state.showDemoBarrier) {
+            DemoDataBarrierDialog(
+                onConfirmDelete = viewModel::confirmDeleteDemoData,
+                onDismiss = viewModel::dismissDemoBarrier
+            )
+        }
     }
 }
 

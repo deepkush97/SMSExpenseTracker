@@ -3,6 +3,7 @@ package com.smsexpensetracker.ui.screens.settings
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.core.settings.ThemePreferences
 import com.smsexpensetracker.data.csv.ExportResult
 import com.smsexpensetracker.data.demo.DemoDataSeeder
@@ -23,7 +24,9 @@ data class SettingsUiState(
     val isCsvBusy: Boolean = false,
     val pendingExport: ExportResult? = null,
     val demoMessage: String? = null,
-    val isDemoBusy: Boolean = false
+    val isDemoBusy: Boolean = false,
+    val demoDataLoaded: Boolean = false,
+    val showDemoBarrier: Boolean = false
 )
 
 @HiltViewModel
@@ -31,7 +34,8 @@ class SettingsViewModel @Inject constructor(
     private val themePreferences: ThemePreferences,
     private val exportCsvUseCase: ExportCsvUseCase,
     private val importCsvUseCase: ImportCsvUseCase,
-    private val demoDataSeeder: DemoDataSeeder
+    private val demoDataSeeder: DemoDataSeeder,
+    private val demoDataPreferences: DemoDataPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -41,6 +45,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             themePreferences.themeMode.collect { theme ->
                 _uiState.update { it.copy(themeMode = theme) }
+            }
+        }
+        viewModelScope.launch {
+            demoDataPreferences.demoDataLoaded.collect { loaded ->
+                _uiState.update { it.copy(demoDataLoaded = loaded) }
             }
         }
     }
@@ -73,6 +82,10 @@ class SettingsViewModel @Inject constructor(
 
     fun importCsv(uri: Uri) {
         if (_uiState.value.isCsvBusy) return
+        if (_uiState.value.demoDataLoaded) {
+            _uiState.update { it.copy(showDemoBarrier = true) }
+            return
+        }
         _uiState.update { it.copy(isCsvBusy = true) }
         viewModelScope.launch {
             val result = importCsvUseCase(uri)
@@ -122,5 +135,18 @@ class SettingsViewModel @Inject constructor(
 
     fun consumeDemoMessage() {
         _uiState.update { it.copy(demoMessage = null) }
+    }
+
+    fun requestDeleteDemo() = _uiState.update { it.copy(showDemoBarrier = true) }
+
+    fun dismissDemoBarrier() = _uiState.update { it.copy(showDemoBarrier = false) }
+
+    fun confirmDeleteDemoData() {
+        viewModelScope.launch {
+            demoDataSeeder.deleteDemoData()
+            _uiState.update {
+                it.copy(showDemoBarrier = false, demoDataLoaded = false, demoMessage = "Demo data deleted")
+            }
+        }
     }
 }

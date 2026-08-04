@@ -1,6 +1,7 @@
 package com.smsexpensetracker.ui.screens.settings
 
 import android.net.Uri
+import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.core.settings.ThemePreferences
 import com.smsexpensetracker.data.csv.ExportResult
 import com.smsexpensetracker.data.demo.DemoDataSeeder
@@ -14,6 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -37,10 +39,13 @@ class SettingsViewModelTest {
     private val exportCsvUseCase = mockk<ExportCsvUseCase>()
     private val importCsvUseCase = mockk<ImportCsvUseCase>()
     private val demoDataSeeder = mockk<DemoDataSeeder>()
+    private val demoDataPreferences = mockk<DemoDataPreferences>()
+    private val demoDataLoadedFlow = MutableStateFlow(false)
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        every { demoDataPreferences.demoDataLoaded } returns demoDataLoadedFlow
     }
 
     @After
@@ -49,7 +54,7 @@ class SettingsViewModelTest {
     }
 
     private fun viewModel() =
-        SettingsViewModel(themePreferences, exportCsvUseCase, importCsvUseCase, demoDataSeeder)
+        SettingsViewModel(themePreferences, exportCsvUseCase, importCsvUseCase, demoDataSeeder, demoDataPreferences)
 
     @Test
     fun `exposes persisted theme mode`() = runTest(testDispatcher) {
@@ -200,5 +205,47 @@ class SettingsViewModelTest {
 
         assertTrue(viewModel.uiState.value.demoMessage?.contains("Demo load failed") == true)
         assertFalse(viewModel.uiState.value.isDemoBusy)
+    }
+
+    @Test
+    fun `importCsv opens demo barrier instead of importing when demo data present`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        demoDataLoadedFlow.value = true
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.importCsv(mockk<Uri>())
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showDemoBarrier)
+        coVerify(exactly = 0) { importCsvUseCase(any()) }
+    }
+
+    @Test
+    fun `requestDeleteDemo opens the barrier`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        demoDataLoadedFlow.value = true
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.requestDeleteDemo()
+
+        assertTrue(viewModel.uiState.value.showDemoBarrier)
+    }
+
+    @Test
+    fun `confirmDeleteDemoData deletes demo, closes barrier, sets message`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        demoDataLoadedFlow.value = true
+        coEvery { demoDataSeeder.deleteDemoData() } returns Unit
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.confirmDeleteDemoData()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { demoDataSeeder.deleteDemoData() }
+        assertFalse(viewModel.uiState.value.showDemoBarrier)
+        assertEquals("Demo data deleted", viewModel.uiState.value.demoMessage)
     }
 }
