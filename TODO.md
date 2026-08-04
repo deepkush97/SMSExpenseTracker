@@ -118,6 +118,7 @@
 - [x] Implement FAB (+) -> navigates to Manual Entry screen
 - [x] Implement Transaction List empty state
 - [x] Connect to `TransactionsViewModel` + `GetTransactionsUseCase` with live filter
+- [x] **Bulk categorize flow** — Categorize tab (between Transactions and Parser): card-by-card category assignment (None + categories dropdown, Skip, Start over)
 - [x] **Verify:** Transactions render, search filters, category assignment works
 
 ### [-] 12. Manual Transaction Entry Screen

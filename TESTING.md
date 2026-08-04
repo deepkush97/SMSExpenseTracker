@@ -165,13 +165,30 @@ A tap-through test plan. Every item is **Action → Expected result**.
 
 ---
 
+## 14. Bulk Categorize
+
+A tap-through test plan. Every item is **Action → Expected result**.
+
+- [ ] Bottom nav shows a **Categorize** tab (icon) between Transactions and Parser.
+- [ ] With no transactions → tab shows the "No transactions yet" empty state.
+- [ ] After loading demo data / syncing → tab shows a card: amount, type, description, bank, date, and the current category ("Uncategorized" for SMS transactions).
+- [ ] Progress reads "1 of N".
+- [ ] Uncategorized transactions appear BEFORE already-categorized ones.
+- [ ] Open the category dropdown → pick **Food** → card advances to the next transaction; Transactions list shows the first one now categorized.
+- [ ] Pick **None** in the dropdown → transaction becomes Uncategorized and the card advances.
+- [ ] Tap **Skip** → card advances WITHOUT changing the category.
+- [ ] Reach the end → "All done!" + "Categorized N of M transactions."; **Start over** returns to the first card.
+- [ ] Categorizing works while demo data is present (no demo barrier here).
+
+---
+
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 346 tests cover |
+| Layer | What the 352 tests cover |
 |---|---|
 | Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |
 | Data | ParserEngine, SmsReader query, repository dedup, repositories, `DemoDataSeeder`, `deleteAll`, demo-flag lifecycle in `SmsSyncUseCase` |
-| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel, demo-data barrier gate (Transactions/ManualEntry/Parser/Settings) |
+| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel, demo-data barrier gate (Transactions/ManualEntry/Parser/Settings), `CategorizeViewModel` (uncategorized-first queue ordering, assign/skip/reset) |
 | Validation | `BankRulesValidation` (bank/rule/category names, template pattern) |
 | **Not covered (manual-only)** | Anything touching the Android runtime — `ContentResolver`/Room/the emulator or real SMS: actual sync, SMS permission flow, share sheet, file picker, DataStore theme, and all Compose UI interaction such as chip filters, dialogs, navigation, charts |
