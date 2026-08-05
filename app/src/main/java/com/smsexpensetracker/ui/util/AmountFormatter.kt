@@ -17,6 +17,13 @@ object AmountFormatter {
         return "$sign${formatPaisa(paisa.absoluteValue)}"
     }
 
+    fun formatPaisaInput(paisa: Long): String {
+        val abs = paisa.absoluteValue
+        val rupees = abs / 100
+        val paise = abs % 100
+        return "$rupees.${paise.toString().padStart(2, '0')}"
+    }
+
     private fun indianGrouping(number: Long): String {
         if (number == 0L) return "0"
         val digits = number.toString()
@@ -40,3 +47,5 @@ object AmountFormatter {
 fun formatPaisa(paisa: Long): String = AmountFormatter.formatPaisa(paisa)
 
 fun formatAmountWithSign(paisa: Long): String = AmountFormatter.formatAmountWithSign(paisa)
+
+fun formatPaisaInput(paisa: Long): String = AmountFormatter.formatPaisaInput(paisa)

@@ -49,3 +49,21 @@ class AmountFormatterSignTest {
         assertEquals("+₹0.00", formatAmountWithSign(0L))
     }
 }
+
+class AmountFormatterInputTest {
+
+    @Test
+    fun wholeRupeesKeepTrailingZeros() {
+        assertEquals("100.00", formatPaisaInput(10000L))
+    }
+
+    @Test
+    fun paisePadToTwoDigits() {
+        assertEquals("1234.50", formatPaisaInput(123450L))
+    }
+
+    @Test
+    fun singlePaiseRendersWithLeadingZero() {
+        assertEquals("0.05", formatPaisaInput(5L))
+    }
+}
