@@ -17,6 +17,7 @@ import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
 import com.smsexpensetracker.ui.util.formatPaisaInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -98,9 +99,10 @@ class TransactionsViewModel @Inject constructor(
     val currentMonth: StateFlow<YearMonth> = _currentMonth.asStateFlow()
 
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
-    val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction.asStateFlow()
 
     private val _editForm = MutableStateFlow(EditFormState())
+
+    private var updateJob: Job? = null
 
     private val _isSyncing = MutableStateFlow(false)
     private val _syncMessage = MutableStateFlow<String?>(null)
@@ -126,7 +128,8 @@ class TransactionsViewModel @Inject constructor(
         _currentMonth,
         _isSyncing,
         _syncMessage,
-        _editForm
+        _editForm,
+        _selectedTransaction
     ) { array ->
         val allTxs = array[0] as List<Transaction>
         val banks = array[1] as List<Bank>
@@ -138,6 +141,7 @@ class TransactionsViewModel @Inject constructor(
         val isSyncing = array[7] as Boolean
         val syncMessage = array[8] as String?
         val edit = array[9] as EditFormState
+        val selectedTx = array[10] as Transaction?
 
         val monthTxs = allTxs.filter { tx ->
             YearMonth.from(tx.transactionDate) == month
@@ -177,7 +181,7 @@ class TransactionsViewModel @Inject constructor(
             selectedBankId = bankId,
             banks = banks,
             categories = categories,
-            selectedTransaction = _selectedTransaction.value,
+            selectedTransaction = selectedTx,
             isLoading = false,
             isSyncing = isSyncing,
             syncMessage = syncMessage,
@@ -213,6 +217,7 @@ class TransactionsViewModel @Inject constructor(
     }
 
     fun onDismissSheet() {
+        updateJob?.cancel()
         _selectedTransaction.value = null
         _editForm.value = EditFormState()
     }
@@ -258,7 +263,7 @@ class TransactionsViewModel @Inject constructor(
         val dateTime = form.dateTime ?: tx.transactionDate
 
         _editForm.update { it.copy(isUpdating = true) }
-        viewModelScope.launch {
+        updateJob = viewModelScope.launch {
             try {
                 transactionRepository.updateEditedTransaction(
                     tx.copy(

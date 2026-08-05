@@ -16,16 +16,19 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -220,6 +223,15 @@ class TransactionsViewModelTest {
         }
         assertTrue(viewModel.uiState.value.selectedTransaction == null)
         assertTrue(viewModel.uiState.value.showEditSavedSnackbar)
+
+        val s = viewModel.uiState.value
+        assertEquals("", s.editAmountInput)
+        assertEquals(TransactionType.DEBIT, s.editType)
+        assertNull(s.editDateTime)
+        assertNull(s.editBankId)
+        assertEquals("", s.editDescription)
+        assertNull(s.editCategoryId)
+        assertFalse(s.isUpdating)
     }
 
     @Test
@@ -299,6 +311,97 @@ class TransactionsViewModelTest {
         assertTrue(viewModel.uiState.value.selectedTransaction != null)
         assertEquals("Could not update transaction. Please try again.", viewModel.uiState.value.editSaveError)
         assertFalse(viewModel.uiState.value.isUpdating)
+    }
+
+    @Test
+    fun `second updateTransaction while update in flight does not launch a second repository call`() =
+        runTest(testDispatcher) {
+            coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+            every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+            every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+            coEvery { transactionRepository.updateEditedTransaction(any()) } coAnswers { delay(1000) }
+            viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
+            backgroundScope.launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+            viewModel.onTransactionClick(mockTransaction())
+            advanceUntilIdle()
+
+            viewModel.updateTransaction()
+            runCurrent()
+            viewModel.updateTransaction()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { transactionRepository.updateEditedTransaction(any()) }
+        }
+
+    @Test
+    fun `dismissing sheet while update in flight cancels update and skips completion`() =
+        runTest(testDispatcher) {
+            coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+            every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+            every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+            coEvery { transactionRepository.updateEditedTransaction(any()) } coAnswers { delay(1000) }
+            viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
+            backgroundScope.launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+            viewModel.onTransactionClick(mockTransaction())
+            advanceUntilIdle()
+            viewModel.updateTransaction()
+            runCurrent()
+            assertTrue(viewModel.uiState.value.isUpdating)
+
+            viewModel.onDismissSheet()
+            advanceUntilIdle()
+
+            val s = viewModel.uiState.value
+            assertTrue(s.selectedTransaction == null)
+            assertFalse(s.isUpdating)
+            assertFalse(s.showEditSavedSnackbar)
+            assertEquals("", s.editAmountInput)
+            assertEquals("", s.editDescription)
+            coVerify(exactly = 1) { transactionRepository.updateEditedTransaction(any()) }
+        }
+
+    @Test
+    fun `consumeEditSavedSnackbar clears the saved snackbar flag`() = runTest(testDispatcher) {
+        coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+        every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+        every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+        coEvery { transactionRepository.updateEditedTransaction(any()) } returns Unit
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+        viewModel.onTransactionClick(mockTransaction())
+        advanceUntilIdle()
+        viewModel.updateTransaction()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showEditSavedSnackbar)
+
+        viewModel.consumeEditSavedSnackbar()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showEditSavedSnackbar)
+    }
+
+    @Test
+    fun `consumeEditSaveError clears the edit save error`() = runTest(testDispatcher) {
+        coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+        every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+        every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+        coEvery { transactionRepository.updateEditedTransaction(any()) } throws RuntimeException("boom")
+        viewModel = TransactionsViewModel(getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase, demoDataPreferences, demoDataSeeder)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+        viewModel.onTransactionClick(mockTransaction())
+        advanceUntilIdle()
+        viewModel.updateTransaction()
+        advanceUntilIdle()
+        assertEquals("Could not update transaction. Please try again.", viewModel.uiState.value.editSaveError)
+
+        viewModel.consumeEditSaveError()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.editSaveError)
     }
 
     @Test

@@ -40,6 +40,11 @@ class TransactionEditValidationTest {
     }
 
     @Test
+    fun `description at exactly 200 characters is accepted`() {
+        assertNull(validateTransactionEdit("100", "x".repeat(200)).description)
+    }
+
+    @Test
     fun `valid input has no errors`() {
         val errors = validateTransactionEdit("1,250.50", "Swiggy order")
         assertNull(errors.amount)
