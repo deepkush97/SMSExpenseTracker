@@ -110,26 +110,43 @@ class SmsSyncUseCase @Inject constructor(
 
     suspend fun handleIncomingSms(body: String, sender: String, timestamp: Long): Boolean {
         try {
-            if (demoDataPreferences.demoDataLoaded.first()) return false
-            val banks = bankRepository.getAllBanks().first()
-            if (detectBankForSender(sender, banks) == null) return false
+            return withContext(ioDispatcher) {
+                if (demoDataPreferences.demoDataLoaded.first()) return@withContext false
+                val banks = bankRepository.getAllBanks().first()
+                val knownBank = detectBankForSender(sender, banks) != null
 
-            val rulePairs = smsRuleRepository.getAllRules().first()
-                .filter { it.isActive }
-                .map { it.bankId to it.pattern }
+                val rulePairs = smsRuleRepository.getAllRules().first()
+                    .filter { it.isActive }
+                    .map { it.bankId to it.pattern }
 
-            val inserted = when (val result = classifySms(body, sender, timestamp, rulePairs)) {
-                is ClassifyResult.TransactionReady ->
-                    transactionRepository.insertBatch(listOf(result.transaction))
-                ClassifyResult.ParseFailed, ClassifyResult.Skipped -> 0
+                val inserted = when (val result = classifySms(
+                    body,
+                    sender,
+                    timestamp,
+                    rulePairs,
+                    writeParseLog = knownBank
+                )) {
+                    is ClassifyResult.TransactionReady ->
+                        transactionRepository.insertBatch(listOf(result.transaction))
+                    ClassifyResult.ParseFailed, ClassifyResult.Skipped -> 0
+                }
+
+                if (inserted > 0) {
+                    try {
+                        syncMetaRepository.upsert(
+                            SyncMeta(
+                                lastSyncTimestamp = System.currentTimeMillis(),
+                                lastSmsId = null
+                            )
+                        )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.tag("PARSE").w(e, "sync meta upsert failed after insert")
+                    }
+                }
+                inserted > 0
             }
-
-            if (inserted > 0) {
-                syncMetaRepository.upsert(
-                    SyncMeta(lastSyncTimestamp = System.currentTimeMillis(), lastSmsId = null)
-                )
-            }
-            return inserted > 0
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -142,21 +159,24 @@ class SmsSyncUseCase @Inject constructor(
         body: String,
         sender: String,
         timestamp: Long,
-        rulePairs: List<Pair<Long, String>>
+        rulePairs: List<Pair<Long, String>>,
+        writeParseLog: Boolean = true
     ): ClassifyResult {
         val parsed = ParserEngine.parse(body, sender, rulePairs)
         if (parsed.errorMessage != null) {
             Timber.tag("PARSE").w("Parse failed [$sender]: ${parsed.errorMessage}")
-            parseLogRepository.insert(
-                ParseLog(
-                    id = 0L,
-                    smsBody = body,
-                    smsSender = sender,
-                    parsedAt = LocalDateTime.now(),
-                    status = ParseStatus.FAILED,
-                    errorMessage = parsed.errorMessage
+            if (writeParseLog) {
+                parseLogRepository.insert(
+                    ParseLog(
+                        id = 0L,
+                        smsBody = body,
+                        smsSender = sender,
+                        parsedAt = LocalDateTime.now(),
+                        status = ParseStatus.FAILED,
+                        errorMessage = parsed.errorMessage
+                    )
                 )
-            )
+            }
             return ClassifyResult.ParseFailed
         }
         if (parsed.bankId != null && parsed.amount > 0L) {

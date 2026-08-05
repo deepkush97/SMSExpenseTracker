@@ -19,12 +19,14 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -306,5 +308,63 @@ class SmsSyncUseCaseTest {
         val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
 
         assertEquals(false, result)
+    }
+
+    @Test
+    fun `handleIncomingSms captures unrecognized-sender bank sms via rule match`() = runTest {
+        val iciciRule = SmsRule(
+            id = 2L,
+            bankId = 2L,
+            pattern = "ICICI Bank Acct \\w+ debited for Rs ([\\d,.]+) on [\\w-]+; (.+?) credited\\. UPI",
+            description = "ICICI UPI Debit"
+        )
+        val body = "ICICI Bank Acct XX123 debited for Rs 242.00 on 26-Jul-26; BUS Ticket credited. UPI:003637672623. Call 18002662 for dispute. SMS BLOCK 796 to 9215676766."
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(iciciRule))
+        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        val result = useCase.handleIncomingSms(body, "AD-ICICIT-S", 1750000000000L)
+
+        assertEquals(true, result)
+        coVerify {
+            transactionRepository.insertBatch(
+                match { list -> list.size == 1 && list[0].bankId == 2L }
+            )
+        }
+        coVerify(exactly = 0) { parseLogRepository.insert(any()) }
+    }
+
+    @Test
+    fun `concurrent sync and handleIncomingSms both complete`() = runTest {
+        coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { parseLogRepository.insert(any()) } returns Unit
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        val syncDeferred = backgroundScope.async { useCase.sync() }
+        val incomingDeferred = backgroundScope.async {
+            useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
+        }
+        runCurrent()
+        advanceUntilIdle()
+
+        val syncResult = syncDeferred.await()
+        val incomingResult = incomingDeferred.await()
+
+        assertEquals(1, syncResult.scanned)
+        assertEquals(1, syncResult.inserted)
+        assertEquals(true, incomingResult)
+    }
+
+    @Test
+    fun `handleIncomingSms returns true when upsert throws after insert`() = runTest {
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { syncMetaRepository.upsert(any()) } throws RuntimeException("meta down")
+
+        val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
+
+        assertEquals(true, result)
     }
 }
