@@ -1,12 +1,5 @@
 package com.smsexpensetracker.ui.screens.transactions
 
-import android.Manifest
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,15 +31,12 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,6 +49,7 @@ import com.smsexpensetracker.data.sms.PermissionManager
 import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import com.smsexpensetracker.ui.components.EmptyState
 import com.smsexpensetracker.ui.components.TransactionRow
+import com.smsexpensetracker.ui.components.rememberSmsSyncPermission
 import com.smsexpensetracker.ui.components.rememberSpringPressScale
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -78,16 +68,10 @@ fun TransactionsScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val permissionManager = remember { PermissionManager() }
-    var showRationale by remember { mutableStateOf(false) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { grants ->
-        val allGranted = grants[Manifest.permission.READ_SMS] == true &&
-            grants[Manifest.permission.RECEIVE_SMS] == true
-        if (allGranted) {
-            viewModel.sync()
-        } else {
+    val requestSync = rememberSmsSyncPermission(
+        onGranted = { viewModel.sync() },
+        onDenied = {
             scope.launch {
                 val result = snackbarHostState.showSnackbar(
                     message = "SMS access is needed to sync transactions",
@@ -99,19 +83,7 @@ fun TransactionsScreen(
                 }
             }
         }
-    }
-
-    fun beginSync() {
-        if (permissionManager.hasPermission(context)) {
-            viewModel.sync()
-        } else if (permissionManager.shouldShowRationale(context as? Activity)) {
-            showRationale = true
-        } else {
-            permissionLauncher.launch(
-                arrayOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
-            )
-        }
-    }
+    )
 
     Scaffold(
         modifier.fillMaxSize(),
@@ -135,7 +107,7 @@ fun TransactionsScreen(
                     title = "No transactions yet",
                     subtitle = "Sync your SMS to get started, or tap + to add manually",
                     actionLabel = "Sync SMS",
-                    onAction = { beginSync() }
+                    onAction = requestSync
                 )
             }
 
@@ -169,7 +141,7 @@ fun TransactionsScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(
-                                onClick = { beginSync() },
+                                onClick = requestSync,
                                 enabled = !state.isSyncing,
                                 modifier = Modifier.padding(end = 8.dp)
                             ) {
@@ -272,25 +244,6 @@ fun TransactionsScreen(
             snackbarHostState.showSnackbar(error)
             viewModel.consumeEditSaveError()
         }
-    }
-
-    if (showRationale) {
-        AlertDialog(
-            onDismissRequest = { showRationale = false },
-            title = { Text("Allow SMS access?") },
-            text = { Text("SMS Expense Tracker reads your bank SMS to extract transaction details. SMS data stays on your device.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showRationale = false
-                    permissionLauncher.launch(
-                        arrayOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
-                    )
-                }) { Text("Allow") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRationale = false }) { Text("Not now") }
-            }
-        )
     }
 
     state.selectedTransaction?.let { tx ->
