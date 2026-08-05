@@ -1,6 +1,7 @@
 package com.smsexpensetracker.domain.usecase
 
 import com.smsexpensetracker.core.parser.ParserEngine
+import com.smsexpensetracker.core.parser.detectBankForSender
 import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.data.sms.SmsReader
 import com.smsexpensetracker.domain.model.ParseLog
@@ -8,6 +9,7 @@ import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.ParseStatus
 import com.smsexpensetracker.domain.model.SyncMeta
 import com.smsexpensetracker.domain.model.Transaction
+import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.ParseLogRepository
 import com.smsexpensetracker.domain.repository.SmsRuleRepository
 import com.smsexpensetracker.domain.repository.SyncMetaRepository
@@ -28,6 +30,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import timber.log.Timber
 
+private sealed interface ClassifyResult {
+    data class TransactionReady(val transaction: Transaction) : ClassifyResult
+    data object ParseFailed : ClassifyResult
+    data object Skipped : ClassifyResult
+}
+
 @Singleton
 class SmsSyncUseCase @Inject constructor(
     private val smsReader: SmsReader,
@@ -35,6 +43,7 @@ class SmsSyncUseCase @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val parseLogRepository: ParseLogRepository,
     private val syncMetaRepository: SyncMetaRepository,
+    private val bankRepository: BankRepository,
     private val demoDataPreferences: DemoDataPreferences,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
@@ -53,6 +62,7 @@ class SmsSyncUseCase @Inject constructor(
         return try {
             withContext(ioDispatcher) {
                 val rules = smsRuleRepository.getAllRules().first().filter { it.isActive }
+                val rulePairs = rules.map { it.bankId to it.pattern }
                 val messages = smsReader.readSms().first()
                 val total = messages.size
 
@@ -63,40 +73,10 @@ class SmsSyncUseCase @Inject constructor(
                 messages.chunked(100).forEach { chunk ->
                     val transactions = mutableListOf<Transaction>()
                     for (msg in chunk) {
-                        val parsed = ParserEngine.parse(
-                            msg.body,
-                            msg.sender,
-                            rules.map { it.bankId to it.pattern }
-                        )
-                        if (parsed.errorMessage != null) {
-                            Timber.tag("PARSE").w(
-                                "Parse failed [${msg.sender}]: ${parsed.errorMessage}"
-                            )
-                            parseLogRepository.insert(
-                                ParseLog(
-                                    id = 0L,
-                                    smsBody = msg.body,
-                                    smsSender = msg.sender,
-                                    parsedAt = LocalDateTime.now(),
-                                    status = ParseStatus.FAILED,
-                                    errorMessage = parsed.errorMessage
-                                )
-                            )
-                            unparsed++
-                        } else if (parsed.bankId != null && parsed.amount > 0L) {
-                            transactions += Transaction(
-                                id = 0L,
-                                bankId = parsed.bankId,
-                                amount = parsed.amount,
-                                transactionType = parsed.type,
-                                description = parsed.description,
-                                transactionDate = LocalDate.now().atStartOfDay(),
-                                categoryId = null,
-                                rawSms = msg.body,
-                                smsTimestamp = msg.timestamp,
-                                createdAt = LocalDateTime.now(),
-                                parseMethod = ParseMethod.SMS
-                            )
+                        when (val result = classifySms(msg.body, msg.sender, msg.timestamp, rulePairs)) {
+                            is ClassifyResult.TransactionReady -> transactions += result.transaction
+                            ClassifyResult.ParseFailed -> unparsed++
+                            ClassifyResult.Skipped -> Unit
                         }
                         processed++
                     }
@@ -126,5 +106,76 @@ class SmsSyncUseCase @Inject constructor(
         } finally {
             isRunning = false
         }
+    }
+
+    suspend fun handleIncomingSms(body: String, sender: String, timestamp: Long): Boolean {
+        try {
+            if (demoDataPreferences.demoDataLoaded.first()) return false
+            val banks = bankRepository.getAllBanks().first()
+            if (detectBankForSender(sender, banks) == null) return false
+
+            val rulePairs = smsRuleRepository.getAllRules().first()
+                .filter { it.isActive }
+                .map { it.bankId to it.pattern }
+
+            val inserted = when (val result = classifySms(body, sender, timestamp, rulePairs)) {
+                is ClassifyResult.TransactionReady ->
+                    transactionRepository.insertBatch(listOf(result.transaction))
+                ClassifyResult.ParseFailed, ClassifyResult.Skipped -> 0
+            }
+
+            if (inserted > 0) {
+                syncMetaRepository.upsert(
+                    SyncMeta(lastSyncTimestamp = System.currentTimeMillis(), lastSmsId = null)
+                )
+            }
+            return inserted > 0
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.tag("PARSE").e(e, "handleIncomingSms failed")
+            return false
+        }
+    }
+
+    private suspend fun classifySms(
+        body: String,
+        sender: String,
+        timestamp: Long,
+        rulePairs: List<Pair<Long, String>>
+    ): ClassifyResult {
+        val parsed = ParserEngine.parse(body, sender, rulePairs)
+        if (parsed.errorMessage != null) {
+            Timber.tag("PARSE").w("Parse failed [$sender]: ${parsed.errorMessage}")
+            parseLogRepository.insert(
+                ParseLog(
+                    id = 0L,
+                    smsBody = body,
+                    smsSender = sender,
+                    parsedAt = LocalDateTime.now(),
+                    status = ParseStatus.FAILED,
+                    errorMessage = parsed.errorMessage
+                )
+            )
+            return ClassifyResult.ParseFailed
+        }
+        if (parsed.bankId != null && parsed.amount > 0L) {
+            return ClassifyResult.TransactionReady(
+                Transaction(
+                    id = 0L,
+                    bankId = parsed.bankId,
+                    amount = parsed.amount,
+                    transactionType = parsed.type,
+                    description = parsed.description,
+                    transactionDate = LocalDate.now().atStartOfDay(),
+                    categoryId = null,
+                    rawSms = body,
+                    smsTimestamp = timestamp,
+                    createdAt = LocalDateTime.now(),
+                    parseMethod = ParseMethod.SMS
+                )
+            )
+        }
+        return ClassifyResult.Skipped
     }
 }

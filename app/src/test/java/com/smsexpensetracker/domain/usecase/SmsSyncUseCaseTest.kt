@@ -3,8 +3,11 @@ package com.smsexpensetracker.domain.usecase
 import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.data.sms.SmsMessage
 import com.smsexpensetracker.data.sms.SmsReader
+import com.smsexpensetracker.domain.model.Bank
+import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.ParseStatus
 import com.smsexpensetracker.domain.model.SmsRule
+import com.smsexpensetracker.domain.repository.BankRepository
 import com.smsexpensetracker.domain.repository.ParseLogRepository
 import com.smsexpensetracker.domain.repository.SmsRuleRepository
 import com.smsexpensetracker.domain.repository.SyncMetaRepository
@@ -42,6 +45,7 @@ class SmsSyncUseCaseTest {
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var parseLogRepository: ParseLogRepository
     private lateinit var syncMetaRepository: SyncMetaRepository
+    private lateinit var bankRepository: BankRepository
     private lateinit var demoDataPreferences: DemoDataPreferences
     private lateinit var useCase: SmsSyncUseCase
 
@@ -67,14 +71,17 @@ class SmsSyncUseCaseTest {
         transactionRepository = mockk()
         parseLogRepository = mockk()
         syncMetaRepository = mockk()
+        bankRepository = mockk()
         demoDataPreferences = mockk()
         every { demoDataPreferences.demoDataLoaded } returns flowOf(false)
+        every { bankRepository.getAllBanks() } returns flowOf(listOf(Bank(1L, "HDFC Bank", "HDFCBK")))
         useCase = SmsSyncUseCase(
             smsReader,
             smsRuleRepository,
             transactionRepository,
             parseLogRepository,
             syncMetaRepository,
+            bankRepository,
             demoDataPreferences,
             testDispatcher
         )
@@ -215,5 +222,89 @@ class SmsSyncUseCaseTest {
             result
         )
         coVerify(exactly = 0) { smsReader.readSms() }
+    }
+
+    @Test
+    fun `handleIncomingSms returns false when demo data is loaded`() = runTest {
+        every { demoDataPreferences.demoDataLoaded } returns MutableStateFlow(true)
+
+        val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
+
+        assertEquals(false, result)
+        coVerify(exactly = 0) { bankRepository.getAllBanks() }
+        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+    }
+
+    @Test
+    fun `handleIncomingSms ignores non-bank sender without a parse log`() = runTest {
+        val result = useCase.handleIncomingSms("Your OTP is 1234", "VM-OTPSVC", System.currentTimeMillis())
+
+        assertEquals(false, result)
+        coVerify(exactly = 0) { parseLogRepository.insert(any()) }
+        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { syncMetaRepository.upsert(any()) }
+    }
+
+    @Test
+    fun `handleIncomingSms inserts transaction for bank sms`() = runTest {
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
+
+        assertEquals(true, result)
+        coVerify {
+            transactionRepository.insertBatch(
+                match { list ->
+                    list.size == 1 &&
+                        list[0].amount == 483176L &&
+                        list[0].bankId == 1L &&
+                        list[0].smsTimestamp == hdfcSms.timestamp &&
+                        list[0].parseMethod == ParseMethod.SMS
+                }
+            )
+        }
+        coVerify(exactly = 0) { parseLogRepository.insert(any()) }
+        coVerify(exactly = 1) { syncMetaRepository.upsert(any()) }
+    }
+
+    @Test
+    fun `handleIncomingSms records failed parse log and returns false`() = runTest {
+        val body = "Rs. 100 debited from A/c for something"
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(emptyList())
+        coEvery { parseLogRepository.insert(any()) } returns Unit
+
+        val result = useCase.handleIncomingSms(body, "AD-HDFCBK-S", 1750000000000L)
+
+        assertEquals(false, result)
+        coVerify {
+            parseLogRepository.insert(
+                match { log -> log.status == ParseStatus.FAILED && log.smsBody == body }
+            )
+        }
+        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { syncMetaRepository.upsert(any()) }
+    }
+
+    @Test
+    fun `handleIncomingSms returns false when insert is deduplicated`() = runTest {
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        coEvery { transactionRepository.insertBatch(any()) } returns 0
+
+        val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
+
+        assertEquals(false, result)
+        coVerify(exactly = 0) { syncMetaRepository.upsert(any()) }
+    }
+
+    @Test
+    fun `handleIncomingSms returns false when repository throws`() = runTest {
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        coEvery { transactionRepository.insertBatch(any()) } throws RuntimeException("db down")
+
+        val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
+
+        assertEquals(false, result)
     }
 }
