@@ -60,7 +60,7 @@ CTAs: **Cancel** (`onDismiss`, discard edits) and **Update** (validate → save 
 - Edit form state initialized from the tapped transaction in `onTransactionClick`.
 - Setters per field (`onAmountChange`, `onTypeChange`, `onDateChange`, `onBankChange`, `onDescriptionChange`, `onCategoryChange` for the form).
 - Pure helper `validateTransactionEdit(amountInput: String, description: String): EditFormErrors` (mirrors `validateCategoryName` placement — lives next to the form state, unit-testable).
-- `updateTransaction()`: gate on demo data → validate → `repository.updateEditedTransaction(...)` → refresh `_selectedTransaction` with the saved value → snackbar → dismiss sheet.
+- `updateTransaction()`: gate on demo data → validate → `repository.updateEditedTransaction(...)` → snackbar "Transaction updated" → dismiss sheet. The list refreshes automatically: Room emits the updated row and `TransactionsViewModel.combine()` rebuilds `uiState`.
 - Existing `onCategoryChange` in `TransactionsViewModel` (calling `updateTransactionCategory`) is superseded by the form — the detail sheet is its only caller. **`updateTransactionCategory` itself stays**: `CategorizeViewModel` (categorize tab) still calls it, so DAO/repository/interface keep the method. Only the detail-sheet `onCategoryChange` wiring and its `TransactionsViewModelTest` test are replaced.
 
 ### 4.3 Repository / DAO
