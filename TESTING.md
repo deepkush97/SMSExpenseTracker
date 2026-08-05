@@ -45,8 +45,12 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 - [ ] Use the **month arrows** on the monthly overview card. → Navigates by month; the *next* arrow is disabled when you're already in the current (or a future) month.
 - [ ] Type in the **search bar**. → Filters by description as you type; a clear (×) button appears; clearing restores the list.
 - [ ] Toggle the **All / Credit / Debit** chips and the **Bank dropdown**. → List filters accordingly; a filtered-out result set shows "No results" (no action button when filtered).
-- [ ] Tap a transaction row. → A **bottom sheet** opens: read-only Amount/Type/Bank/Date/Description.
-- [ ] In the sheet, tap the **Category dropdown** and pick a category, then close the sheet. → The change is saved (it appears in the Dashboard category breakdown shortly after).
+- [ ] Tap a transaction row. → A **bottom sheet** opens: editable Amount, Type (Credit/Debit), Date, Bank, Description, and Category, with **Cancel** / **Update** buttons.
+- [ ] Edit **every field** (amount, type, date, bank, description, category), then tap **Update**. → Snackbar "Transaction updated"; the sheet closes; the list row and the Dashboard reflect the new values.
+- [ ] Tap **Update** with a blank/zero amount or a blank description. → Inline error under the offending field; **Update** stays disabled until it is fixed.
+- [ ] Tap **Cancel** after changing fields. → Edits are discarded; the sheet closes; the row is unchanged.
+- [ ] With demo data loaded, tap **Update** on a transaction. → Demo-data barrier dialog appears; nothing is written.
+- [ ] **Dedup safety [M]:** edit an SMS-derived transaction (from `push_test_sms.sh`), then re-run sync. → The edited row updates; no duplicate is inserted (`smsBodyHash` is preserved).
 
 ---
 
@@ -185,12 +189,12 @@ A tap-through test plan. Every item is **Action → Expected result**.
 
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 366 tests cover |
+| Layer | What the 384 tests cover |
 |---|---|
 | Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |
 | Data | ParserEngine, SmsReader query, repository dedup, repositories, `DemoDataSeeder`, `deleteAll`, demo-flag lifecycle in `SmsSyncUseCase` |
-| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel, demo-data barrier gate (Transactions/ManualEntry/Parser/Settings), `CategorizeViewModel` (uncategorized-first queue ordering, assign/skip/reset) |
-| Validation | `BankRulesValidation` (bank/rule/category names, template pattern) |
+| ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel, demo-data barrier gate (Transactions/ManualEntry/Parser/Settings), `CategorizeViewModel` (uncategorized-first queue ordering, assign/skip/reset), transaction edit form init/update/validation/demo-gate |
+| Validation | `BankRulesValidation` (bank/rule/category names, template pattern), `TransactionEditValidationTest` — `validateTransactionEdit` error strings, `AmountFormatterInputTest` — `formatPaisaInput` plain input strings |
 | Validation / UI-util | `CategoryIconsTest` — `searchIcons` filter logic + `materialIcon` resolution for all 193 catalog entries |
 | **Not covered (manual-only)** | Anything touching the Android runtime — `ContentResolver`/Room/the emulator or real SMS: actual sync, SMS permission flow, share sheet, file picker, DataStore theme, and all Compose UI interaction such as chip filters, dialogs, navigation, charts |
