@@ -19,7 +19,7 @@
 - [ ] **F4. Auto-categorization on sync** — keyword/merchant rule engine using the existing `UserCategoryRule` + `TransactionLabel` entities (entities only, no engine yet). (SOLUTION_DESIGN §10.8)
 - [ ] **F5. Dashboard empty state** — `EmptyState` with "Sync SMS" CTA (Transactions already has one). (Task 10)
 - [ ] **F6. Release build** — signed release APK (keystore), verify ProGuard, device smoke test; About section shows version from `BuildConfig` instead of hardcoded "Version 1.0". (Tasks 14/18)
-- [ ] **F11. On-arrival SMS capture** — `SMS_RECEIVED` broadcast receiver parses + records new bank SMS instantly (no manual sync). Request `RECEIVE_SMS` alongside `READ_SMS`. Spec: `docs/superpowers/specs/2026-08-05-on-arrival-sms-capture-design.md`. On-arrival = fast path; full-scan "Sync SMS" remains the re-attempt safety net for failed parses.
+- [x] **F11. On-arrival SMS capture** — `SMS_RECEIVED` broadcast receiver parses + records new bank SMS instantly (no manual sync). Request `RECEIVE_SMS` alongside `READ_SMS`. Spec: `docs/superpowers/specs/2026-08-05-on-arrival-sms-capture-design.md`. On-arrival = fast path; full-scan "Sync SMS" remains the re-attempt safety net for failed parses. _(Implemented 2026-08-05: `SmsIncomingReceiver` + `handleIncomingSms` rule-match fallback; 398 unit tests green. Device check folded into F1.)_
 
 ### P2 — Polish / later
 - [ ] **F7. Error components** — shared `ErrorBanner` / `ErrorSnackbar` / `ErrorDialog`. (Task 9)
