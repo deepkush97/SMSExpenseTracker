@@ -255,6 +255,21 @@ fun TransactionsScreen(
         }
     }
 
+    LaunchedEffect(state.showEditSavedSnackbar) {
+        if (state.showEditSavedSnackbar) {
+            snackbarHostState.showSnackbar("Transaction updated")
+            viewModel.consumeEditSavedSnackbar()
+        }
+    }
+
+    LaunchedEffect(state.editSaveError) {
+        val error = state.editSaveError
+        if (error != null) {
+            snackbarHostState.showSnackbar(error)
+            viewModel.consumeEditSaveError()
+        }
+    }
+
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },
@@ -273,11 +288,25 @@ fun TransactionsScreen(
     }
 
     state.selectedTransaction?.let { tx ->
-        TransactionDetailSheet(
+        TransactionEditSheet(
             transaction = tx,
+            amountInput = state.editAmountInput,
+            type = state.editType,
+            dateTime = state.editDateTime ?: tx.transactionDate,
+            bankId = state.editBankId,
+            description = state.editDescription,
+            categoryId = state.editCategoryId,
+            errors = state.editErrors,
+            isUpdating = state.isUpdating,
             banks = state.banks,
             categories = state.categories,
-            onCategoryChange = { _, _ -> },
+            onAmountChange = viewModel::onEditAmountChange,
+            onTypeChange = viewModel::onEditTypeChange,
+            onDateChange = viewModel::onEditDateChange,
+            onBankChange = viewModel::onEditBankChange,
+            onDescriptionChange = viewModel::onEditDescriptionChange,
+            onCategoryChange = viewModel::onEditCategoryChange,
+            onUpdate = viewModel::updateTransaction,
             onDismiss = viewModel::onDismissSheet
         )
     }
