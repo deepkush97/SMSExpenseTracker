@@ -13,7 +13,11 @@ import androidx.core.content.ContextCompat
 class PermissionManager {
 
     fun hasPermission(context: Context): Boolean =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) ==
+        hasPermission(context, Manifest.permission.READ_SMS) &&
+            hasPermission(context, Manifest.permission.RECEIVE_SMS)
+
+    private fun hasPermission(context: Context, permission: String): Boolean =
+        ContextCompat.checkSelfPermission(context, permission) ==
             PackageManager.PERMISSION_GRANTED
 
     fun shouldShowRationale(activity: Activity?): Boolean =

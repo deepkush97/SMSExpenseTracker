@@ -81,9 +81,11 @@ fun TransactionsScreen(
     var showRationale by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        val allGranted = grants[Manifest.permission.READ_SMS] == true &&
+            grants[Manifest.permission.RECEIVE_SMS] == true
+        if (allGranted) {
             viewModel.sync()
         } else {
             scope.launch {
@@ -105,7 +107,9 @@ fun TransactionsScreen(
         } else if (permissionManager.shouldShowRationale(context as? Activity)) {
             showRationale = true
         } else {
-            permissionLauncher.launch(Manifest.permission.READ_SMS)
+            permissionLauncher.launch(
+                arrayOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
+            )
         }
     }
 
@@ -278,7 +282,9 @@ fun TransactionsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showRationale = false
-                    permissionLauncher.launch(Manifest.permission.READ_SMS)
+                    permissionLauncher.launch(
+                        arrayOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
+                    )
                 }) { Text("Allow") }
             },
             dismissButton = {
