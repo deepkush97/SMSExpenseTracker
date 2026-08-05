@@ -35,9 +35,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,15 +52,22 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.smsexpensetracker.core.settings.OnboardingPreferences
 import com.smsexpensetracker.ui.navigation.AppNavHost
 import com.smsexpensetracker.ui.navigation.BottomNavItem
+import com.smsexpensetracker.ui.onboarding.OnboardingScreen
 import com.smsexpensetracker.ui.theme.SMSExpenseTrackerTheme
 import com.smsexpensetracker.ui.theme.ThemeMode
 import com.smsexpensetracker.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var onboardingPreferences: OnboardingPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -69,36 +79,49 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK, ThemeMode.AMOLED -> true
             }
+            var onboardingComplete by remember { mutableStateOf<Boolean?>(null) }
+            LaunchedEffect(Unit) {
+                onboardingPreferences.onboardingComplete.collect { onboardingComplete = it }
+            }
             SMSExpenseTrackerTheme(
                 darkTheme = darkTheme,
                 pureBlack = themeMode == ThemeMode.AMOLED
             ) {
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        if (currentRoute in BottomNavItem.items.map { it.route }) {
-                            PillNavigationBar(
-                                items = BottomNavItem.items,
-                                currentRoute = currentRoute,
-                                onItemClick = { item ->
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            )
-                        }
-                    }
-                ) { innerPadding ->
-                    AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
+                when (onboardingComplete) {
+                    null -> Unit
+                    false -> OnboardingScreen()
+                    true -> MainScaffold()
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MainScaffold() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (currentRoute in BottomNavItem.items.map { it.route }) {
+                PillNavigationBar(
+                    items = BottomNavItem.items,
+                    currentRoute = currentRoute,
+                    onItemClick = { item ->
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
+        AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
     }
 }
 
