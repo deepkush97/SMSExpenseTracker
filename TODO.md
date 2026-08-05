@@ -17,7 +17,7 @@
 ### P1 — Strongly recommended
 - [ ] **F3. Sync controls in Settings** — last-sync time, Re-sync button, sync-range picker (1d/1w/2w/1m/3m/All). Wire `SyncRange` → `SmsReader.readSms(dateRange)` in `SmsSyncUseCase.sync()` (currently full-scan). (Tasks 14/15)
 - [ ] **F4. Auto-categorization on sync** — keyword/merchant rule engine using the existing `UserCategoryRule` + `TransactionLabel` entities (entities only, no engine yet). (SOLUTION_DESIGN §10.8)
-- [ ] **F5. Dashboard empty state** — `EmptyState` with "Sync SMS" CTA (Transactions already has one). (Task 10)
+- [x] **F5. Dashboard empty state** — "Get started" card on empty Dashboard (Try demo data / Sync SMS / dismiss) doubles as onboarding safety net. (Task 10; implemented with the new-user onboarding flow, see `docs/superpowers/specs/2026-08-05-new-user-onboarding-design.md`)
 - [ ] **F6. Release build** — signed release APK (keystore), verify ProGuard, device smoke test; About section shows version from `BuildConfig` instead of hardcoded "Version 1.0". (Tasks 14/18)
 - [x] **F11. On-arrival SMS capture** — `SMS_RECEIVED` broadcast receiver parses + records new bank SMS instantly (no manual sync). Request `RECEIVE_SMS` alongside `READ_SMS`. Spec: `docs/superpowers/specs/2026-08-05-on-arrival-sms-capture-design.md`. On-arrival = fast path; full-scan "Sync SMS" remains the re-attempt safety net for failed parses. _(Implemented 2026-08-05: `SmsIncomingReceiver` + `handleIncomingSms` rule-match fallback; 398 unit tests green. Device check folded into F1.)_
 
@@ -129,7 +129,7 @@
 - [x] Implement category breakdown donut chart (Vico `PieChartHost`)
 - [x] Implement recent transactions list (last 5, tappable -> detail sheet)
 - [x] Implement loading state (shimmer/skeleton cards)
-- [ ] Implement Dashboard empty state (`EmptyState` with "Sync SMS" CTA) → **F5**
+- [x] Implement Dashboard empty state (`GetStartedCard` on empty Dashboard) → **F5**
 - [x] Connect `DashboardViewModel` + `GetTransactionsUseCase` for live data
 - [x] **Verify:** Dashboard renders charts with seed/test data
 
@@ -190,7 +190,7 @@
 ### [-] 15. Onboarding Flow
 - [x] Implement `READ_SMS` permission request with rationale dialog — shipped in Transactions screen empty state (sync CTA requests permission, shows "Open Settings" fallback)
 - [x] Implement "Sync SMS" button with loading state — Transactions empty state + header button; Unparsed SMS has "Re-sync now"
-- [ ] Implement first-launch detection (`SharedPreferences` flag) → **F5** (dashboard empty state doubles as onboarding)
+- [x] Implement first-launch detection (DataStore `onboarding_complete` flag) → **F5** (3-page welcome flow at first launch; Dashboard card is the safety net)
 - [ ] Implement dedicated permission explanation screen with illustration → optional (current inline flow works)
 - [ ] Implement sync range picker bottom sheet (1d/1w/2w/1m/3m/All) → **F3**
 - [ ] Integrate `SmsSyncWorker` trigger after range selection → **F10** (deferred)

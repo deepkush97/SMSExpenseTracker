@@ -14,7 +14,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 ## 1. First Launch & Navigation
 
-- [ ] Fresh install → app opens on **Dashboard**, NOT an onboarding screen.  → Dashboard opens with an **empty** transaction list (totals at 0, no demo rows).
+- [ ] Fresh install → app opens on the **3-page welcome flow** (what the app does → two ways to start → Dashboard tour; bottom nav bar hidden). Tap **Skip** → Dashboard with the **Get started** card; relaunching does not show the welcome again.
 - [ ] Bottom bar shows four pill tabs in order: **Dashboard → Transactions → Parser → Settings**. → Highlights the active tab; hides on sub-screens.
 - [ ] Tap each bottom tab. → Each opens its screen; Dashboard is the start destination.
 - [ ] From Settings, open **Logs / Categories / Banks & Rules**; from Transactions tap the **+ (FAB)**. → Each opens a sub-screen with a back arrow; bottom bar is hidden there; back returns to the parent.
@@ -22,6 +22,8 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 ---
 
 ## 2. Dashboard
+
+- [ ] With an empty DB, Dashboard shows a **Get started** card above the zeroed summary cards with **Try demo data** + **Sync SMS** actions and an X to dismiss (per session). The card disappears once any transaction exists.
 
 > These rows assume data is present — load demo data first (Settings → Data → **Load demo data**, §12).
 
