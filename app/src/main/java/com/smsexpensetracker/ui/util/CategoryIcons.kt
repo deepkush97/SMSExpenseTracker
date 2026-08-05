@@ -191,6 +191,7 @@ import androidx.compose.material.icons.filled.WineBar
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.smsexpensetracker.domain.model.Category
+import java.util.Locale
 
 val CATEGORY_COLORS = listOf(
     -13108, -13956304, -48060, -13676760, -10496, -16581634,
@@ -406,11 +407,11 @@ fun materialIcon(name: String): ImageVector =
     CATEGORY_ICONS.find { it.name == name }?.imageVector ?: Icons.Filled.Category
 
 fun searchIcons(query: String): List<IconEntry> {
-    val q = query.trim().lowercase().replace("_", "").replace(" ", "")
+    val q = query.trim().lowercase(Locale.ROOT).replace("_", "").replace(" ", "")
     if (q.isEmpty()) return CATEGORY_ICONS
     return CATEGORY_ICONS.filter { entry ->
         (entry.name + entry.keywords.joinToString(" "))
-            .lowercase()
+            .lowercase(Locale.ROOT)
             .replace("_", "").replace(" ", "")
             .contains(q)
     }

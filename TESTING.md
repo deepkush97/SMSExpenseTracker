@@ -185,7 +185,7 @@ A tap-through test plan. Every item is **Action → Expected result**.
 
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 365 tests cover |
+| Layer | What the 366 tests cover |
 |---|---|
 | Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |

@@ -63,6 +63,11 @@ class CategoryIconsTest {
     }
 
     @Test
+    fun `materialIcon resolves every catalog entry`() {
+        CATEGORY_ICONS.forEach { assertSame(it.imageVector, materialIcon(it.name)) }
+    }
+
+    @Test
     fun `materialIcon returns the vector for a known name`() {
         assertSame(Icons.Filled.Restaurant, materialIcon("restaurant"))
     }
