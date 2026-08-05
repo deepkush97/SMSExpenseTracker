@@ -114,6 +114,7 @@
 - [x] Implement `LazyColumn` transaction list with date headers and group separators
 - [x] Implement transaction row composable (amount, type icon, payee, date, category chip)
 - [x] Implement Transaction Detail bottom sheet (all fields, category picker, edit label)
+  - [ ] **Edit transaction details** — tap a transaction row → the bottom sheet edits Amount, Type, Date, Bank, Description, and Category with Cancel / Update CTAs; the update persists and the list refreshes live (DB Flow), preserving `smsBodyHash` so re-sync never duplicates the edited row
 - [x] Implement category picker with searchable dropdown
 - [x] Implement FAB (+) -> navigates to Manual Entry screen
 - [x] Implement Transaction List empty state
