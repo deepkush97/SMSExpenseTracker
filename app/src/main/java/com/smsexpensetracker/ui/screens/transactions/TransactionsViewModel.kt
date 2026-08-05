@@ -2,6 +2,7 @@ package com.smsexpensetracker.ui.screens.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.smsexpensetracker.core.parser.parsePaisa
 import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.domain.model.Bank
@@ -13,7 +14,9 @@ import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import com.smsexpensetracker.domain.usecase.GetTransactionsUseCase
 import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
+import com.smsexpensetracker.ui.util.formatPaisaInput
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +24,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -42,7 +48,30 @@ data class TransactionsUiState(
     val selectedTransaction: Transaction? = null,
     val isLoading: Boolean = true,
     val isSyncing: Boolean = false,
-    val syncMessage: String? = null
+    val syncMessage: String? = null,
+    val editAmountInput: String = "",
+    val editType: TransactionType = TransactionType.DEBIT,
+    val editDateTime: LocalDateTime? = null,
+    val editBankId: Long? = null,
+    val editDescription: String = "",
+    val editCategoryId: Long? = null,
+    val editErrors: EditFormErrors = EditFormErrors(),
+    val isUpdating: Boolean = false,
+    val showEditSavedSnackbar: Boolean = false,
+    val editSaveError: String? = null
+)
+
+private data class EditFormState(
+    val amountInput: String = "",
+    val type: TransactionType = TransactionType.DEBIT,
+    val dateTime: LocalDateTime? = null,
+    val bankId: Long? = null,
+    val description: String = "",
+    val categoryId: Long? = null,
+    val errors: EditFormErrors = EditFormErrors(),
+    val isUpdating: Boolean = false,
+    val showSavedSnackbar: Boolean = false,
+    val saveError: String? = null
 )
 
 @HiltViewModel
@@ -71,6 +100,8 @@ class TransactionsViewModel @Inject constructor(
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
     val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction.asStateFlow()
 
+    private val _editForm = MutableStateFlow(EditFormState())
+
     private val _isSyncing = MutableStateFlow(false)
     private val _syncMessage = MutableStateFlow<String?>(null)
 
@@ -94,7 +125,8 @@ class TransactionsViewModel @Inject constructor(
         _selectedBankId,
         _currentMonth,
         _isSyncing,
-        _syncMessage
+        _syncMessage,
+        _editForm
     ) { array ->
         val allTxs = array[0] as List<Transaction>
         val banks = array[1] as List<Bank>
@@ -105,6 +137,7 @@ class TransactionsViewModel @Inject constructor(
         val month = array[6] as YearMonth
         val isSyncing = array[7] as Boolean
         val syncMessage = array[8] as String?
+        val edit = array[9] as EditFormState
 
         val monthTxs = allTxs.filter { tx ->
             YearMonth.from(tx.transactionDate) == month
@@ -147,7 +180,17 @@ class TransactionsViewModel @Inject constructor(
             selectedTransaction = _selectedTransaction.value,
             isLoading = false,
             isSyncing = isSyncing,
-            syncMessage = syncMessage
+            syncMessage = syncMessage,
+            editAmountInput = edit.amountInput,
+            editType = edit.type,
+            editDateTime = edit.dateTime,
+            editBankId = edit.bankId,
+            editDescription = edit.description,
+            editCategoryId = edit.categoryId,
+            editErrors = edit.errors,
+            isUpdating = edit.isUpdating,
+            showEditSavedSnackbar = edit.showSavedSnackbar,
+            editSaveError = edit.saveError
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TransactionsUiState())
 
@@ -157,14 +200,104 @@ class TransactionsViewModel @Inject constructor(
     fun onMonthChange(month: YearMonth) {
         if (!month.isAfter(YearMonth.now())) _currentMonth.value = month
     }
-    fun onTransactionClick(tx: Transaction) { _selectedTransaction.value = tx }
-    fun onDismissSheet() { _selectedTransaction.value = null }
+    fun onTransactionClick(tx: Transaction) {
+        _selectedTransaction.value = tx
+        _editForm.value = EditFormState(
+            amountInput = formatPaisaInput(tx.amount),
+            type = tx.transactionType,
+            dateTime = tx.transactionDate,
+            bankId = tx.bankId,
+            description = tx.description,
+            categoryId = tx.categoryId
+        )
+    }
 
-    fun onCategoryChange(transactionId: Long, categoryId: Long?) {
+    fun onDismissSheet() {
+        _selectedTransaction.value = null
+        _editForm.value = EditFormState()
+    }
+
+    fun onEditAmountChange(value: String) = _editForm.update {
+        it.copy(
+            amountInput = value.filter { c -> c.isDigit() || c == '.' || c == ',' },
+            errors = it.errors.copy(amount = null)
+        )
+    }
+
+    fun onEditTypeChange(type: TransactionType) = _editForm.update { it.copy(type = type) }
+
+    fun onEditDateChange(date: LocalDate) = _editForm.update {
+        it.copy(dateTime = it.dateTime?.with(date) ?: date.atStartOfDay())
+    }
+
+    fun onEditBankChange(id: Long) = _editForm.update { it.copy(bankId = id) }
+
+    fun onEditDescriptionChange(value: String) = _editForm.update {
+        it.copy(description = value, errors = it.errors.copy(description = null))
+    }
+
+    fun onEditCategoryChange(id: Long?) = _editForm.update { it.copy(categoryId = id) }
+
+    fun updateTransaction() {
+        val tx = _selectedTransaction.value ?: return
+        val form = _editForm.value
+        if (form.isUpdating) return
+        if (_demoDataLoaded.value) {
+            _showDemoBarrier.value = true
+            return
+        }
+
+        val errors = validateTransactionEdit(form.amountInput, form.description)
+        if (errors.amount != null || errors.description != null) {
+            _editForm.update { it.copy(errors = errors) }
+            return
+        }
+
+        val bankId = form.bankId ?: return
+        val amount = parsePaisa(form.amountInput) ?: return
+        val dateTime = form.dateTime ?: tx.transactionDate
+
+        _editForm.update { it.copy(isUpdating = true) }
         viewModelScope.launch {
-            transactionRepository.updateTransactionCategory(transactionId, categoryId)
+            try {
+                transactionRepository.updateEditedTransaction(
+                    tx.copy(
+                        bankId = bankId,
+                        amount = amount,
+                        transactionType = form.type,
+                        description = form.description.trim(),
+                        transactionDate = dateTime,
+                        categoryId = form.categoryId
+                    )
+                )
+                _selectedTransaction.value = null
+                _editForm.update {
+                    it.copy(
+                        amountInput = "",
+                        type = TransactionType.DEBIT,
+                        dateTime = null,
+                        bankId = null,
+                        description = "",
+                        categoryId = null,
+                        errors = EditFormErrors(),
+                        isUpdating = false,
+                        showSavedSnackbar = true,
+                        saveError = null
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _editForm.update {
+                    it.copy(isUpdating = false, saveError = "Could not update transaction. Please try again.")
+                }
+            }
         }
     }
+
+    fun consumeEditSavedSnackbar() = _editForm.update { it.copy(showSavedSnackbar = false) }
+
+    fun consumeEditSaveError() = _editForm.update { it.copy(saveError = null) }
 
     fun sync() {
         if (_isSyncing.value) return

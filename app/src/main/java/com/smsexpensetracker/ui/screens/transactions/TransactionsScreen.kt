@@ -277,7 +277,7 @@ fun TransactionsScreen(
             transaction = tx,
             banks = state.banks,
             categories = state.categories,
-            onCategoryChange = viewModel::onCategoryChange,
+            onCategoryChange = { _, _ -> },
             onDismiss = viewModel::onDismissSheet
         )
     }
