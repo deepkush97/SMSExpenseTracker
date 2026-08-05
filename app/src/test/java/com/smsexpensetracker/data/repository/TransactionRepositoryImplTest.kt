@@ -246,6 +246,49 @@ class TransactionRepositoryImplTest {
         coVerify(exactly = 1) { transactionDao.deleteAll() }
     }
 
+    @Test
+    fun `updateEditedTransaction maps enums and calls the targeted query`() = runTest {
+        val domain = Transaction(
+            id = 7L, bankId = 2L, amount = 125050L,
+            transactionType = com.smsexpensetracker.domain.model.TransactionType.CREDIT,
+            description = "Swiggy order", transactionDate = date, categoryId = 3L,
+            rawSms = "raw", smsTimestamp = 123L, createdAt = date,
+            parseMethod = DomainParseMethod.SMS
+        )
+        coEvery {
+            transactionDao.updateTransactionFields(any(), any(), any(), any(), any(), any(), any())
+        } returns Unit
+
+        repo.updateEditedTransaction(domain)
+
+        coVerify(exactly = 1) {
+            transactionDao.updateTransactionFields(
+                7L, 2L, 125050L, TransactionType.CREDIT, "Swiggy order", date, 3L
+            )
+        }
+        coVerify(exactly = 0) { transactionDao.update(any<TransactionEntity>()) }
+    }
+
+    @Test
+    fun `updateEditedTransaction passes null category when uncategorized`() = runTest {
+        val domain = Transaction(
+            id = 7L, bankId = 1L, amount = 10000L,
+            transactionType = com.smsexpensetracker.domain.model.TransactionType.DEBIT,
+            description = "Zomato", transactionDate = date, categoryId = null,
+            rawSms = "raw", smsTimestamp = 123L, createdAt = date,
+            parseMethod = DomainParseMethod.SMS
+        )
+        coEvery {
+            transactionDao.updateTransactionFields(any(), any(), any(), any(), any(), any(), any())
+        } returns Unit
+
+        repo.updateEditedTransaction(domain)
+
+        coVerify(exactly = 1) {
+            transactionDao.updateTransactionFields(7L, 1L, 10000L, TransactionType.DEBIT, "Zomato", date, null)
+        }
+    }
+
     private fun assertTransaction(expected: TransactionEntity, actual: Transaction) {
         assertEquals(expected.id, actual.id)
         assertEquals(expected.bankId, actual.bankId)

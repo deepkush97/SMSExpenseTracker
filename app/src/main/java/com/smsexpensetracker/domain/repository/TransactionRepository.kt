@@ -18,6 +18,7 @@ interface TransactionRepository {
     suspend fun insertBatch(transactions: List<Transaction>): Int
     suspend fun delete(transaction: Transaction)
     suspend fun updateTransactionCategory(id: Long, categoryId: Long?)
+    suspend fun updateEditedTransaction(transaction: Transaction)
     fun getBankSummary(): Flow<List<BankSummary>>
     fun getMonthlySummary(): Flow<List<MonthlySummary>>
     fun getCategorySummary(): Flow<List<CategorySummary>>

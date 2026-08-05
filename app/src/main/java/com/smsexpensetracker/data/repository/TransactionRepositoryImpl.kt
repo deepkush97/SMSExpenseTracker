@@ -67,6 +67,18 @@ class TransactionRepositoryImpl @Inject constructor(
         transactionDao.updateTransactionCategory(id, categoryId)
     }
 
+    override suspend fun updateEditedTransaction(transaction: Transaction) {
+        transactionDao.updateTransactionFields(
+            id = transaction.id,
+            bankId = transaction.bankId,
+            amount = transaction.amount,
+            type = com.smsexpensetracker.core.database.entity.TransactionType.valueOf(transaction.transactionType.name),
+            description = transaction.description,
+            transactionDate = transaction.transactionDate,
+            categoryId = transaction.categoryId
+        )
+    }
+
     override fun getBankSummary(): Flow<List<BankSummary>> =
         transactionDao.getBankSummary().map { list ->
             list.map { BankSummary(it.bankId, TransactionType.valueOf(it.type.name), it.total) }

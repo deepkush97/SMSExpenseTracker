@@ -9,6 +9,7 @@ import androidx.room.Update
 import com.smsexpensetracker.core.database.entity.TransactionEntity
 import com.smsexpensetracker.core.database.entity.TransactionType
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDateTime
 
 @Dao
 interface TransactionDao {
@@ -63,6 +64,23 @@ interface TransactionDao {
 
     @Query("UPDATE transactions SET categoryId = :categoryId WHERE id = :id")
     suspend fun updateTransactionCategory(id: Long, categoryId: Long?)
+
+    @Query("""
+        UPDATE transactions
+        SET bankId = :bankId, amount = :amount, type = :type,
+            description = :description, transactionDate = :transactionDate,
+            categoryId = :categoryId
+        WHERE id = :id
+    """)
+    suspend fun updateTransactionFields(
+        id: Long,
+        bankId: Long,
+        amount: Long,
+        type: TransactionType,
+        description: String,
+        transactionDate: LocalDateTime,
+        categoryId: Long?
+    )
 
     @Query("SELECT COUNT(*) FROM transactions")
     suspend fun count(): Int
