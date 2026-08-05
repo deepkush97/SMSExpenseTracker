@@ -147,6 +147,7 @@
   - [x] Rule patterns support {amount}/{description} template syntax (legacy regex still works)
   - [x] Seed now holds 14 template rules across 6 banks (HDFC 7, ICICI 3, Pluxee 3, DCB 1) covering every `scripts/push_test_sms.sh` pattern — no parse failures out of the box
 - [x] Implement category management: list, add, edit, delete
+  - [x] **Searchable icon picker** — category Add/Edit dialog has a "Search icons" field over a scrollable grid of ~120 curated Material icons (name + keyword search)
 - [ ] Implement sync controls: trigger re-sync, select range, view last sync time
 - [x] Implement CSV export/import buttons
 - [x] Demo data is opt-in — the app starts empty (no auto-seed on launch); Settings → Data → **Load demo data** seeds 60 transactions (second tap reports "Demo data already loaded")

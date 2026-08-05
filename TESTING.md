@@ -104,6 +104,7 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 - [ ] Tap a (non-default) row → edit dialog; Save updates it.
 - [ ] Delete a non-default category → confirm dialog warns "Transactions in this category will become uncategorized".
 - [ ] Deleting / editing is not allowed for default categories.
+- [ ] **Add/Edit category** → icon picker now shows a "Search icons" field above a scrollable grid of ~120 icons. Typing "food" filters to the restaurant icon; tapping an icon selects it; selecting + Save persists the icon string.
 
 ---
 
@@ -184,11 +185,12 @@ A tap-through test plan. Every item is **Action → Expected result**.
 
 ## Which are covered by unit tests today? *(summary)*
 
-| Layer | What the 352 tests cover |
+| Layer | What the 365 tests cover |
 |---|---|
 | Parser / template | `TemplateCompiler`, `RegexParser` dual-mode dispatch, `ConfidenceScorer`, `TypeInferrer`, `SenderDetector`, 14 real-SMS template rows (plus 1 "No match" row), matching the 14 messages in `push_test_sms.sh` |
 | CSV | `CsvCodec` round-trip + robustness, CSV import FK validation, off-main-thread import |
 | Data | ParserEngine, SmsReader query, repository dedup, repositories, `DemoDataSeeder`, `deleteAll`, demo-flag lifecycle in `SmsSyncUseCase` |
 | ViewModels | ManualEntry, Dashboard, Transactions, Settings (CSV), RuleEditor template round-trip, UnparsedSmsViewModel, demo-data barrier gate (Transactions/ManualEntry/Parser/Settings), `CategorizeViewModel` (uncategorized-first queue ordering, assign/skip/reset) |
 | Validation | `BankRulesValidation` (bank/rule/category names, template pattern) |
+| Validation / UI-util | `CategoryIconsTest` — `searchIcons` filter logic + `materialIcon` resolution for all 193 catalog entries |
 | **Not covered (manual-only)** | Anything touching the Android runtime — `ContentResolver`/Room/the emulator or real SMS: actual sync, SMS permission flow, share sheet, file picker, DataStore theme, and all Compose UI interaction such as chip filters, dialogs, navigation, charts |
