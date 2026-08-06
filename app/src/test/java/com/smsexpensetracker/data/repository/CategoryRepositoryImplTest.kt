@@ -1,7 +1,10 @@
 package com.smsexpensetracker.data.repository
 
 import com.smsexpensetracker.core.database.dao.CategoryDao
+import com.smsexpensetracker.core.database.dao.UserCategoryRuleDao
 import com.smsexpensetracker.core.database.entity.CategoryEntity
+import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
+import com.smsexpensetracker.domain.model.UserCategoryRule
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -15,11 +18,12 @@ import org.junit.Test
 
 class CategoryRepositoryImplTest {
     private val categoryDao = mockk<CategoryDao>()
+    private val userCategoryRuleDao = mockk<UserCategoryRuleDao>()
     private lateinit var repo: CategoryRepositoryImpl
 
     @Before
     fun setup() {
-        repo = CategoryRepositoryImpl(categoryDao)
+        repo = CategoryRepositoryImpl(categoryDao, userCategoryRuleDao)
     }
 
     @Test
@@ -66,5 +70,24 @@ class CategoryRepositoryImplTest {
 
         assertEquals(null, result)
         coVerify { categoryDao.getAllCategoryById(1L) }
+    }
+
+    @Test
+    fun `getRules maps dao rules to domain`() = runTest {
+        every { userCategoryRuleDao.getAll() } returns flowOf(
+            listOf(UserCategoryRuleEntity(id = 1L, pattern = "amazon", categoryId = 2L))
+        )
+        val rules = repo.getRules().first()
+        assertEquals(1, rules.size)
+        assertEquals("amazon", rules[0].pattern)
+        assertEquals(2L, rules[0].categoryId)
+    }
+
+    @Test
+    fun `insertRule delegates to dao`() = runTest {
+        coEvery { userCategoryRuleDao.insert(any()) } returns 9L
+        val id = repo.insertRule(UserCategoryRule(id = 0L, pattern = "flipkart", categoryId = 3L))
+        assertEquals(9L, id)
+        coVerify { userCategoryRuleDao.insert(match { it.pattern == "flipkart" }) }
     }
 }

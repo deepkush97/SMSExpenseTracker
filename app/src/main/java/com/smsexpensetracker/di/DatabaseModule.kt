@@ -8,6 +8,8 @@ import com.smsexpensetracker.core.database.dao.ParseLogDao
 import com.smsexpensetracker.core.database.dao.SmsRuleDao
 import com.smsexpensetracker.core.database.dao.SyncMetaDao
 import com.smsexpensetracker.core.database.dao.TransactionDao
+import com.smsexpensetracker.core.database.dao.TransactionLabelDao
+import com.smsexpensetracker.core.database.dao.UserCategoryRuleDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,4 +43,10 @@ object DatabaseModule {
 
     @Provides
     fun provideSyncMetaDao(db: SmsExpenseDatabase): SyncMetaDao = db.syncMetaDao()
+
+    @Provides
+    fun provideUserCategoryRuleDao(db: SmsExpenseDatabase): UserCategoryRuleDao = db.userCategoryRuleDao()
+
+    @Provides
+    fun provideTransactionLabelDao(db: SmsExpenseDatabase): TransactionLabelDao = db.transactionLabelDao()
 }

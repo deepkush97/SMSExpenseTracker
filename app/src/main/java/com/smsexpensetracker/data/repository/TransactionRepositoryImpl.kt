@@ -41,8 +41,11 @@ class TransactionRepositoryImpl @Inject constructor(
     override suspend fun insert(transaction: Transaction): Long =
         transactionDao.insert(transaction.toEntity())
 
-    override suspend fun insertBatch(transactions: List<Transaction>): Int {
-        val result = transactionDao.insertBatchIgnore(
+    override suspend fun insertBatch(transactions: List<Transaction>): Int =
+        insertBatchReturningIds(transactions).count { it > 0 }
+
+    override suspend fun insertBatchReturningIds(transactions: List<Transaction>): List<Long> {
+        return transactionDao.insertBatchIgnore(
             transactions.map { tx ->
                 tx.toEntity().copy(
                     smsBodyHash = tx.rawSms.takeIf { it.isNotBlank() }?.let { raw ->
@@ -52,8 +55,7 @@ class TransactionRepositoryImpl @Inject constructor(
                     }
                 )
             }
-        )
-        return result.count { it > 0 }
+        ).toList()
     }
 
     override suspend fun delete(transaction: Transaction) =
