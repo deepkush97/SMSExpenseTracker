@@ -13,12 +13,16 @@ import com.smsexpensetracker.core.database.dao.ParseLogDao
 import com.smsexpensetracker.core.database.dao.SmsRuleDao
 import com.smsexpensetracker.core.database.dao.SyncMetaDao
 import com.smsexpensetracker.core.database.dao.TransactionDao
+import com.smsexpensetracker.core.database.dao.TransactionLabelDao
+import com.smsexpensetracker.core.database.dao.UserCategoryRuleDao
 import com.smsexpensetracker.core.database.entity.BankEntity
 import com.smsexpensetracker.core.database.entity.CategoryEntity
 import com.smsexpensetracker.core.database.entity.ParseLogEntity
 import com.smsexpensetracker.core.database.entity.SmsRuleEntity
 import com.smsexpensetracker.core.database.entity.SyncMetaEntity
 import com.smsexpensetracker.core.database.entity.TransactionEntity
+import com.smsexpensetracker.core.database.entity.TransactionLabelEntity
+import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
 
 
 @Database(
@@ -28,7 +32,9 @@ import com.smsexpensetracker.core.database.entity.TransactionEntity
         ParseLogEntity::class,
         SmsRuleEntity::class,
         SyncMetaEntity::class,
-        TransactionEntity::class
+        TransactionEntity::class,
+        UserCategoryRuleEntity::class,
+        TransactionLabelEntity::class
     ],
     version = 6,
     exportSchema = true
@@ -41,6 +47,8 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun parseLogDao(): ParseLogDao
     abstract fun syncMetaDao(): SyncMetaDao
+    abstract fun userCategoryRuleDao(): UserCategoryRuleDao
+    abstract fun transactionLabelDao(): TransactionLabelDao
 
     companion object {
         @Volatile
