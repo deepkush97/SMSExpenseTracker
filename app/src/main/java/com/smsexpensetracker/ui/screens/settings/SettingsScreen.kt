@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,17 +22,22 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SmsFailed
 import androidx.compose.material.icons.outlined.BrightnessAuto
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Nightlight
 import androidx.compose.material.icons.outlined.WbSunny
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,8 +51,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.smsexpensetracker.domain.value.SyncRange
 import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import com.smsexpensetracker.ui.theme.ThemeMode
+import java.time.Instant
+import java.time.ZoneId
 
 @Composable
 fun SettingsScreen(
@@ -91,6 +100,13 @@ fun SettingsScreen(
                 context.startActivity(Intent.createChooser(send, "Export CSV"))
             }
             viewModel.consumePendingExport()
+        }
+    }
+
+    LaunchedEffect(state.syncMessage) {
+        state.syncMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.consumeSyncMessage()
         }
     }
 
@@ -243,6 +259,58 @@ fun SettingsScreen(
             label = "Logs",
             onClick = onNavigateToLogs
         )
+
+        Spacer(modifier = Modifier.size(32.dp))
+
+        Text(
+            text = "Sync",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.size(8.dp))
+
+        Text(
+            text = state.lastSyncTime?.let { ts ->
+                val dt = Instant.ofEpochMilli(ts).atZone(ZoneId.systemDefault()).toLocalDateTime()
+                "Last sync: ${dt.dayOfMonth} ${dt.month.name.lowercase().take(3)} ${dt.hour}:${dt.minute.toString().padStart(2, '0')}"
+            } ?: "Never synced",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.size(8.dp))
+
+        val ranges = listOf(
+            "1D" to SyncRange.LAST_1D,
+            "1W" to SyncRange.LAST_1W,
+            "2W" to SyncRange.LAST_2W,
+            "1M" to SyncRange.LAST_1M,
+            "3M" to SyncRange.LAST_3M,
+            "All" to SyncRange.ALL
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ranges.forEach { (label, range) ->
+                FilterChip(
+                    selected = state.selectedSyncRange == range,
+                    onClick = { viewModel.onSyncRangeChange(range) },
+                    label = { Text(label) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.size(8.dp))
+
+        SettingsActionRow(
+            icon = Icons.Filled.Refresh,
+            label = if (state.isSyncing) "Syncing…" else "Re-sync now",
+            onClick = { if (!state.isSyncing) viewModel.resync() }
+        )
+
+        if (state.isSyncing) {
+            Spacer(modifier = Modifier.size(8.dp))
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
 
         Spacer(modifier = Modifier.size(32.dp))
 
