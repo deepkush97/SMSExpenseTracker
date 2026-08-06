@@ -9,11 +9,13 @@ import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import com.smsexpensetracker.domain.usecase.GetTransactionsUseCase
 import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
+import com.smsexpensetracker.domain.value.SyncProgress
 import com.smsexpensetracker.domain.value.SyncResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -61,6 +63,7 @@ class TransactionsViewModelTest {
         demoDataPreferences = mockk()
         demoDataSeeder = mockk()
         every { demoDataPreferences.demoDataLoaded } returns demoDataLoadedFlow
+        every { smsSyncUseCase.progress } returns MutableStateFlow(SyncProgress())
     }
 
     @After
@@ -488,5 +491,38 @@ class TransactionsViewModelTest {
 
         coVerify(exactly = 1) { demoDataSeeder.deleteDemoData() }
         assertFalse(viewModel.showDemoBarrier.value)
+    }
+
+    @Test
+    fun `sync progress from use case surfaces while syncing and clears after`() = runTest(testDispatcher) {
+        coEvery { getTransactionsUseCase() } returns MutableStateFlow(emptyList())
+        every { bankRepository.getAllBanks() } returns MutableStateFlow(emptyList())
+        every { categoryRepository.getAllCategories() } returns MutableStateFlow(emptyList())
+        every { smsSyncUseCase.progress } returns MutableStateFlow(SyncProgress(processed = 25, total = 100, unparsed = 2))
+        val gate = CompletableDeferred<SyncResult>()
+        coEvery { smsSyncUseCase.sync() } coAnswers { gate.await() }
+
+        viewModel = TransactionsViewModel(
+            getTransactionsUseCase, bankRepository, categoryRepository, transactionRepository, smsSyncUseCase,
+            demoDataPreferences, demoDataSeeder
+        )
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.sync()
+        advanceUntilIdle()
+
+        val syncing = viewModel.uiState.value
+        assertTrue(syncing.isSyncing)
+        assertEquals(25, syncing.syncProgress?.processed)
+        assertEquals(100, syncing.syncProgress?.total)
+        assertEquals(2, syncing.syncProgress?.unparsed)
+
+        gate.complete(SyncResult(scanned = 5, inserted = 2, unparsed = 1))
+        advanceUntilIdle()
+
+        val done = viewModel.uiState.value
+        assertTrue(!done.isSyncing)
+        assertNull(done.syncProgress)
     }
 }

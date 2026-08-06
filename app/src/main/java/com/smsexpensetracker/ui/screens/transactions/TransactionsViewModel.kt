@@ -14,6 +14,7 @@ import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import com.smsexpensetracker.domain.usecase.GetTransactionsUseCase
 import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
+import com.smsexpensetracker.domain.value.SyncProgress
 import com.smsexpensetracker.ui.util.formatPaisaInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -49,6 +50,7 @@ data class TransactionsUiState(
     val selectedTransaction: Transaction? = null,
     val isLoading: Boolean = true,
     val isSyncing: Boolean = false,
+    val syncProgress: SyncProgress? = null,
     val syncMessage: String? = null,
     val editAmountInput: String = "",
     val editType: TransactionType = TransactionType.DEBIT,
@@ -106,6 +108,7 @@ class TransactionsViewModel @Inject constructor(
 
     private val _isSyncing = MutableStateFlow(false)
     private val _syncMessage = MutableStateFlow<String?>(null)
+    private val _syncProgress = MutableStateFlow<SyncProgress?>(null)
 
     private val _demoDataLoaded = MutableStateFlow(false)
     private val _showDemoBarrier = MutableStateFlow(false)
@@ -114,6 +117,9 @@ class TransactionsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             demoDataPreferences.demoDataLoaded.collect { _demoDataLoaded.value = it }
+        }
+        viewModelScope.launch {
+            smsSyncUseCase.progress.collect { _syncProgress.value = it }
         }
     }
 
@@ -129,7 +135,8 @@ class TransactionsViewModel @Inject constructor(
         _isSyncing,
         _syncMessage,
         _editForm,
-        _selectedTransaction
+        _selectedTransaction,
+        _syncProgress
     ) { array ->
         val allTxs = array[0] as List<Transaction>
         val banks = array[1] as List<Bank>
@@ -142,6 +149,7 @@ class TransactionsViewModel @Inject constructor(
         val syncMessage = array[8] as String?
         val edit = array[9] as EditFormState
         val selectedTx = array[10] as Transaction?
+        val syncProgress = array[11] as SyncProgress?
 
         val monthTxs = allTxs.filter { tx ->
             YearMonth.from(tx.transactionDate) == month
@@ -184,6 +192,7 @@ class TransactionsViewModel @Inject constructor(
             selectedTransaction = selectedTx,
             isLoading = false,
             isSyncing = isSyncing,
+            syncProgress = if (isSyncing) syncProgress else null,
             syncMessage = syncMessage,
             editAmountInput = edit.amountInput,
             editType = edit.type,
