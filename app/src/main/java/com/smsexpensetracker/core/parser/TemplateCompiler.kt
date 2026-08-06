@@ -75,6 +75,8 @@ object TemplateCompiler {
         if (isTerminal) "(?<a$count>[\\s\\S]+)" else "(?<a$count>[\\s\\S]+?)"
 
     private fun appendLiteral(builder: StringBuilder, literal: String) {
+        if (literal.isEmpty()) return
+        builder.append("\\s*")
         var i = 0
         while (i < literal.length) {
             val c = literal[i]
@@ -86,5 +88,6 @@ object TemplateCompiler {
                 i++
             }
         }
+        builder.append("\\s*")
     }
 }

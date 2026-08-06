@@ -51,8 +51,8 @@ class RegexParserTest(
             ),
             arrayOf(
                 "Txn Rs.25.00\nOn HDFC Bank Card 1111\nAt Q123456789@ybl \nby UPI 620436716168\nOn 23-07\nNot You?\nCall 18002586161/SMS BLOCK CC 2468 to 7308080808",
-                "Txn Rs\\.([\\d,.]+)[\\s\\S]*?On HDFC Bank Card \\d{4}[\\s\\S]*?At (.+?)\\n[\\s\\S]*?by UPI \\d+[\\s\\S]*?On [\\d-]+",
-                1L, "HDFC CC UPI Debit", 2500L, "Q123456789@ybl "
+                "Txn Rs\\.([\\d,.]+)[\\s\\S]*?On HDFC Bank Card \\d{4}[\\s\\S]*?At (.+?)\\s+by UPI \\d+[\\s\\S]*?On [\\d-]+",
+                1L, "HDFC CC UPI Debit", 2500L, "Q123456789@ybl"
             ),
             arrayOf(
                 "Alert! Rs. 32 refunded by someComp on 20/JUL/2026 & adjusted against HDFC Bank Credit Card 1111 View updated balance here: bank link",

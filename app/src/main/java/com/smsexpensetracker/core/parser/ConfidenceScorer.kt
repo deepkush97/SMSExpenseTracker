@@ -19,7 +19,7 @@ object ConfidenceScorer {
         } else {
             Regex(pattern, RegexOption.IGNORE_CASE)
         }
-        val match = compiled?.find(smsBody)
+        val match = compiled?.find(collapseWhitespace(smsBody))
         if (match != null) {
             score += 0.3f
             val groups = match.groupValues.size - 1

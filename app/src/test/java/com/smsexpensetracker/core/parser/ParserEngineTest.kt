@@ -21,7 +21,7 @@ class ParserEngineTest(
             1L to "Rs\\.([\\d,.]+) credited to HDFC Bank A/c \\w+ on [\\d-]+ from VPA (.+?) \\(UPI",
             1L to "INR ([\\d,.]+) deducted from HDFC Bank A/C No \\w+ towards (.+?) UMRN",
             1L to "INR ([\\d,.]+) deposited in HDFC Bank A/c \\w+ on [\\w-]+ for NEFT Cr-(.+?)\\.?Avl bal",
-            1L to "Txn Rs\\.([\\d,.]+)[\\s\\S]*?On HDFC Bank Card \\d{4}[\\s\\S]*?At (.+?)\\n[\\s\\S]*?by UPI \\d+[\\s\\S]*?On [\\d-]+",
+            1L to "Txn Rs\\.([\\d,.]+)[\\s\\S]*?On HDFC Bank Card \\d{4}[\\s\\S]*?At (.+?)\\s+by UPI \\d+[\\s\\S]*?On [\\d-]+",
             1L to "Alert! Rs\\.? ([\\d,.]+) refunded by (.+?) on [\\d/]+.*?HDFC Bank Credit Card \\d{4}",
             1L to "Rs\\.? ([\\d,.]+) from A/c [\\w*]+ to (.+?) via HDFC Bank NetBanking"
         )
@@ -59,7 +59,7 @@ class ParserEngineTest(
                 hdfcRules,
                 2500L,
                 "DEBIT",
-                "Q123456789@ybl "
+                "Q123456789@ybl"
             ),
             arrayOf(
                 "Alert! Rs. 32 refunded by someComp on 20/JUL/2026 & adjusted against HDFC Bank Credit Card 1111 View updated balance here: bank link",

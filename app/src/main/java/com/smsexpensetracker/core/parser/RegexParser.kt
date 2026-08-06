@@ -7,13 +7,18 @@ data class RegexMatch(
     val rawSms: String
 )
 
+private val WHITESPACE_RUN = Regex("\\s+")
+
+internal fun collapseWhitespace(text: String): String = text.trim().replace(WHITESPACE_RUN, " ")
+
 object RegexParser {
     fun parse(smsBody: String, pattern: String, bankId: Long): RegexMatch? {
+        val body = collapseWhitespace(smsBody)
         if (TemplateCompiler.isTemplate(pattern)) {
-            return TemplateCompiler.extract(smsBody, pattern, bankId)
+            return TemplateCompiler.extract(body, pattern, bankId)?.copy(rawSms = smsBody)
         }
         val regex = Regex(pattern, RegexOption.IGNORE_CASE)
-        val matchResult = regex.find(smsBody) ?: return null
+        val matchResult = regex.find(body) ?: return null
 
         val amountStr = matchResult.groupValues.getOrNull(1) ?: return null
         val description = matchResult.groupValues.getOrNull(2) ?: ""
