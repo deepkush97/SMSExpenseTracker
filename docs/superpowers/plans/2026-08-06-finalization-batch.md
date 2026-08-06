@@ -729,7 +729,7 @@ git commit -m "feat: re-land user category rule and transaction label entities a
 - Modify: `app/src/main/java/com/smsexpensetracker/data/repository/CategoryRepositoryImpl.kt`
 - Modify: `app/src/main/java/com/smsexpensetracker/domain/repository/TransactionRepository.kt`
 - Modify: `app/src/main/java/com/smsexpensetracker/data/repository/TransactionRepositoryImpl.kt`
-- Modify: `app/src/main/java/com/smsexpensetracker/di/RepositoryModule.kt`
+- ~~Modify: `app/src/main/java/com/smsexpensetracker/di/RepositoryModule.kt`~~ (SKIPPED — user decision: no Hilt module changes)
 
 **Interfaces:**
 - Produces:
@@ -830,16 +830,9 @@ override suspend fun insertBatchReturningIds(transactions: List<Transaction>): L
 }
 ```
 
-- [ ] **Step 4: Add DI binding**
+- [ ] **Step 4: DI binding — SKIPPED (user decision)**
 
-In `RepositoryModule.kt`, add imports + binding:
-```kotlin
-@Binds
-@Singleton
-abstract fun bindTransactionLabelRepository(
-    impl: TransactionLabelRepositoryImpl
-): TransactionLabelRepository
-```
+Per user decision (2026-08-06), do NOT touch Hilt modules (Global Constraint). No `@Binds` added to `RepositoryModule.kt`. `TransactionLabelRepositoryImpl` has an `@Inject constructor`, so Hilt provides it when injected as the **concrete type** `TransactionLabelRepositoryImpl` (see Task 11 — `SmsSyncUseCase` takes the impl type, not the interface).
 
 - [ ] **Step 5: Update CategoryRepositoryImpl tests**
 
@@ -874,7 +867,7 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add app/src/main/java/com/smsexpensetracker/domain/repository/TransactionLabelRepository.kt app/src/main/java/com/smsexpensetracker/data/repository/TransactionLabelRepositoryImpl.kt app/src/main/java/com/smsexpensetracker/domain/repository/CategoryRepository.kt app/src/main/java/com/smsexpensetracker/data/repository/CategoryRepositoryImpl.kt app/src/main/java/com/smsexpensetracker/domain/repository/TransactionRepository.kt app/src/main/java/com/smsexpensetracker/data/repository/TransactionRepositoryImpl.kt app/src/main/java/com/smsexpensetracker/di/RepositoryModule.kt app/src/test/java/com/smsexpensetracker/data/repository/CategoryRepositoryImplTest.kt
+git add app/src/main/java/com/smsexpensetracker/domain/repository/TransactionLabelRepository.kt app/src/main/java/com/smsexpensetracker/data/repository/TransactionLabelRepositoryImpl.kt app/src/main/java/com/smsexpensetracker/domain/repository/CategoryRepository.kt app/src/main/java/com/smsexpensetracker/data/repository/CategoryRepositoryImpl.kt app/src/main/java/com/smsexpensetracker/domain/repository/TransactionRepository.kt app/src/main/java/com/smsexpensetracker/data/repository/TransactionRepositoryImpl.kt app/src/test/java/com/smsexpensetracker/data/repository/CategoryRepositoryImplTest.kt
 git commit -m "feat: add label and rule repositories, insertBatchReturningIds"
 ```
 
@@ -1057,13 +1050,13 @@ git commit -m "feat: add AutoCategoryEngine for rule-based categorization"
 - Test: `app/src/test/java/com/smsexpensetracker/domain/usecase/SmsSyncUseCaseTest.kt`
 
 **Interfaces:**
-- Consumes: `AutoCategoryEngine.matchCategory`, `CategoryRepository.getRules()/getAllCategories()`, `TransactionRepository.insertBatchReturningIds`, `TransactionLabelRepository.insert`, domain `UserCategoryRule`, `TransactionLabel`.
+- Consumes: `AutoCategoryEngine.matchCategory`, `CategoryRepository.getRules()/getAllCategories()`, `TransactionRepository.insertBatchReturningIds`, `TransactionLabelRepositoryImpl.insert` (concrete type — DI binding skipped per user decision), domain `UserCategoryRule`, `TransactionLabel`.
 - Produces: `sync()` and `handleIncomingSms()` assign `categoryId` when a rule matches and record a `TransactionLabel` per inserted matched transaction.
 
 - [ ] **Step 1: Update existing tests for new constructor deps**
 
 In `SmsSyncUseCaseTest`:
-1. Add mock fields `categoryRepository = mockk<CategoryRepository>()` and `transactionLabelRepository = mockk<TransactionLabelRepository>()`; add imports.
+1. Add mock fields `categoryRepository = mockk<CategoryRepository>()` and `transactionLabelRepository = mockk<TransactionLabelRepositoryImpl>()`; add imports.
 2. In `setup()`, stub:
    ```kotlin
    every { categoryRepository.getRules() } returns flowOf(emptyList())
@@ -1138,7 +1131,7 @@ Expected: the two new tests FAIL (`categoryId` stays null / no label); existing 
 - [ ] **Step 4: Modify SmsSyncUseCase**
 
 In `SmsSyncUseCase.kt`:
-1. Add constructor params `private val categoryRepository: CategoryRepository`, `private val transactionLabelRepository: TransactionLabelRepository` (before `ioDispatcher`). Add imports.
+1. Add constructor params `private val categoryRepository: CategoryRepository`, `private val transactionLabelRepository: TransactionLabelRepositoryImpl` (before `ioDispatcher`). Add imports (note: concrete impl type, NOT the interface — no Hilt binding exists).
 2. Change `sync()` body inside `withContext(ioDispatcher)`:
    ```kotlin
    val rules = smsRuleRepository.getAllRules().first().filter { it.isActive }
