@@ -7,8 +7,11 @@ import com.smsexpensetracker.core.settings.DemoDataPreferences
 import com.smsexpensetracker.core.settings.ThemePreferences
 import com.smsexpensetracker.data.csv.ExportResult
 import com.smsexpensetracker.data.demo.DemoDataSeeder
+import com.smsexpensetracker.domain.repository.SyncMetaRepository
 import com.smsexpensetracker.domain.usecase.ExportCsvUseCase
 import com.smsexpensetracker.domain.usecase.ImportCsvUseCase
+import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
+import com.smsexpensetracker.domain.value.SyncRange
 import com.smsexpensetracker.ui.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +29,11 @@ data class SettingsUiState(
     val demoMessage: String? = null,
     val isDemoBusy: Boolean = false,
     val demoDataLoaded: Boolean = false,
-    val showDemoBarrier: Boolean = false
+    val showDemoBarrier: Boolean = false,
+    val lastSyncTime: Long? = null,
+    val selectedSyncRange: SyncRange = SyncRange.ALL,
+    val isSyncing: Boolean = false,
+    val syncMessage: String? = null
 )
 
 @HiltViewModel
@@ -35,7 +42,9 @@ class SettingsViewModel @Inject constructor(
     private val exportCsvUseCase: ExportCsvUseCase,
     private val importCsvUseCase: ImportCsvUseCase,
     private val demoDataSeeder: DemoDataSeeder,
-    private val demoDataPreferences: DemoDataPreferences
+    private val demoDataPreferences: DemoDataPreferences,
+    private val smsSyncUseCase: SmsSyncUseCase,
+    private val syncMetaRepository: SyncMetaRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -51,6 +60,9 @@ class SettingsViewModel @Inject constructor(
             demoDataPreferences.demoDataLoaded.collect { loaded ->
                 _uiState.update { it.copy(demoDataLoaded = loaded) }
             }
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(lastSyncTime = syncMetaRepository.get()?.lastSyncTimestamp) }
         }
     }
 
@@ -148,5 +160,34 @@ class SettingsViewModel @Inject constructor(
                 it.copy(showDemoBarrier = false, demoDataLoaded = false, demoMessage = "Demo data deleted")
             }
         }
+    }
+
+    fun onSyncRangeChange(range: SyncRange) {
+        _uiState.update { it.copy(selectedSyncRange = range) }
+    }
+
+    fun resync() {
+        if (_uiState.value.isSyncing) return
+        if (_uiState.value.demoDataLoaded) {
+            _uiState.update { it.copy(showDemoBarrier = true) }
+            return
+        }
+        _uiState.update { it.copy(isSyncing = true) }
+        viewModelScope.launch {
+            val result = smsSyncUseCase.sync(_uiState.value.selectedSyncRange)
+            val meta = syncMetaRepository.get()
+            _uiState.update {
+                it.copy(
+                    isSyncing = false,
+                    lastSyncTime = meta?.lastSyncTimestamp ?: it.lastSyncTime,
+                    syncMessage = result.error?.let { "Sync failed. Try again." }
+                        ?: "Scanned ${result.scanned}, added ${result.inserted}, unparsed ${result.unparsed}"
+                )
+            }
+        }
+    }
+
+    fun consumeSyncMessage() {
+        _uiState.update { it.copy(syncMessage = null) }
     }
 }

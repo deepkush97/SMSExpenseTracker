@@ -6,8 +6,13 @@ import com.smsexpensetracker.core.settings.ThemePreferences
 import com.smsexpensetracker.data.csv.ExportResult
 import com.smsexpensetracker.data.demo.DemoDataSeeder
 import com.smsexpensetracker.data.csv.ImportResult
+import com.smsexpensetracker.domain.model.SyncMeta
+import com.smsexpensetracker.domain.repository.SyncMetaRepository
 import com.smsexpensetracker.domain.usecase.ExportCsvUseCase
 import com.smsexpensetracker.domain.usecase.ImportCsvUseCase
+import com.smsexpensetracker.domain.usecase.SmsSyncUseCase
+import com.smsexpensetracker.domain.value.SyncRange
+import com.smsexpensetracker.domain.value.SyncResult
 import com.smsexpensetracker.ui.theme.ThemeMode
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -40,12 +45,15 @@ class SettingsViewModelTest {
     private val importCsvUseCase = mockk<ImportCsvUseCase>()
     private val demoDataSeeder = mockk<DemoDataSeeder>()
     private val demoDataPreferences = mockk<DemoDataPreferences>()
+    private val smsSyncUseCase = mockk<SmsSyncUseCase>()
+    private val syncMetaRepository = mockk<SyncMetaRepository>()
     private val demoDataLoadedFlow = MutableStateFlow(false)
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { demoDataPreferences.demoDataLoaded } returns demoDataLoadedFlow
+        coEvery { syncMetaRepository.get() } returns null
     }
 
     @After
@@ -54,7 +62,7 @@ class SettingsViewModelTest {
     }
 
     private fun viewModel() =
-        SettingsViewModel(themePreferences, exportCsvUseCase, importCsvUseCase, demoDataSeeder, demoDataPreferences)
+        SettingsViewModel(themePreferences, exportCsvUseCase, importCsvUseCase, demoDataSeeder, demoDataPreferences, smsSyncUseCase, syncMetaRepository)
 
     @Test
     fun `exposes persisted theme mode`() = runTest(testDispatcher) {
@@ -247,5 +255,52 @@ class SettingsViewModelTest {
         coVerify(exactly = 1) { demoDataSeeder.deleteDemoData() }
         assertFalse(viewModel.uiState.value.showDemoBarrier)
         assertEquals("Demo data deleted", viewModel.uiState.value.demoMessage)
+    }
+
+    @Test
+    fun `loads last sync time from repo`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { syncMetaRepository.get() } returns SyncMeta(lastSyncTimestamp = 1750000000000L, lastSmsId = null)
+        val viewModel = viewModel()
+        val job = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        assertEquals(1750000000000L, viewModel.uiState.value.lastSyncTime)
+        job.cancel()
+    }
+
+    @Test
+    fun `resync triggers use case with selected range`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { syncMetaRepository.get() } returns SyncMeta(lastSyncTimestamp = 0L, lastSmsId = null)
+        coEvery { smsSyncUseCase.sync(any()) } returns SyncResult(scanned = 3, inserted = 1, unparsed = 0)
+        val viewModel = viewModel()
+        val job = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onSyncRangeChange(SyncRange.LAST_1W)
+        viewModel.resync()
+        advanceUntilIdle()
+
+        coVerify { smsSyncUseCase.sync(SyncRange.LAST_1W) }
+        assertTrue(!viewModel.uiState.value.isSyncing)
+        assertTrue(viewModel.uiState.value.syncMessage!!.contains("Scanned 3"))
+        job.cancel()
+    }
+
+    @Test
+    fun `resync blocks while already syncing`() = runTest(testDispatcher) {
+        every { themePreferences.themeMode } returns flowOf(ThemeMode.SYSTEM)
+        coEvery { syncMetaRepository.get() } returns SyncMeta(lastSyncTimestamp = 0L, lastSmsId = null)
+        coEvery { smsSyncUseCase.sync(any()) } returns SyncResult()
+        val viewModel = viewModel()
+        val job = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.resync()
+        viewModel.resync()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { smsSyncUseCase.sync(any()) }
+        job.cancel()
     }
 }
