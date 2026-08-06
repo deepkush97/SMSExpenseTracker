@@ -115,4 +115,25 @@ class MigrationTest {
         }
         db.close()
     }
+
+    @Test
+    fun migrate5To6_dropsUnusedLabelTables() {
+        helper.createDatabase("migration-test-v6", 5).use { db ->
+            db.execSQL("INSERT INTO banks (id, name, smsSender) VALUES (1, 'HDFC Bank', 'HDFCBK')")
+        }
+
+        val db = helper.runMigrationsAndValidate("migration-test-v6", 6, true, SmsExpenseDatabase.MIGRATION_5_6)
+
+        db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'transaction_labels'").use { cursor ->
+            assertTrue(!cursor.moveToFirst())
+        }
+        db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'user_category_rules'").use { cursor ->
+            assertTrue(!cursor.moveToFirst())
+        }
+        db.query("SELECT name FROM banks WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("HDFC Bank", cursor.getString(0))
+        }
+        db.close()
+    }
 }

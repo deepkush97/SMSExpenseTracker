@@ -19,8 +19,6 @@ import com.smsexpensetracker.core.database.entity.ParseLogEntity
 import com.smsexpensetracker.core.database.entity.SmsRuleEntity
 import com.smsexpensetracker.core.database.entity.SyncMetaEntity
 import com.smsexpensetracker.core.database.entity.TransactionEntity
-import com.smsexpensetracker.core.database.entity.TransactionLabelEntity
-import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
 
 
 @Database(
@@ -30,11 +28,9 @@ import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
         ParseLogEntity::class,
         SmsRuleEntity::class,
         SyncMetaEntity::class,
-        TransactionEntity::class,
-        TransactionLabelEntity::class,
-        UserCategoryRuleEntity::class
+        TransactionEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -95,6 +91,13 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `transaction_labels`")
+                db.execSQL("DROP TABLE IF EXISTS `user_category_rules`")
+            }
+        }
+
         fun getInstance(context: Context): SmsExpenseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -102,7 +105,7 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
                     SmsExpenseDatabase::class.java,
                     "sms_expense_tracker.db"
                 ).addCallback(SeedDatabaseCallback())
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
 //                    .setQueryCallback(Executors.newSingleThreadExecutor()) { sqlQuery, bindArgs ->
 //                        // some query logs for debug
 //                    }

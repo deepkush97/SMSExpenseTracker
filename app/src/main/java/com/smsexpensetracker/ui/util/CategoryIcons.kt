@@ -401,8 +401,6 @@ val CATEGORY_ICONS: List<IconEntry> = listOf(
     IconEntry("info", listOf("info", "information"), Icons.Filled.Info)
 )
 
-val CATEGORY_ICON_NAMES: List<String> = CATEGORY_ICONS.map { it.name }
-
 fun materialIcon(name: String): ImageVector =
     CATEGORY_ICONS.find { it.name == name }?.imageVector ?: Icons.Filled.Category
 

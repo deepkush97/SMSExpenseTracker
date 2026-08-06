@@ -7,7 +7,7 @@
 
 ## Finalization Track — Priority Order (for actual use)
 
-> What remains to ship a usable app. Unit suite: **389 tests green** (`./gradlew testDebugUnitTest`).
+> What remains to ship a usable app. Unit suite: **414 tests green** (`./gradlew testDebugUnitTest`).
 > P0 = blocks daily use · P1 = strongly recommended · P2 = polish/later.
 
 ### P0 — Must land first
@@ -15,8 +15,8 @@
 - [ ] **F2. Live sync progress** — observe `SmsSyncUseCase.progress` (`processed/total/percent`) in Transactions/Dashboard; currently only a bare spinner shows. (Task 16)
 
 ### P1 — Strongly recommended
-- [ ] **F3. Sync controls in Settings** — last-sync time, Re-sync button, sync-range picker (1d/1w/2w/1m/3m/All). Wire `SyncRange` → `SmsReader.readSms(dateRange)` in `SmsSyncUseCase.sync()` (currently full-scan). (Tasks 14/15)
-- [ ] **F4. Auto-categorization on sync** — keyword/merchant rule engine using the existing `UserCategoryRule` + `TransactionLabel` entities (entities only, no engine yet). (SOLUTION_DESIGN §10.8)
+- [ ] **F3. Sync controls in Settings** — last-sync time, Re-sync button, sync-range picker (1d/1w/2w/1m/3m/All). Wire `SyncRange` (re-land deleted class) → `SmsReader.readSms(dateRange)` in `SmsSyncUseCase.sync()` (currently full-scan). (Tasks 14/15)
+- [ ] **F4. Auto-categorization on sync** — keyword/merchant rule engine using the deleted `UserCategoryRule` + `TransactionLabel` entities (re-land alongside entities). (SOLUTION_DESIGN §10.8)
 - [x] **F5. Dashboard empty state** — "Get started" card on empty Dashboard (Try demo data / Sync SMS / dismiss) doubles as onboarding safety net. (Task 10; implemented with the new-user onboarding flow, see `docs/superpowers/specs/2026-08-05-new-user-onboarding-design.md`)
 - [ ] **F6. Release build** — signed release APK (keystore), verify ProGuard, device smoke test; About section shows version from `BuildConfig` instead of hardcoded "Version 1.0". (Tasks 14/18)
 - [x] **F11. On-arrival SMS capture** — `SMS_RECEIVED` broadcast receiver parses + records new bank SMS instantly (no manual sync). Request `RECEIVE_SMS` alongside `READ_SMS`. Spec: `docs/superpowers/specs/2026-08-05-on-arrival-sms-capture-design.md`. On-arrival = fast path; full-scan "Sync SMS" remains the re-attempt safety net for failed parses. _(Implemented 2026-08-05: `SmsIncomingReceiver` + `handleIncomingSms` rule-match fallback; 398 unit tests green. Device check folded into F1.)_
@@ -43,20 +43,20 @@
 - [x] **Verify:** `./gradlew assembleDebug` compiles cleanly
 
 ### [x] 2. Database Foundation
-- [x] Implement all Room entities: `BankEntity`, `SmsRuleEntity`, `TransactionEntity`, `CategoryEntity`, `TransactionLabelEntity`, `UserCategoryRuleEntity`, `ParseLogEntity`, `SyncMetaEntity`
+- [x] Implement all Room entities: `BankEntity`, `SmsRuleEntity`, `TransactionEntity`, `CategoryEntity`, `ParseLogEntity`, `SyncMetaEntity` _(`TransactionLabelEntity`, `UserCategoryRuleEntity` were added in Task 2, then pruned 2026-08-06 — re-land with **F4**)_
 - [x] Implement all DAOs with `@Insert`, `@Update`, `@Delete`, `@Query` methods
 - [x] Implement `Converters` class (`@TypeConverter` for enums, `LocalDateTime`, `Long` (paisa))
-- [x] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 1, `exportSchema = true`)
+- [x] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 6, `exportSchema = true`; started at version 1, bumped 5→6 on 2026-08-06 when the two unused label tables were pruned)
 - [x] Implement `SeedDatabaseCallback` (`RoomDatabase.Callback.onCreate()`) — inserts 6 banks, 14 categories, 14 SMS_RULE template seed rows
 - [x] Configure Room schema export in `build.gradle.kts`
-- [x] Implement migrations & migration tests — DB is at **version 5**; `MIGRATION_1_2`, `2_3`, `3_4`, `4_5` with 4 androidTest cases (`MigrationTest.kt`)
+- [x] Implement migrations & migration tests — DB is at **version 6**; `MIGRATION_1_2`, `2_3`, `3_4`, `4_5`, `5_6` with 5 androidTest cases (`MigrationTest.kt`; `5_6` drops the pruned `transaction_labels`/`user_category_rules` tables)
 - [~] **Verify:** Migration tests pass on a device/emulator (folded into **F1**)
 
 ### [x] 3. Domain Models & Repository Interfaces
-- [x] Implement domain models: `Transaction`, `Bank`, `SmsRule`, `Category`, `UserCategoryRule`, `ParseLog`, `SyncMeta`, `TransactionLabel`
-- [x] Implement value objects: `SenderId`, `ParsedResult`, `ConfidenceScore`, `SyncProgress`, `SyncRange`
+- [x] Implement domain models: `Transaction`, `Bank`, `SmsRule`, `Category`, `ParseLog`, `SyncMeta` _(`UserCategoryRule`, `TransactionLabel` pruned 2026-08-06 — re-land with **F4**)_
+- [x] Implement value objects: `SenderId`, `ParsedResult`, `ConfidenceScore`, `SyncProgress` _(`SyncRange` pruned 2026-08-06 — re-land with **F3**)_
 - [x] Implement repository interfaces: `TransactionRepository`, `BankRepository`, `SmsRuleRepository`, `CategoryRepository`, `ParseLogRepository`, `SyncMetaRepository`
-- [x] Implement use case stubs: `ParseSmsUseCase`, `GetTransactionsUseCase`, `LabelTransactionUseCase`, `SyncSmsUseCase`, `ExportCsvUseCase`
+- [x] Implement use case stubs: `GetTransactionsUseCase`, `SyncSmsUseCase`, `ExportCsvUseCase` _(`ParseSmsUseCase`, `LabelTransactionUseCase` pruned 2026-08-06 — re-land with **F4**)_
 - [x] **Verify:** All interfaces compile; use cases are injectable via Hilt (`@Inject` wired in DI modules + ViewModels)
 
 ---
@@ -71,7 +71,7 @@
 - [x] Implement `ParserEngine` — orchestrates sender detection, rule loading, regex matching, type inference, confidence scoring
 - [x] Implement `ParseLog` recording for every parse attempt
 - [ ] **Verify:** Parser correctly extracts all fields from the 14 real SMS patterns
-  - [x] Covered by `ParserEngineTest`, `RegexParserTest`, `SenderDetectorTest`, `TypeInferrerTest`, `ConfidenceScorerTest` (22 parser tests, part of the 389 green)
+  - [x] Covered by `ParserEngineTest`, `RegexParserTest`, `SenderDetectorTest`, `TypeInferrerTest`, `ConfidenceScorerTest` (22 parser tests, part of the 414 green)
 
 ### [x] 5. Parser Unit Tests (Real SMS Patterns)
 - [x] Create test data class with all 14 SMS strings across 4 banks
@@ -93,7 +93,7 @@
 - [x] Implement `CategoryRepositoryImpl` — CRUD for categories and auto-category rules
 - [x] Implement `SyncMetaRepositoryImpl` — track last sync time, range, status, progress
 - [x] Implement `ParseLogRepositoryImpl` — record and query parse logs
-- [x] **Verify:** Data layer compiles; repository unit tests pass (6 repo test classes, part of the 389 green). Room in-memory integration tests → **F8**
+- [x] **Verify:** Data layer compiles; repository unit tests pass (6 repo test classes, part of the 414 green). Room in-memory integration tests → **F8**
 
 ### [x] 7. Sync Use Case (Debounce + Batching)
 - [x] Implement `SmsSyncUseCase` — orchestrates `SmsReader.readSms()` -> chunk(100) -> `ParserEngine.parse()` -> `TransactionRepository.insertBatch()` -> emit progress; wired to UI (Transactions sync button + Unparsed re-sync)
@@ -228,7 +228,7 @@
 - [x] Generate ADB test SMS script — `scripts/push_test_sms.sh` exists
 - [ ] Build release APK/AAB, smoke test on physical device → **F6** + **F1**
 - [ ] Verify ProGuard rules don't break functionality → **F6**
-- [~] **Verify:** `./gradlew testDebugUnitTest` 100% pass (389 green); `lint` not configured (AGENTS.md: build+test only); release APK works → **F1/F6**
+- [~] **Verify:** `./gradlew testDebugUnitTest` 100% pass (414 green); `lint` not configured (AGENTS.md: build+test only); release APK works → **F1/F6**
 
 ---
 

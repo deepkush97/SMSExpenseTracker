@@ -79,8 +79,8 @@ com.smsexpensetracker
   domain/
     model/          — Transaction, Bank, SmsRule, Category, ParseLog, SyncMeta, etc.
     repository/     — Repository interfaces
-    usecase/        — ParseSmsUseCase, GetTransactionsUseCase, etc. (stubs)
-    value/          — ParsedResult, ConfidenceScore, SenderId, SyncProgress, SyncRange
+    usecase/        — GetTransactionsUseCase, SyncSmsUseCase, etc. (stubs)
+    value/          — ParsedResult, ConfidenceScore, SenderId, SyncProgress
   ui/
     theme/          — Color, Theme, Type (Compose theme only, no screens yet)
   di/               — DatabaseModule (Hilt)
@@ -355,10 +355,10 @@ Write logs to `filesDir/logs/`. Timber tree for forwarding. CSV export/import fo
 First-launch detection, permission explanation, sync range picker.
 
 ### 10.8 TransactionLabel + UserCategoryRule
-Entities exist. Need domain models, repos, and auto-categorization engine.
+Pruned 2026-08-06 (entities + domain models were unused). Re-land alongside an auto-categorization engine: entities, domain models, repos, and the keyword/merchant rule engine (see **F4**).
 
 ### 10.9 CI/CD
 GitHub Actions: lint+test, debug APK, release build with signing.
 
 ### 10.10 Migrations
-Currently version 1. Future schema changes will add `MIGRATION_1_2` with tests.
+Currently version 6. `MIGRATION_1_2`, `2_3`, `3_4`, `4_5` for the live schema; `MIGRATION_5_6` drops the pruned `transaction_labels` / `user_category_rules` tables. Each has a `MigrationTest.kt` androidTest case.
