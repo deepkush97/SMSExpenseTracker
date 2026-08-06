@@ -33,24 +33,16 @@ send_sms "AD-HDFCBK-S" \
 "Spent Rs.4831.76 On HDFC Bank Card 1111 At Acme Inc. On 2026-07-26:21:35:51.Not You? To Block+Reissue Call 18002586161/SMS BLOCK CC 2468 to 7308080808"
 
 send_sms "AD-HDFCBK-S" \
-"Txn Rs.25.00
-On HDFC Bank Card 1111
-At Q123456789@ybl
-by UPI 620436716168
-On 23-07
-Not You?
-Call 18002586161/SMS BLOCK CC 2468 to 7308080808"
+"Txn Rs.25.00\nOn HDFC Bank Card 1111\nAt Q123456789@ybl \nby UPI 620436716168\nOn 23-07\nNot You?\nCall 18002586161/SMS BLOCK CC 2468 to 7308080808"
 
 send_sms "AD-HDFCBK-S" \
 "Alert! Rs. 32 refunded by someComp on 20/JUL/2026 & adjusted against HDFC Bank Credit Card 1111 View updated balance here: bank link"
 
 send_sms "AD-HDFCBK-S" \
-"Credit Alert!
-Rs.12000.00 credited to HDFC Bank A/c XX1111 on 18-07-26 from VPA yourupi@addr (UPI 656540994008)"
+"Credit Alert!\nRs.12000.00 credited to HDFC Bank A/c XX1111 on 18-07-26 from VPA yourupi@addr (UPI 656540994008)"
 
 send_sms "AD-HDFCBK-S" \
-"PAYMENT ALERT!
-INR 1000.00 deducted from HDFC Bank A/C No 1234 towards Some CORP UMRN: HDFC7011403241000251"
+"PAYMENT ALERT! \nINR 1000.00 deducted from HDFC Bank A/C No 1234 towards Some CORP UMRN: HDFC7011403241000251"
 
 send_sms "AD-HDFCBK-S" \
 "Payment Successful! Rs. 66093.00 from A/c **********1233 to SOMECORP via HDFC Bank NetBanking. Not you?Call 18002586161"
