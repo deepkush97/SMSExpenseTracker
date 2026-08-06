@@ -4,6 +4,24 @@ A tap-through test plan. Every item is **Action → Expected result**. Work top 
 
 > **Reference numbers:** [U] = covered by an automated unit test today; [M] = manual-only (no unit test). Not every row is marked — the ones that are flag coverage where it matters.
 
+## Automated UI acceptance (Compose)
+
+The Compose smoke/acceptance suite replaces the deleted scaffold test. 17 instrumented tests: Dashboard (4), Onboarding (4), Transactions (1), Settings (1), Categorize (1), Parser (1), Permission (1), Room Migration (4).
+
+Run the suite on the Gradle Managed Device (provisions a headless Pixel 9 Pro, API 35):
+
+```bash
+./gradlew pixel9Api35DebugAndroidTest
+```
+
+Or run it against a live emulator/device (one must be running, API 28+):
+
+```bash
+./gradlew connectedDebugAndroidTest
+```
+
+The SMS-permission **grant** path is automated; the **deny** path (picking "Not now" on the system dialog, then the in-app **Open Settings** rescue flow) is **manual-only** — see §5 Sync (SMS).
+
 ## 0. Prerequisites
 
 - [ ] An Android emulator (API 28+) is running.
