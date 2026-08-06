@@ -9,36 +9,21 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.smsexpensetracker.MainActivity
 import com.smsexpensetracker.core.AppState
-import com.smsexpensetracker.core.settings.DemoDataPreferences
-import com.smsexpensetracker.di.SettingsModule
 import com.smsexpensetracker.ui.TestTags
 import com.smsexpensetracker.util.TestPermissions
-import kotlinx.coroutines.runBlocking
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.rules.TestWatcher
-import org.junit.runner.Description
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class OnboardingPermissionTest {
 
-    private val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
 
-    @get:Rule
-    val ruleChain: RuleChain = RuleChain
-        .outerRule(object : TestWatcher() {
-            override fun starting(description: Description) {
-                val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-                AppState.reset(ctx)
-                runBlocking {
-                    DemoDataPreferences(SettingsModule.provideSettingsDataStore(ctx.applicationContext))
-                        .setDemoDataLoaded(false)
-                }
-            }
-        })
-        .around(composeRule)
+    @Before fun reset() {
+        AppState.reset(InstrumentationRegistry.getInstrumentation().targetContext)
+    }
 
     @Test fun syncGranted_flowProceeds_grantsSmsPermission() {
         TestPermissions.grant(InstrumentationRegistry.getInstrumentation().targetContext)
