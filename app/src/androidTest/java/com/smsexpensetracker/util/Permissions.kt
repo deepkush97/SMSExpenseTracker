@@ -14,9 +14,4 @@ object TestPermissions {
         val uia = InstrumentationRegistry.getInstrumentation().uiAutomation
         SMS.forEach { perm -> uia.grantRuntimePermission(context.packageName, perm) }
     }
-
-    fun revoke(context: Context) {
-        val uia = InstrumentationRegistry.getInstrumentation().uiAutomation
-        SMS.forEach { perm -> uia.revokeRuntimePermission(context.packageName, perm) }
-    }
 }
