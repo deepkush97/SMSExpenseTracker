@@ -50,6 +50,17 @@ android {
     sourceSets {
         getByName("androidTest").assets.srcDirs(files("$projectDir/schemas"))
     }
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixel9Api35") {
+                    device = "Pixel 9 Pro"
+                    apiLevel = 35
+                    systemImageSource = "google"
+                }
+            }
+        }
+    }
 }
 
 // androidTest-only: room-testing needs kotlinx-serialization 1.8.1 and test-ext-junit needs concurrent-futures 1.2.0 vs the main graph's lifecycle/core pins (1.7.3/1.1.0); AGP aligns androidTest classpaths to the main variant, so the force must also cover the variant runtime classpaths
