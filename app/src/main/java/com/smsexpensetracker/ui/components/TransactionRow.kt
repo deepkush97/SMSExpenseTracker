@@ -65,7 +65,7 @@ fun TransactionRow(
     } else {
         colorScheme.onSurfaceVariant
     }
-    val chipLabel = categoryName ?: transaction.description.take(12)
+    val chipLabel = categoryName ?: "Uncategorized"
 
     Row(
         modifier = modifier
