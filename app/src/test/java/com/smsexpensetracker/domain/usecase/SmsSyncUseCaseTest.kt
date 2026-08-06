@@ -12,6 +12,7 @@ import com.smsexpensetracker.domain.repository.ParseLogRepository
 import com.smsexpensetracker.domain.repository.SmsRuleRepository
 import com.smsexpensetracker.domain.repository.SyncMetaRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
+import com.smsexpensetracker.domain.value.SyncRange
 import com.smsexpensetracker.domain.value.SyncResult
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -366,5 +367,33 @@ class SmsSyncUseCaseTest {
         val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
 
         assertEquals(true, result)
+    }
+
+    @Test
+    fun `sync with a range passes date range to readSms`() = runTest {
+        coEvery { smsReader.readSms(dateRange = any()) } returns MutableStateFlow(emptyList())
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(emptyList())
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        useCase.sync(range = SyncRange.LAST_1W)
+
+        coVerify {
+            smsReader.readSms(
+                dateRange = match { pair ->
+                    pair != null && pair.second > pair.first && pair.second <= System.currentTimeMillis()
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `sync with ALL range keeps full scan (null date range)`() = runTest {
+        coEvery { smsReader.readSms(dateRange = null) } returns MutableStateFlow(emptyList())
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(emptyList())
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        useCase.sync(range = SyncRange.ALL)
+
+        coVerify(exactly = 1) { smsReader.readSms(dateRange = null) }
     }
 }

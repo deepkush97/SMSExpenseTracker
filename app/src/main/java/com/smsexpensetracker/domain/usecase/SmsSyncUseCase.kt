@@ -15,6 +15,7 @@ import com.smsexpensetracker.domain.repository.SmsRuleRepository
 import com.smsexpensetracker.domain.repository.SyncMetaRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
 import com.smsexpensetracker.domain.value.SyncProgress
+import com.smsexpensetracker.domain.value.SyncRange
 import com.smsexpensetracker.domain.value.SyncResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -52,7 +53,7 @@ class SmsSyncUseCase @Inject constructor(
 
     private var isRunning = false
 
-    suspend fun sync(): SyncResult {
+    suspend fun sync(range: SyncRange? = null): SyncResult {
         if (isRunning) return SyncResult()
         if (demoDataPreferences.demoDataLoaded.first()) {
             return SyncResult(error = "Delete demo data before syncing real SMS.")
@@ -63,7 +64,9 @@ class SmsSyncUseCase @Inject constructor(
             withContext(ioDispatcher) {
                 val rules = smsRuleRepository.getAllRules().first().filter { it.isActive }
                 val rulePairs = rules.map { it.bankId to it.pattern }
-                val messages = smsReader.readSms().first()
+                val dateRange = range?.takeUnless { it == SyncRange.ALL }
+                    ?.let { it.startTimestamp to it.endTimestamp }
+                val messages = smsReader.readSms(dateRange = dateRange).first()
                 val total = messages.size
 
                 var processed = 0
