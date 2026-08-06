@@ -103,5 +103,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.hilt.android)
+    kspAndroidTest(libs.hilt.compiler)
     androidTestImplementation(libs.room.testing)
 }

@@ -47,12 +47,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.smsexpensetracker.core.settings.OnboardingPreferences
+import com.smsexpensetracker.ui.TestTags
 import com.smsexpensetracker.ui.navigation.AppNavHost
 import com.smsexpensetracker.ui.navigation.BottomNavItem
 import com.smsexpensetracker.ui.onboarding.OnboardingScreen
@@ -138,7 +140,8 @@ private fun PillNavigationBar(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(bottom = 12.dp),
+            .padding(bottom = 12.dp)
+            .testTag(TestTags.BOTTOM_NAV),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
