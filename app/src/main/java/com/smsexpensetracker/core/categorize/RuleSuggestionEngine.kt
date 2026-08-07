@@ -26,9 +26,10 @@ object RuleSuggestionEngine {
         classified.forEach(::add)
 
         return allByKeyword
-            .filter { it.value.size >= minCount }
             .filterKeys { it.length >= minKeywordLength }
             .map { (kw, txns) ->
+                val uncategorizedCount = txns.count { it.categoryId == null }
+                if (uncategorizedCount < minCount) return@map null
                 val evidence = txns.filter { it.categoryId != null }
                 val byCategory = evidence.groupingBy { it.categoryId }.eachCount()
                 val topCount = byCategory.values.maxOrNull()
@@ -36,9 +37,23 @@ object RuleSuggestionEngine {
                 val categoryId = if (topCount != null && winners.size == 1) {
                     winners.keys.single()
                 } else null
-                RuleSuggestion(keyword = kw, transactionCount = txns.size, suggestedCategoryId = categoryId)
+                RuleSuggestion(keyword = kw, transactionCount = uncategorizedCount, suggestedCategoryId = categoryId)
             }
+            .filterNotNull()
             .sortedByDescending { it.transactionCount }
+    }
+
+    fun conflicts(suggestions: List<RuleSuggestion>): List<Pair<String, String>> {
+        val keywords = suggestions.map { it.keyword }.sorted()
+        val result = mutableListOf<Pair<String, String>>()
+        for (i in keywords.indices) {
+            for (j in i + 1 until keywords.size) {
+                val a = keywords[i]
+                val b = keywords[j]
+                if (b.contains(a) || a.contains(b)) result.add(a to b)
+            }
+        }
+        return result
     }
 
     private fun tokens(description: String, minLength: Int): Set<String> =

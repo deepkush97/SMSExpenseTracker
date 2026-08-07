@@ -60,13 +60,30 @@ class BulkCategorizeViewModelTest {
         assertEquals(1, vm.uiState.value.suggestions.size)
         assertEquals("amazon", vm.uiState.value.suggestions.first().keyword)
         assertEquals(3, vm.uiState.value.uncategorizedCount)
+        assertEquals(emptyList<Pair<String, String>>(), vm.uiState.value.conflicts)
+    }
+
+    @Test
+    fun `populates overlapping keyword conflicts in state from engine`() = runTest(dispatcher) {
+        coEvery { transactionRepository.getAllTransactions() } returns flowOf(
+            listOf(
+                tx(1, "AMAZON order"), tx(2, "amazon gift"), tx(3, "amazon shoes"),
+                tx(4, "AMAZONPAY one"), tx(5, "amazonpay two"), tx(6, "amazonpay three"),
+                tx(7, "AMAZON prime", 9L), tx(8, "AMAZON wallet", 9L)
+            )
+        )
+        coEvery { categoryRepository.getAllCategories() } returns flowOf(emptyList())
+        val vm = BulkCategorizeViewModel(transactionRepository, categoryRepository)
+        advanceUntilIdle()
+        assertEquals(listOf("amazon" to "amazonpay"), vm.uiState.value.conflicts)
     }
 
     @Test
     fun `apply inserts confirmed rules and reassigns uncategorized`() = runTest(dispatcher) {
         val txs = listOf(
-            tx(1, "AMAZON order"), tx(2, "amazon shoes"),
-            tx(3, "PAYMENT VIA AMAZON", 9L)
+            tx(1, "AMAZON order"), tx(2, "amazon shoes"), tx(3, "amazon wallet"),
+            tx(4, "AMAZON prime"),
+            tx(5, "PAYMENT VIA AMAZON", 9L)
         )
         coEvery { transactionRepository.getAllTransactions() } returns flowOf(txs)
         coEvery { categoryRepository.getAllCategories() } returns flowOf(emptyList())
@@ -83,15 +100,17 @@ class BulkCategorizeViewModelTest {
         vm.apply()
         advanceUntilIdle()
         coVerify { categoryRepository.insertRule(UserCategoryRule(0L, "amazon", 9L)) }
-        coVerify(exactly = 2) { transactionRepository.updateTransactionCategory(any(), any()) }
-        assertEquals(2, vm.uiState.value.categorizedCount)
+        coVerify(exactly = 4) { transactionRepository.updateTransactionCategory(any(), any()) }
+        assertEquals(4, vm.uiState.value.categorizedCount)
+        assertEquals(0, vm.uiState.value.remainingCount)
     }
 
     @Test
     fun `apply skips insertRule when matching rule already exists but still reassigns`() = runTest(dispatcher) {
         val txs = listOf(
-            tx(1, "AMAZON order"), tx(2, "amazon shoes"),
-            tx(3, "PAYMENT VIA AMAZON", 9L)
+            tx(1, "AMAZON order"), tx(2, "amazon shoes"), tx(3, "amazon wallet"),
+            tx(4, "AMAZON prime"),
+            tx(5, "PAYMENT VIA AMAZON", 9L)
         )
         rulesFlow.value = listOf(UserCategoryRule(0L, "amazon", 9L))
         coEvery { transactionRepository.getAllTransactions() } returns flowOf(txs)
@@ -106,7 +125,8 @@ class BulkCategorizeViewModelTest {
         vm.apply()
         advanceUntilIdle()
         coVerify(exactly = 0) { categoryRepository.insertRule(any()) }
-        coVerify(exactly = 2) { transactionRepository.updateTransactionCategory(any(), any()) }
-        assertEquals(2, vm.uiState.value.categorizedCount)
+        coVerify(exactly = 4) { transactionRepository.updateTransactionCategory(any(), any()) }
+        assertEquals(4, vm.uiState.value.categorizedCount)
+        assertEquals(true, vm.uiState.value.hasApplied)
     }
 }

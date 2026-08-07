@@ -30,9 +30,11 @@ data class BulkCategorizeUiState(
     val suggestions: List<SuggestionUi> = emptyList(),
     val uncategorizedCount: Int = 0,
     val isApplying: Boolean = false,
+    val hasApplied: Boolean = false,
     val categorizedCount: Int = 0,
     val remainingCount: Int = 0,
-    val categories: List<Category> = emptyList()
+    val categories: List<Category> = emptyList(),
+    val conflicts: List<Pair<String, String>> = emptyList()
 ) {
     val previewCount: Int get() = suggestions.filter { it.enabled && it.chosenCategoryId != null }
         .sumOf { it.transactionCount }
@@ -62,6 +64,7 @@ class BulkCategorizeViewModel @Inject constructor(
                 isLoading = false,
                 uncategorizedCount = uncategorized.size,
                 categories = categories,
+                conflicts = RuleSuggestionEngine.conflicts(raw),
                 suggestions = raw.map { s ->
                     SuggestionUi(
                         keyword = s.keyword,
@@ -120,6 +123,7 @@ class BulkCategorizeViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isApplying = false,
+                    hasApplied = true,
                     categorizedCount = categorized,
                     remainingCount = it.uncategorizedCount - categorized
                 )

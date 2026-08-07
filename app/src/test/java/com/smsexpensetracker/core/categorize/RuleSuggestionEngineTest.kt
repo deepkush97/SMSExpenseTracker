@@ -34,8 +34,52 @@ class RuleSuggestionEngineTest {
         assertEquals(1, suggestions.size)
         val s = suggestions.first()
         assertEquals("amazon", s.keyword)
-        assertEquals(5, s.transactionCount)
+        assertEquals(3, s.transactionCount)
         assertEquals(10L, s.suggestedCategoryId)
+    }
+
+    @Test
+    fun `does not suggest keyword that appears only among classified transactions`() {
+        val uncategorized = listOf(tx(1, "Coffee starbucks", null))
+        val classified = listOf(
+            tx(10, "AMAZON order", 10L),
+            tx(11, "AMAZON pay", 10L),
+            tx(12, "AMAZON sale", 10L)
+        )
+        val suggestions = RuleSuggestionEngine.suggest(uncategorized, classified, minCount = 2)
+        assertEquals(emptyList<RuleSuggestion>(), suggestions)
+    }
+
+    @Test
+    fun `counts only uncategorized transactions and guesses category from classified evidence`() {
+        val uncategorized = listOf(
+            tx(1, "AMAZON order", null),
+            tx(2, "amazon gift", null),
+            tx(3, "amazon shoes", null)
+        )
+        val classified = listOf(tx(10, "amazon prime", 7L), tx(11, "amazon wallet", 7L))
+        val suggestions = RuleSuggestionEngine.suggest(uncategorized, classified, minCount = 3)
+        assertEquals(1, suggestions.size)
+        assertEquals(3, suggestions.first().transactionCount)
+        assertEquals(7L, suggestions.first().suggestedCategoryId)
+    }
+
+    @Test
+    fun `flags overlapping keywords as conflicts`() {
+        val suggestions = listOf(
+            RuleSuggestion(keyword = "amazon", transactionCount = 4, suggestedCategoryId = null),
+            RuleSuggestion(keyword = "amazonpay", transactionCount = 3, suggestedCategoryId = null)
+        )
+        assertEquals(listOf("amazon" to "amazonpay"), RuleSuggestionEngine.conflicts(suggestions))
+    }
+
+    @Test
+    fun `returns no conflicts for non overlapping keywords`() {
+        val suggestions = listOf(
+            RuleSuggestion(keyword = "amazon", transactionCount = 4, suggestedCategoryId = null),
+            RuleSuggestion(keyword = "flipkart", transactionCount = 3, suggestedCategoryId = null)
+        )
+        assertEquals(emptyList<Pair<String, String>>(), RuleSuggestionEngine.conflicts(suggestions))
     }
 
     @Test

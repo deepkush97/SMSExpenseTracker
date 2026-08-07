@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.smsexpensetracker.domain.model.Category
@@ -133,17 +132,22 @@ private fun BulkCategorizeContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = if (state.isApplying) "Categorizing…"
-                    else "Categorizes ~${state.previewCount} of ${state.uncategorizedCount} uncategorized",
+                    text = when {
+                        state.isApplying -> "Categorizing…"
+                        state.hasApplied ->
+                            "${state.categorizedCount} categorized, ${state.remainingCount} uncategorized"
+                        else -> "Categorizes ~${state.previewCount} of ${state.uncategorizedCount} uncategorized"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (state.hasApplied) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (state.categorizedCount > 0) {
+                if (state.conflicts.isNotEmpty()) {
                     Text(
-                        text = "${state.categorizedCount} categorized, ${state.remainingCount} uncategorized",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        text = state.conflicts.joinToString("  ") { (a, b) -> "Overlapping keywords: $a and $b" } +
+                            " — rules apply in order, so one may match the other's transactions.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
                 Button(
