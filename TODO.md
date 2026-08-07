@@ -7,23 +7,23 @@
 
 ## Finalization Track — Priority Order (for actual use)
 
-> What remains to ship a usable app. Unit suite: **414 tests green** (`./gradlew testDebugUnitTest`).
+> What remains to ship a usable app. Unit suite: **429 tests green** (`./gradlew testDebugUnitTest`).
 > P0 = blocks daily use · P1 = strongly recommended · P2 = polish/later.
 
 ### P0 — Must land first
 - [ ] **F1. Real-device end-to-end smoke test** — install on a physical device → grant `READ_SMS` → Sync SMS → verify transactions on Dashboard/List → re-sync (no duplicates, `smsBodyHash`) → CSV export round-trip → Unparsed SMS review → run migration androidTests on device. _(folds in Tasks 7/12/16 verifies + `scripts/push_test_sms.sh`)_
-- [ ] **F2. Live sync progress** — observe `SmsSyncUseCase.progress` (`processed/total/percent`) in Transactions/Dashboard; currently only a bare spinner shows. (Task 16)
+- [x] **F2. Live sync progress** — live "Scanning SMS... {processed}/{total} ({percent}%)" banner on the Transactions screen, driven by `SmsSyncUseCase.progress` (`processed/total/percent`). (Task 16 done 2026-08-07)
 
 ### P1 — Strongly recommended
-- [ ] **F3. Sync controls in Settings** — last-sync time, Re-sync button, sync-range picker (1d/1w/2w/1m/3m/All). Wire `SyncRange` (re-land deleted class) → `SmsReader.readSms(dateRange)` in `SmsSyncUseCase.sync()` (currently full-scan). (Tasks 14/15)
-- [ ] **F4. Auto-categorization on sync** — keyword/merchant rule engine using the deleted `UserCategoryRule` + `TransactionLabel` entities (re-land alongside entities). (SOLUTION_DESIGN §10.8)
+- [x] **F3. Sync controls in Settings** — last-sync time, Re-sync button, sync-range picker (1d/1w/2w/1m/3m/All); `SyncRange` re-landed and wired → `SmsReader.readSms(dateRange)` in `SmsSyncUseCase.sync()`. (Tasks 14/15 done 2026-08-07)
+- [x] **F4. Auto-categorization on sync** — `AutoCategoryEngine` keyword/merchant rule engine; `UserCategoryRule` + `TransactionLabel` entities, DAOs, and repositories re-landed and applied during sync. (SOLUTION_DESIGN §10.8)
 - [x] **F5. Dashboard empty state** — "Get started" card on empty Dashboard (Try demo data / Sync SMS / dismiss) doubles as onboarding safety net. (Task 10; implemented with the new-user onboarding flow, see `docs/superpowers/specs/2026-08-05-new-user-onboarding-design.md`)
 - [ ] **F6. Release build** — signed release APK (keystore), verify ProGuard, device smoke test; About section shows version from `BuildConfig` instead of hardcoded "Version 1.0". (Tasks 14/18)
-- [x] **F11. On-arrival SMS capture** — `SMS_RECEIVED` broadcast receiver parses + records new bank SMS instantly (no manual sync). Request `RECEIVE_SMS` alongside `READ_SMS`. Spec: `docs/superpowers/specs/2026-08-05-on-arrival-sms-capture-design.md`. On-arrival = fast path; full-scan "Sync SMS" remains the re-attempt safety net for failed parses. _(Implemented 2026-08-05: `SmsIncomingReceiver` + `handleIncomingSms` rule-match fallback; 398 unit tests green. Device check folded into F1.)_
+- [x] **F11. On-arrival SMS capture** — `SMS_RECEIVED` broadcast receiver parses + records new bank SMS instantly (no manual sync). Request `RECEIVE_SMS` alongside `READ_SMS`. Spec: `docs/superpowers/specs/2026-08-05-on-arrival-sms-capture-design.md`. On-arrival = fast path; full-scan "Sync SMS" remains the re-attempt safety net for failed parses. _(Implemented 2026-08-05: `SmsIncomingReceiver` + `handleIncomingSms` rule-match fallback; 429 unit tests green. Device check folded into F1.)_
 
 ### P2 — Polish / later
-- [ ] **F7. Error components** — shared `ErrorBanner` / `ErrorSnackbar` / `ErrorDialog`. (Task 9)
-- [ ] **F8. Room DAO integration tests** — in-memory DB CRUD, batch insert, dedup (androidTest). (Task 18)
+- [x] **F7. Error components** — shared `ErrorBanner` / `ErrorSnackbar` / `ErrorDialog` (`ErrorBanner` wired on Transactions). (Task 9 done 2026-08-07)
+- [x] **F8. Room DAO integration tests** — in-memory DB CRUD, batch insert, dedup (androidTest). (Task 18 done 2026-08-07)
 - [ ] **F9. CI/CD** — GitHub Actions: lint+test, debug APK, signed release. (Task 17)
 - [ ] **F10. Incremental sync + `SmsSyncWorker`** — background periodic sync (deferred sub-project). (Task 7)
 
@@ -43,20 +43,20 @@
 - [x] **Verify:** `./gradlew assembleDebug` compiles cleanly
 
 ### [x] 2. Database Foundation
-- [x] Implement all Room entities: `BankEntity`, `SmsRuleEntity`, `TransactionEntity`, `CategoryEntity`, `ParseLogEntity`, `SyncMetaEntity` _(`TransactionLabelEntity`, `UserCategoryRuleEntity` were added in Task 2, then pruned 2026-08-06 — re-land with **F4**)_
+- [x] Implement all Room entities: `BankEntity`, `SmsRuleEntity`, `TransactionEntity`, `CategoryEntity`, `ParseLogEntity`, `SyncMetaEntity` _(`TransactionLabelEntity`, `UserCategoryRuleEntity` added in Task 2, pruned 2026-08-06, re-landed with **F4** on 2026-08-07)_
 - [x] Implement all DAOs with `@Insert`, `@Update`, `@Delete`, `@Query` methods
 - [x] Implement `Converters` class (`@TypeConverter` for enums, `LocalDateTime`, `Long` (paisa))
-- [x] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 6, `exportSchema = true`; started at version 1, bumped 5→6 on 2026-08-06 when the two unused label tables were pruned)
+- [x] Implement `SmsExpenseDatabase` (`@Database` with all entities, version 7, `exportSchema = true`; started at version 1; bumped 5→6 on 2026-08-06 when the two unused label tables were pruned, then 6→7 on 2026-08-07 when they were re-landed)
 - [x] Implement `SeedDatabaseCallback` (`RoomDatabase.Callback.onCreate()`) — inserts 6 banks, 14 categories, 14 SMS_RULE template seed rows
 - [x] Configure Room schema export in `build.gradle.kts`
-- [x] Implement migrations & migration tests — DB is at **version 6**; `MIGRATION_1_2`, `2_3`, `3_4`, `4_5`, `5_6` with 5 androidTest cases (`MigrationTest.kt`; `5_6` drops the pruned `transaction_labels`/`user_category_rules` tables)
+- [x] Implement migrations & migration tests — DB is at **version 7**; `MIGRATION_1_2`, `2_3`, `3_4`, `4_5`, `5_6`, `6_7` with 6 androidTest cases (`MigrationTest.kt`; `5_6` drops the pruned `transaction_labels`/`user_category_rules` tables, `6_7` recreates them)
 - [~] **Verify:** Migration tests pass on a device/emulator (folded into **F1**)
 
 ### [x] 3. Domain Models & Repository Interfaces
-- [x] Implement domain models: `Transaction`, `Bank`, `SmsRule`, `Category`, `ParseLog`, `SyncMeta` _(`UserCategoryRule`, `TransactionLabel` pruned 2026-08-06 — re-land with **F4**)_
-- [x] Implement value objects: `SenderId`, `ParsedResult`, `ConfidenceScore`, `SyncProgress` _(`SyncRange` pruned 2026-08-06 — re-land with **F3**)_
+- [x] Implement domain models: `Transaction`, `Bank`, `SmsRule`, `Category`, `ParseLog`, `SyncMeta` _(`UserCategoryRule`, `TransactionLabel` pruned 2026-08-06, re-landed with **F4** on 2026-08-07)_
+- [x] Implement value objects: `SenderId`, `ParsedResult`, `ConfidenceScore`, `SyncProgress`, `SyncRange` _(`SyncRange` pruned 2026-08-06, re-landed with **F3** on 2026-08-07)_
 - [x] Implement repository interfaces: `TransactionRepository`, `BankRepository`, `SmsRuleRepository`, `CategoryRepository`, `ParseLogRepository`, `SyncMetaRepository`
-- [x] Implement use case stubs: `GetTransactionsUseCase`, `SyncSmsUseCase`, `ExportCsvUseCase` _(`ParseSmsUseCase`, `LabelTransactionUseCase` pruned 2026-08-06 — re-land with **F4**)_
+- [x] Implement use case stubs: `GetTransactionsUseCase`, `SyncSmsUseCase`, `ExportCsvUseCase` _(`ParseSmsUseCase`, `LabelTransactionUseCase` pruned 2026-08-06; not re-landed)_
 - [x] **Verify:** All interfaces compile; use cases are injectable via Hilt (`@Inject` wired in DI modules + ViewModels)
 
 ---
@@ -71,7 +71,7 @@
 - [x] Implement `ParserEngine` — orchestrates sender detection, rule loading, regex matching, type inference, confidence scoring
 - [x] Implement `ParseLog` recording for every parse attempt
 - [ ] **Verify:** Parser correctly extracts all fields from the 14 real SMS patterns
-  - [x] Covered by `ParserEngineTest`, `RegexParserTest`, `SenderDetectorTest`, `TypeInferrerTest`, `ConfidenceScorerTest` (22 parser tests, part of the 414 green)
+  - [x] Covered by `ParserEngineTest`, `RegexParserTest`, `SenderDetectorTest`, `TypeInferrerTest`, `ConfidenceScorerTest` (22 parser tests, part of the 429 green)
 
 ### [x] 5. Parser Unit Tests (Real SMS Patterns)
 - [x] Create test data class with all 14 SMS strings across 4 banks
@@ -93,7 +93,7 @@
 - [x] Implement `CategoryRepositoryImpl` — CRUD for categories and auto-category rules
 - [x] Implement `SyncMetaRepositoryImpl` — track last sync time, range, status, progress
 - [x] Implement `ParseLogRepositoryImpl` — record and query parse logs
-- [x] **Verify:** Data layer compiles; repository unit tests pass (6 repo test classes, part of the 414 green). Room in-memory integration tests → **F8**
+- [x] **Verify:** Data layer compiles; repository unit tests pass (6 repo test classes, part of the 429 green). Room in-memory integration tests → **F8**
 
 ### [x] 7. Sync Use Case (Debounce + Batching)
 - [x] Implement `SmsSyncUseCase` — orchestrates `SmsReader.readSms()` -> chunk(100) -> `ParserEngine.parse()` -> `TransactionRepository.insertBatch()` -> emit progress; wired to UI (Transactions sync button + Unparsed re-sync)
@@ -118,7 +118,7 @@
 - [x] Implement NavHost with bottom navigation: Dashboard, Transactions, Parser Test, Settings
 - [x] Implement `MainActivity` with `@AndroidEntryPoint`, Scaffold with bottom bar
 - [x] Implement `EmptyState` composable (icon, title, subtitle, action button)
-- [ ] Implement `ErrorBanner`, `ErrorSnackbar`, `ErrorDialog` composables → **F7**
+- [x] Implement `ErrorBanner`, `ErrorSnackbar`, `ErrorDialog` composables → **F7**
 - [x] Implement `DashboardViewModel`, `TransactionsViewModel`, `ParserViewModel`, `SettingsViewModel` (+ `Bank`, `Category`, `RuleEditor`, `LogViewer`, `UnparsedSms`, `Categorize`, `ManualEntry` VMs)
 - [x] **Verify:** `./gradlew assembleDebug` compiles cleanly
 
@@ -174,7 +174,7 @@
   - [x] Seed now holds 14 template rules across 6 banks (HDFC 7, ICICI 3, Pluxee 3, DCB 1) covering every `scripts/push_test_sms.sh` pattern — no parse failures out of the box
 - [x] Implement category management: list, add, edit, delete
   - [x] **Searchable icon picker** — category Add/Edit dialog has a "Search icons" field over a scrollable grid of ~120 curated Material icons (name + keyword search)
-- [ ] Implement sync controls: trigger re-sync, select range, view last sync time → **F3** (re-sync already exists via Unparsed SMS screen)
+- [x] Implement sync controls: trigger re-sync, select range, view last sync time → **F3** (re-sync already exists via Unparsed SMS screen)
 - [x] Implement CSV export/import buttons
 - [x] Demo data is opt-in — the app starts empty (no auto-seed on launch); Settings → Data → **Load demo data** seeds 60 transactions (second tap reports "Demo data already loaded")
   - [x] **Demo-data gate** — while demo data is present, real entry is blocked (Transactions sync, Manual Entry save, Parser add-as-transaction, CSV import) with a "Demo data present" dialog; Settings → **Delete demo data** wipes the demo rows and unblocks everything
@@ -192,19 +192,19 @@
 - [x] Implement "Sync SMS" button with loading state — Transactions empty state + header button; Unparsed SMS has "Re-sync now"
 - [x] Implement first-launch detection (DataStore `onboarding_complete` flag) → **F5** (3-page welcome flow at first launch; Dashboard card is the safety net)
 - [ ] Implement dedicated permission explanation screen with illustration → optional (current inline flow works)
-- [ ] Implement sync range picker bottom sheet (1d/1w/2w/1m/3m/All) → **F3**
+- [x] Implement sync range picker bottom sheet (1d/1w/2w/1m/3m/All) → **F3**
 - [ ] Integrate `SmsSyncWorker` trigger after range selection → **F10** (deferred)
 - [~] **Verify:** On first launch, empty dashboard shows, sync flow completes end-to-end → **F1**
 
 ### [-] 16. Sync Progress & Dashboard Updates
-- [ ] Observe sync progress (`SmsSyncUseCase.progress`, not WorkManager — no worker yet) in Transactions/Dashboard → **F2**
-- [ ] Implement sync progress banner: "Scanning SMS... {processed}/{total} ({percent}%)" → **F2**
+- [x] Observe sync progress (`SmsSyncUseCase.progress`, not WorkManager — no worker yet) in Transactions/Dashboard → **F2**
+- [x] Implement sync progress banner: "Scanning SMS... {processed}/{total} ({percent}%)" → **F2**
 - [x] Implement incremental dashboard updates as batches complete — DB is Flow-backed, dashboard/list refresh live
 - [x] Implement sync complete banner: "X SMS scanned, Y transactions found, Z unparsed" — Transactions screen snackbar shows scanned/added/unparsed
 - [x] Handle sync failure: error banner with retry — snackbar "Sync failed. Try again." + retry button
 - [x] Implement unparsed SMS list — shipped as Settings → Unparsed SMS (completion-banner entry point deferred)
-- [ ] Implement re-sync option in Settings → **F3** (exists in Unparsed SMS screen)
-- [~] **Verify:** Progress banner updates live; dashboard populates incrementally → **F2** + **F1**
+- [x] Implement re-sync option in Settings → **F3** (exists in Unparsed SMS screen)
+- [~] **Verify:** Progress banner updates live; dashboard populates incrementally (banner implemented; device check → **F1**)
 
 ---
 
@@ -221,14 +221,14 @@
 - [ ] **Verify:** `git push` triggers pipeline; release build produces signed APK
 
 ### [-] 18. Testing & Release Preparation
-- [ ] Write Room integration tests: DAO CRUD, batch insert, deduplication → **F8**
+- [x] Write Room integration tests: DAO CRUD, batch insert, deduplication → **F8**
 - [x] Write repository tests with mock DAOs — 6 repo test classes green
 - [x] Write use case tests with mock repositories — `SmsSyncUseCaseTest`, `ExportCsvUseCaseTest`, `ImportCsvUseCaseTest`
 - [x] Write ViewModel tests — `TransactionsViewModelTest`, `SettingsViewModelTest`, `CategorizeViewModelTest`, `UnparsedSmsViewModelTest`, `ThemeViewModelTest` (StandardTestDispatcher)
 - [x] Generate ADB test SMS script — `scripts/push_test_sms.sh` exists
 - [ ] Build release APK/AAB, smoke test on physical device → **F6** + **F1**
 - [ ] Verify ProGuard rules don't break functionality → **F6**
-- [~] **Verify:** `./gradlew testDebugUnitTest` 100% pass (414 green); `lint` not configured (AGENTS.md: build+test only); release APK works → **F1/F6**
+- [~] **Verify:** `./gradlew testDebugUnitTest` 100% pass (429 green); `lint` not configured (AGENTS.md: build+test only); release APK works → **F1/F6**
 
 ---
 

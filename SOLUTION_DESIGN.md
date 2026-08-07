@@ -355,10 +355,10 @@ Write logs to `filesDir/logs/`. Timber tree for forwarding. CSV export/import fo
 First-launch detection, permission explanation, sync range picker.
 
 ### 10.8 TransactionLabel + UserCategoryRule
-Pruned 2026-08-06 (entities + domain models were unused). Re-land alongside an auto-categorization engine: entities, domain models, repos, and the keyword/merchant rule engine (see **F4**).
+Re-landed 2026-08-07 (**F4**): entities, domain models, repos, DAOs, and the `AutoCategoryEngine` keyword/merchant rule engine applied during sync. (Originally added in Task 2, pruned 2026-08-06 as unused.)
 
 ### 10.9 CI/CD
 GitHub Actions: lint+test, debug APK, release build with signing.
 
 ### 10.10 Migrations
-Currently version 6. `MIGRATION_1_2`, `2_3`, `3_4`, `4_5` for the live schema; `MIGRATION_5_6` drops the pruned `transaction_labels` / `user_category_rules` tables. Each has a `MigrationTest.kt` androidTest case.
+Currently version 7. `MIGRATION_1_2`, `2_3`, `3_4`, `4_5` for the live schema; `MIGRATION_5_6` drops the pruned `transaction_labels` / `user_category_rules` tables; `MIGRATION_6_7` (2026-08-07) recreates them. Each has a `MigrationTest.kt` androidTest case.
