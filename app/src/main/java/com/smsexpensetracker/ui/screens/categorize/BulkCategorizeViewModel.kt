@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.smsexpensetracker.core.categorize.AutoCategoryEngine
 import com.smsexpensetracker.core.categorize.RuleSuggestion
 import com.smsexpensetracker.core.categorize.RuleSuggestionEngine
+import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.UserCategoryRule
 import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.TransactionRepository
@@ -30,7 +31,8 @@ data class BulkCategorizeUiState(
     val uncategorizedCount: Int = 0,
     val isApplying: Boolean = false,
     val categorizedCount: Int = 0,
-    val remainingCount: Int = 0
+    val remainingCount: Int = 0,
+    val categories: List<Category> = emptyList()
 ) {
     val previewCount: Int get() = suggestions.filter { it.enabled && it.chosenCategoryId != null }
         .sumOf { it.transactionCount }
@@ -53,11 +55,13 @@ class BulkCategorizeViewModel @Inject constructor(
         val transactions = transactionRepository.getAllTransactions().first()
         val classified = transactions.filter { it.categoryId != null }
         val uncategorized = transactions.filter { it.categoryId == null }
+        val categories = categoryRepository.getAllCategories().first()
         val raw: List<RuleSuggestion> = RuleSuggestionEngine.suggest(uncategorized, classified)
         _uiState.update {
             it.copy(
                 isLoading = false,
                 uncategorizedCount = uncategorized.size,
+                categories = categories,
                 suggestions = raw.map { s ->
                     SuggestionUi(
                         keyword = s.keyword,

@@ -12,6 +12,7 @@ import com.smsexpensetracker.ui.screens.banks.BankDetailScreen
 import com.smsexpensetracker.ui.screens.banks.BankManagementScreen
 import com.smsexpensetracker.ui.screens.banks.RuleEditorScreen
 import com.smsexpensetracker.ui.screens.categories.CategoryManagementScreen
+import com.smsexpensetracker.ui.screens.categorize.BulkCategorizeScreen
 import com.smsexpensetracker.ui.screens.categorize.CategorizeScreen
 import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
 import com.smsexpensetracker.ui.screens.logs.LogViewerScreen
@@ -44,7 +45,12 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             ManualEntryScreen(onBack = { navController.popBackStack() })
         }
         composable(BottomNavItem.Categorize.route) {
-            CategorizeScreen()
+            CategorizeScreen(
+                onBulkCategorize = { navController.navigate("bulk_categorize") }
+            )
+        }
+        composable("bulk_categorize") {
+            BulkCategorizeScreen(onBack = { navController.popBackStack() })
         }
         composable(BottomNavItem.Parser.route) { ParserScreen() }
         composable(BottomNavItem.Settings.route) {

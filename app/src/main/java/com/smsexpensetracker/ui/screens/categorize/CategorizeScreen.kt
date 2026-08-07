@@ -48,6 +48,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CategorizeScreen(
     modifier: Modifier = Modifier,
+    onBulkCategorize: () -> Unit = {},
     viewModel: CategorizeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -98,6 +99,15 @@ fun CategorizeScreen(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    val uncategorizedCount = state.queue.count { it.categoryId == null }
+                    if (uncategorizedCount > 0) {
+                        Button(
+                            onClick = onBulkCategorize,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("$uncategorizedCount uncategorized — Categorize automatically")
+                        }
+                    }
                     Text(
                         text = "Categorize",
                         style = MaterialTheme.typography.headlineMedium,
