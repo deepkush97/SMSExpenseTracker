@@ -136,4 +136,26 @@ class MigrationTest {
         }
         db.close()
     }
+
+    @Test
+    fun migrate6To7_createsRuleAndLabelTables() {
+        helper.createDatabase("migration-test-v7", 6).use { db ->
+            db.execSQL("INSERT INTO banks (id, name, smsSender) VALUES (1, 'HDFC Bank', 'HDFCBK')")
+            db.execSQL("INSERT INTO categories (id, name, icon, color, isDefault) VALUES (1, 'Shopping', '', 0, 0)")
+        }
+
+        val db = helper.runMigrationsAndValidate("migration-test-v7", 7, true, SmsExpenseDatabase.MIGRATION_6_7)
+
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO user_category_rules (pattern, categoryId) VALUES ('amazon', 1)")
+
+        db.query("SELECT pattern FROM user_category_rules").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("amazon", cursor.getString(0))
+        }
+        db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'transaction_labels'").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+        }
+        db.close()
+    }
 }

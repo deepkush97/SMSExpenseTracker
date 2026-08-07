@@ -36,7 +36,7 @@ import com.smsexpensetracker.core.database.entity.UserCategoryRuleEntity
         UserCategoryRuleEntity::class,
         TransactionLabelEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -106,6 +106,31 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `user_category_rules` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`pattern` TEXT NOT NULL, " +
+                        "`categoryId` INTEGER NOT NULL, " +
+                        "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_user_category_rules_categoryId` ON `user_category_rules` (`categoryId`)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `transaction_labels` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`transactionId` INTEGER NOT NULL, " +
+                        "`label` TEXT NOT NULL, " +
+                        "FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_transaction_labels_transactionId` ON `transaction_labels` (`transactionId`)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): SmsExpenseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -113,7 +138,7 @@ abstract class SmsExpenseDatabase : RoomDatabase() {
                     SmsExpenseDatabase::class.java,
                     "sms_expense_tracker.db"
                 ).addCallback(SeedDatabaseCallback())
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 //                    .setQueryCallback(Executors.newSingleThreadExecutor()) { sqlQuery, bindArgs ->
 //                        // some query logs for debug
 //                    }
