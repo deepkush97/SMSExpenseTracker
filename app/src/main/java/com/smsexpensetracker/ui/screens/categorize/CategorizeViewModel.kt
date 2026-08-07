@@ -22,7 +22,8 @@ data class CategorizeUiState(
     val index: Int = 0,
     val categories: List<Category> = emptyList(),
     val banks: List<Bank> = emptyList(),
-    val assignedCount: Int = 0
+    val assignedCount: Int = 0,
+    val lastCategoryId: Long? = null
 ) {
     val current: Transaction? get() = queue.getOrNull(index)
     val isDone: Boolean get() = queue.isNotEmpty() && index >= queue.size
@@ -70,10 +71,16 @@ class CategorizeViewModel @Inject constructor(
                         if (i == it.index) tx.copy(categoryId = categoryId) else tx
                     },
                     index = it.index + 1,
-                    assignedCount = it.assignedCount + 1
+                    assignedCount = it.assignedCount + 1,
+                    lastCategoryId = categoryId
                 )
             }
         }
+    }
+
+    fun assignSameAsPrevious() {
+        val last = _uiState.value.lastCategoryId ?: return
+        assignCategory(last)
     }
 
     fun skip() {

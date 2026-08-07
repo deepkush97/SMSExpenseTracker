@@ -195,6 +195,47 @@ class CategorizeViewModelTest {
     }
 
     @Test
+    fun `assignSameAsPrevious uses last assigned`() = runTest(testDispatcher) {
+        every { transactionRepository.getAllTransactions() } returns flowOf(listOf(tx(1), tx(2), tx(3)))
+        every { categoryRepository.getAllCategories() } returns flowOf(listOf(food))
+        every { bankRepository.getAllBanks() } returns flowOf(listOf(hdfc))
+        coEvery { transactionRepository.updateTransactionCategory(1L, 3L) } returns Unit
+        coEvery { transactionRepository.updateTransactionCategory(2L, 3L) } returns Unit
+
+        val vm = CategorizeViewModel(transactionRepository, categoryRepository, bankRepository)
+        advanceUntilIdle()
+
+        vm.assignCategory(3L)
+        advanceUntilIdle()
+
+        vm.assignSameAsPrevious()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { transactionRepository.updateTransactionCategory(1L, 3L) }
+        coVerify(exactly = 1) { transactionRepository.updateTransactionCategory(2L, 3L) }
+        assertEquals(2, vm.uiState.value.index)
+        assertEquals(2, vm.uiState.value.assignedCount)
+        assertEquals(3L, vm.uiState.value.current?.id)
+        assertEquals(3L, vm.uiState.value.lastCategoryId)
+    }
+
+    @Test
+    fun `assignSameAsPrevious does nothing when no previous category`() = runTest(testDispatcher) {
+        every { transactionRepository.getAllTransactions() } returns flowOf(listOf(tx(1)))
+        every { categoryRepository.getAllCategories() } returns flowOf(listOf(food))
+        every { bankRepository.getAllBanks() } returns flowOf(listOf(hdfc))
+
+        val vm = CategorizeViewModel(transactionRepository, categoryRepository, bankRepository)
+        advanceUntilIdle()
+
+        vm.assignSameAsPrevious()
+        advanceUntilIdle()
+
+        assertEquals(0, vm.uiState.value.index)
+        coVerify(exactly = 0) { transactionRepository.updateTransactionCategory(any(), any()) }
+    }
+
+    @Test
     fun `assignCategory updates queue transaction so reset shows the assigned category`() = runTest(testDispatcher) {
         every { transactionRepository.getAllTransactions() } returns flowOf(listOf(tx(1), tx(2)))
         every { categoryRepository.getAllCategories() } returns flowOf(listOf(food, travel))
