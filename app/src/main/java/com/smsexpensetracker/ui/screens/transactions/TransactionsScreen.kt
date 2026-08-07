@@ -51,6 +51,7 @@ import com.smsexpensetracker.data.sms.PermissionManager
 import com.smsexpensetracker.domain.value.SyncProgress
 import com.smsexpensetracker.ui.components.DemoDataBarrierDialog
 import com.smsexpensetracker.ui.components.EmptyState
+import com.smsexpensetracker.ui.components.ErrorBanner
 import com.smsexpensetracker.ui.components.TransactionRow
 import com.smsexpensetracker.ui.components.rememberSmsSyncPermission
 import com.smsexpensetracker.ui.components.rememberSpringPressScale
@@ -133,6 +134,15 @@ fun TransactionsScreen(
                         }
                     }
                     item(key = "searchSpacer") { Spacer(Modifier.height(12.dp)) }
+                    state.syncMessage?.takeIf { it.startsWith("Sync failed") }?.let { message ->
+                        item(key = "syncErrorBanner") {
+                            ErrorBanner(
+                                message = message,
+                                onDismiss = viewModel::consumeSyncMessage,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                    }
                     item(key = "search") {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -259,7 +269,7 @@ fun TransactionsScreen(
 
     LaunchedEffect(state.syncMessage) {
         val message = state.syncMessage
-        if (message != null) {
+        if (message != null && !message.startsWith("Sync failed")) {
             snackbarHostState.showSnackbar(message)
             viewModel.consumeSyncMessage()
         }
