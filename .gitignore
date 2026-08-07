@@ -13,3 +13,4 @@
 *.hprof
 *.log
 .DS_Store
+app/release/*
