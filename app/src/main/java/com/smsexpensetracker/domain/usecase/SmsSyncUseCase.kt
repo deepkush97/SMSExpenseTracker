@@ -30,8 +30,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import timber.log.Timber
@@ -226,7 +227,8 @@ class SmsSyncUseCase @Inject constructor(
                     amount = parsed.amount,
                     transactionType = parsed.type,
                     description = parsed.description,
-                    transactionDate = LocalDate.now().atStartOfDay(),
+                    transactionDate = Instant.ofEpochMilli(timestamp)
+                        .atZone(ZoneId.systemDefault()).toLocalDate().atStartOfDay(),
                     categoryId = AutoCategoryEngine.matchCategory(parsed.description, categoryRules),
                     rawSms = body,
                     smsTimestamp = timestamp,

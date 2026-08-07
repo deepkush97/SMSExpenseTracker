@@ -19,6 +19,8 @@ Built for Indian banks (HDFC, ICICI, DCB, Pluxee, SBI, Axis). Parsing is regex-b
 
 `READ_SMS` is a **hard-restricted permission** — the app cannot be distributed via the Play Store. Install it by building with Android Studio or `./gradlew installDebug` (sideload). No network permission is declared at all.
 
+> **Play Protect note:** sideloading a **debug**-signed APK that requests `READ_SMS`/`RECEIVE_SMS` can be **blocked** by Google Play Protect (the debug key is public/known and SMS permissions are sensitive). To install with a valid, trusted identity, build a **release** APK signed with your own keystore — see [Building a signed release APK](#building-a-signed-release-apk).
+
 ## Tech Stack
 
 | Component  | Technology |
@@ -70,6 +72,52 @@ Parsing pipeline: `SenderDetector` (strips TRAI DLT prefixes, e.g. `AD-HDFCBK-S`
 ```
 
 The database is seeded on first launch with **6 banks, 14 categories, and 14 SMS rules**.
+
+### Building a signed release APK
+
+A release build signs the APK with your own key so Play Protect won't hard-block the install. You only do the keystore setup **once**; afterwards it's a single command.
+
+**1. Generate a keystore (one-time)**
+
+```bash
+mkdir -p ~/keystores
+keytool -genkey -v -keystore ~/keystores/sms-expense-tracker.jks \
+  -alias sms-expense-tracker -keyalg RSA -keysize 2048 -validity 10000
+```
+
+`keytool` prompts for a store password and identity details (name, org, country). **Back up the keystore file and its password somewhere safe** — losing them permanently locks you out of updating this app.
+
+> On JDK 9+ the default keystore format is PKCS12, where the store password also acts as the key password.
+
+**2. Create `keystore.properties` (one-time, git-ignored)**
+
+Create this file in the project root — the build script reads it for signing. It is already listed in `.gitignore`, so the secrets never enter the repo.
+
+```properties
+storeFile=/Users/<you>/keystores/sms-expense-tracker.jks
+storePassword=<store password from step 1>
+keyAlias=sms-expense-tracker
+keyPassword=<same store password (PKCS12)>
+```
+
+**3. Build the signed APK**
+
+```bash
+./gradlew assembleRelease
+```
+
+Output: `app/build/outputs/apk/release/app-release.apk`
+
+**4. Install on your device**
+
+```bash
+# Uninstall the debug build first (signature mismatch otherwise)
+adb uninstall com.smsexpensetracker
+# Then install the signed release APK
+adb install app/build/outputs/apk/release/app-release.apk
+```
+
+Expect a one-time Play Protect "unknown app" prompt on first install — tap **Install anyway**. A valid self-signed key is not hard-blocked; only a debug/unknown signature is.
 
 ## Testing
 

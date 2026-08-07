@@ -41,6 +41,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SmsSyncUseCaseTest {
@@ -129,6 +131,25 @@ class SmsSyncUseCaseTest {
             )
         }
         coVerify(exactly = 0) { parseLogRepository.insert(any()) }
+    }
+
+    @Test
+    fun `sync dates the transaction from the sms timestamp not now`() = runTest {
+        coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
+        coEvery { parseLogRepository.insert(any()) } returns Unit
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        useCase.sync()
+
+        val expectedDate = Instant.ofEpochMilli(hdfcSms.timestamp)
+            .atZone(ZoneId.systemDefault()).toLocalDate().atStartOfDay()
+        coVerify {
+            transactionRepository.insertBatchReturningIds(
+                match { list -> list[0].transactionDate == expectedDate }
+            )
+        }
     }
 
     @Test

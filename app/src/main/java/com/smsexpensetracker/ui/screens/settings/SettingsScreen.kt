@@ -1,6 +1,7 @@
 package com.smsexpensetracker.ui.screens.settings
 
 import android.content.Intent
+import com.smsexpensetracker.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -327,7 +328,7 @@ fun SettingsScreen(
             style = MaterialTheme.typography.bodyLarge
         )
         Text(
-            text = "Version 1.0",
+            text = "Version ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

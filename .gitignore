@@ -13,4 +13,5 @@
 *.hprof
 *.log
 .DS_Store
+/keystore.properties
 app/release/*
