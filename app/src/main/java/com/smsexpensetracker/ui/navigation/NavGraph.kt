@@ -18,6 +18,7 @@ import com.smsexpensetracker.ui.screens.dashboard.DashboardScreen
 import com.smsexpensetracker.ui.screens.logs.LogViewerScreen
 import com.smsexpensetracker.ui.screens.manualentry.ManualEntryScreen
 import com.smsexpensetracker.ui.screens.parser.ParserScreen
+import com.smsexpensetracker.ui.screens.settings.RuleManagerScreen
 import com.smsexpensetracker.ui.screens.settings.SettingsScreen
 import com.smsexpensetracker.ui.screens.transactions.TransactionsScreen
 import com.smsexpensetracker.ui.screens.unparsed.UnparsedSmsScreen
@@ -58,8 +59,12 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 onNavigateToCategories = { navController.navigate("categories") },
                 onNavigateToBanks = { navController.navigate("banks") },
                 onNavigateToLogs = { navController.navigate("logs") },
-                onNavigateToUnparsedSms = { navController.navigate("unparsed_sms") }
+                onNavigateToUnparsedSms = { navController.navigate("unparsed_sms") },
+                onNavigateToCategoryRules = { navController.navigate("category_rules") }
             )
+        }
+        composable("category_rules") {
+            RuleManagerScreen(onBack = { navController.popBackStack() })
         }
         composable("logs") {
             LogViewerScreen(onBack = { navController.popBackStack() })
