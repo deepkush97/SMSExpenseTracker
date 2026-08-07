@@ -29,12 +29,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.Transaction
 import com.smsexpensetracker.domain.model.TransactionType
+import com.smsexpensetracker.ui.TestTags
 import com.smsexpensetracker.ui.components.EmptyState
 import com.smsexpensetracker.ui.util.formatPaisa
 import java.time.format.DateTimeFormatter
@@ -97,7 +99,9 @@ fun CategorizeScreen(
                     if (uncategorizedCount > 0) {
                         Button(
                             onClick = onBulkCategorize,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(TestTags.BULK_CATEGORIZE_BANNER)
                         ) {
                             Text("$uncategorizedCount uncategorized — Categorize automatically")
                         }
