@@ -1,15 +1,20 @@
 package com.smsexpensetracker.domain.usecase
 
+import com.smsexpensetracker.core.categorize.AutoCategoryEngine
 import com.smsexpensetracker.core.parser.ParserEngine
 import com.smsexpensetracker.core.parser.detectBankForSender
 import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.repository.TransactionLabelRepositoryImpl
 import com.smsexpensetracker.data.sms.SmsReader
 import com.smsexpensetracker.domain.model.ParseLog
 import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.ParseStatus
 import com.smsexpensetracker.domain.model.SyncMeta
 import com.smsexpensetracker.domain.model.Transaction
+import com.smsexpensetracker.domain.model.TransactionLabel
+import com.smsexpensetracker.domain.model.UserCategoryRule
 import com.smsexpensetracker.domain.repository.BankRepository
+import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.ParseLogRepository
 import com.smsexpensetracker.domain.repository.SmsRuleRepository
 import com.smsexpensetracker.domain.repository.SyncMetaRepository
@@ -46,6 +51,8 @@ class SmsSyncUseCase @Inject constructor(
     private val syncMetaRepository: SyncMetaRepository,
     private val bankRepository: BankRepository,
     private val demoDataPreferences: DemoDataPreferences,
+    private val categoryRepository: CategoryRepository,
+    private val transactionLabelRepository: TransactionLabelRepositoryImpl,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     private val _progress = MutableStateFlow(SyncProgress())
@@ -64,6 +71,8 @@ class SmsSyncUseCase @Inject constructor(
             withContext(ioDispatcher) {
                 val rules = smsRuleRepository.getAllRules().first().filter { it.isActive }
                 val rulePairs = rules.map { it.bankId to it.pattern }
+                val categoryRules = categoryRepository.getRules().first()
+                val categories = categoryRepository.getAllCategories().first().associateBy { it.id }
                 val dateRange = range?.takeUnless { it == SyncRange.ALL }
                     ?.let { it.startTimestamp to it.endTimestamp }
                 val messages = smsReader.readSms(dateRange = dateRange).first()
@@ -76,7 +85,7 @@ class SmsSyncUseCase @Inject constructor(
                 messages.chunked(100).forEach { chunk ->
                     val transactions = mutableListOf<Transaction>()
                     for (msg in chunk) {
-                        when (val result = classifySms(msg.body, msg.sender, msg.timestamp, rulePairs)) {
+                        when (val result = classifySms(msg.body, msg.sender, msg.timestamp, rulePairs, categoryRules)) {
                             is ClassifyResult.TransactionReady -> transactions += result.transaction
                             ClassifyResult.ParseFailed -> unparsed++
                             ClassifyResult.Skipped -> Unit
@@ -84,7 +93,19 @@ class SmsSyncUseCase @Inject constructor(
                         processed++
                     }
                     if (transactions.isNotEmpty()) {
-                        inserted += transactionRepository.insertBatch(transactions)
+                        val ids = transactionRepository.insertBatchReturningIds(transactions)
+                        ids.forEachIndexed { index, id ->
+                            if (id > 0) {
+                                transactions[index].categoryId?.let { catId ->
+                                    categories[catId]?.let { category ->
+                                        transactionLabelRepository.insert(
+                                            TransactionLabel(id = 0L, transactionId = id, label = category.name)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        inserted += ids.count { it > 0 }
                     }
                     _progress.value = SyncProgress(
                         processed = processed,
@@ -118,6 +139,8 @@ class SmsSyncUseCase @Inject constructor(
                 val banks = bankRepository.getAllBanks().first()
                 val knownBank = detectBankForSender(sender, banks) != null
 
+                val categoryRules = categoryRepository.getRules().first()
+                val categories = categoryRepository.getAllCategories().first().associateBy { it.id }
                 val rulePairs = smsRuleRepository.getAllRules().first()
                     .filter { it.isActive }
                     .map { it.bankId to it.pattern }
@@ -127,10 +150,22 @@ class SmsSyncUseCase @Inject constructor(
                     sender,
                     timestamp,
                     rulePairs,
+                    categoryRules,
                     writeParseLog = knownBank
                 )) {
-                    is ClassifyResult.TransactionReady ->
-                        transactionRepository.insertBatch(listOf(result.transaction))
+                    is ClassifyResult.TransactionReady -> {
+                        val ids = transactionRepository.insertBatchReturningIds(listOf(result.transaction))
+                        ids.firstOrNull { it > 0 }?.let { id ->
+                            result.transaction.categoryId?.let { catId ->
+                                categories[catId]?.let { category ->
+                                    transactionLabelRepository.insert(
+                                        TransactionLabel(id = 0L, transactionId = id, label = category.name)
+                                    )
+                                }
+                            }
+                        }
+                        ids.count { it > 0 }
+                    }
                     ClassifyResult.ParseFailed, ClassifyResult.Skipped -> 0
                 }
 
@@ -163,6 +198,7 @@ class SmsSyncUseCase @Inject constructor(
         sender: String,
         timestamp: Long,
         rulePairs: List<Pair<Long, String>>,
+        categoryRules: List<UserCategoryRule>,
         writeParseLog: Boolean = true
     ): ClassifyResult {
         val parsed = ParserEngine.parse(body, sender, rulePairs)
@@ -191,7 +227,7 @@ class SmsSyncUseCase @Inject constructor(
                     transactionType = parsed.type,
                     description = parsed.description,
                     transactionDate = LocalDate.now().atStartOfDay(),
-                    categoryId = null,
+                    categoryId = AutoCategoryEngine.matchCategory(parsed.description, categoryRules),
                     rawSms = body,
                     smsTimestamp = timestamp,
                     createdAt = LocalDateTime.now(),

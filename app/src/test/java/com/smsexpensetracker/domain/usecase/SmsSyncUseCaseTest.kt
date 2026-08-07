@@ -1,13 +1,17 @@
 package com.smsexpensetracker.domain.usecase
 
 import com.smsexpensetracker.core.settings.DemoDataPreferences
+import com.smsexpensetracker.data.repository.TransactionLabelRepositoryImpl
 import com.smsexpensetracker.data.sms.SmsMessage
 import com.smsexpensetracker.data.sms.SmsReader
 import com.smsexpensetracker.domain.model.Bank
+import com.smsexpensetracker.domain.model.Category
 import com.smsexpensetracker.domain.model.ParseMethod
 import com.smsexpensetracker.domain.model.ParseStatus
 import com.smsexpensetracker.domain.model.SmsRule
+import com.smsexpensetracker.domain.model.UserCategoryRule
 import com.smsexpensetracker.domain.repository.BankRepository
+import com.smsexpensetracker.domain.repository.CategoryRepository
 import com.smsexpensetracker.domain.repository.ParseLogRepository
 import com.smsexpensetracker.domain.repository.SmsRuleRepository
 import com.smsexpensetracker.domain.repository.SyncMetaRepository
@@ -50,6 +54,8 @@ class SmsSyncUseCaseTest {
     private lateinit var syncMetaRepository: SyncMetaRepository
     private lateinit var bankRepository: BankRepository
     private lateinit var demoDataPreferences: DemoDataPreferences
+    private lateinit var categoryRepository: CategoryRepository
+    private lateinit var transactionLabelRepository: TransactionLabelRepositoryImpl
     private lateinit var useCase: SmsSyncUseCase
 
     private val hdfcRule = SmsRule(
@@ -76,8 +82,12 @@ class SmsSyncUseCaseTest {
         syncMetaRepository = mockk()
         bankRepository = mockk()
         demoDataPreferences = mockk()
+        categoryRepository = mockk()
+        transactionLabelRepository = mockk()
         every { demoDataPreferences.demoDataLoaded } returns flowOf(false)
         every { bankRepository.getAllBanks() } returns flowOf(listOf(Bank(1L, "HDFC Bank", "HDFCBK")))
+        every { categoryRepository.getRules() } returns flowOf(emptyList())
+        every { categoryRepository.getAllCategories() } returns flowOf(emptyList())
         useCase = SmsSyncUseCase(
             smsReader,
             smsRuleRepository,
@@ -86,6 +96,8 @@ class SmsSyncUseCaseTest {
             syncMetaRepository,
             bankRepository,
             demoDataPreferences,
+            categoryRepository,
+            transactionLabelRepository,
             testDispatcher
         )
     }
@@ -99,7 +111,7 @@ class SmsSyncUseCaseTest {
     fun `sync parses HDFC sms and inserts a transaction`() = runTest {
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
@@ -107,7 +119,7 @@ class SmsSyncUseCaseTest {
 
         assertEquals(SyncResult(scanned = 1, inserted = 1, unparsed = 0), result)
         coVerify {
-            transactionRepository.insertBatch(
+            transactionRepository.insertBatchReturningIds(
                 match { list ->
                     list.size == 1 &&
                         list[0].amount == 483176L &&
@@ -130,7 +142,7 @@ class SmsSyncUseCaseTest {
         val result = useCase.sync()
 
         assertEquals(SyncResult(scanned = 1, inserted = 0, unparsed = 1), result)
-        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { transactionRepository.insertBatchReturningIds(any()) }
     }
 
     @Test
@@ -138,7 +150,7 @@ class SmsSyncUseCaseTest {
         val junk = SmsMessage(11L, "UNKNOWN", "This is not a bank SMS", 1750000000001L)
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(junk))
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(emptyList())
-        coEvery { transactionRepository.insertBatch(any()) } returns 0
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns emptyList()
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
@@ -150,7 +162,7 @@ class SmsSyncUseCaseTest {
                 match { log -> log.status == ParseStatus.FAILED && log.smsBody == junk.body }
             )
         }
-        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { transactionRepository.insertBatchReturningIds(any()) }
     }
 
     @Test
@@ -162,7 +174,7 @@ class SmsSyncUseCaseTest {
         )
         coEvery { smsReader.readSms() } returns MutableStateFlow(messages)
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
@@ -178,7 +190,7 @@ class SmsSyncUseCaseTest {
     fun `sync upserts sync meta on success`() = runTest {
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
@@ -205,7 +217,7 @@ class SmsSyncUseCaseTest {
     fun `sync returns error when insert batch fails`() = runTest {
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } throws RuntimeException("db down")
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } throws RuntimeException("db down")
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
@@ -235,7 +247,7 @@ class SmsSyncUseCaseTest {
 
         assertEquals(false, result)
         coVerify(exactly = 0) { bankRepository.getAllBanks() }
-        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { transactionRepository.insertBatchReturningIds(any()) }
     }
 
     @Test
@@ -244,21 +256,21 @@ class SmsSyncUseCaseTest {
 
         assertEquals(false, result)
         coVerify(exactly = 0) { parseLogRepository.insert(any()) }
-        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { transactionRepository.insertBatchReturningIds(any()) }
         coVerify(exactly = 0) { syncMetaRepository.upsert(any()) }
     }
 
     @Test
     fun `handleIncomingSms inserts transaction for bank sms`() = runTest {
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
         val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
 
         assertEquals(true, result)
         coVerify {
-            transactionRepository.insertBatch(
+            transactionRepository.insertBatchReturningIds(
                 match { list ->
                     list.size == 1 &&
                         list[0].amount == 483176L &&
@@ -286,14 +298,14 @@ class SmsSyncUseCaseTest {
                 match { log -> log.status == ParseStatus.FAILED && log.smsBody == body }
             )
         }
-        coVerify(exactly = 0) { transactionRepository.insertBatch(any()) }
+        coVerify(exactly = 0) { transactionRepository.insertBatchReturningIds(any()) }
         coVerify(exactly = 0) { syncMetaRepository.upsert(any()) }
     }
 
     @Test
     fun `handleIncomingSms returns false when insert is deduplicated`() = runTest {
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 0
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns emptyList()
 
         val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
 
@@ -304,7 +316,7 @@ class SmsSyncUseCaseTest {
     @Test
     fun `handleIncomingSms returns false when repository throws`() = runTest {
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } throws RuntimeException("db down")
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } throws RuntimeException("db down")
 
         val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
 
@@ -321,14 +333,14 @@ class SmsSyncUseCaseTest {
         )
         val body = "ICICI Bank Acct XX123 debited for Rs 242.00 on 26-Jul-26; BUS Ticket credited. UPI:003637672623. Call 18002662 for dispute. SMS BLOCK 796 to 9215676766."
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(iciciRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
         val result = useCase.handleIncomingSms(body, "AD-ICICIT-S", 1750000000000L)
 
         assertEquals(true, result)
         coVerify {
-            transactionRepository.insertBatch(
+            transactionRepository.insertBatchReturningIds(
                 match { list -> list.size == 1 && list[0].bankId == 2L }
             )
         }
@@ -339,7 +351,7 @@ class SmsSyncUseCaseTest {
     fun `concurrent sync and handleIncomingSms both complete`() = runTest {
         coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { parseLogRepository.insert(any()) } returns Unit
         coEvery { syncMetaRepository.upsert(any()) } returns Unit
 
@@ -361,7 +373,7 @@ class SmsSyncUseCaseTest {
     @Test
     fun `handleIncomingSms returns true when upsert throws after insert`() = runTest {
         every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
-        coEvery { transactionRepository.insertBatch(any()) } returns 1
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(1L)
         coEvery { syncMetaRepository.upsert(any()) } throws RuntimeException("meta down")
 
         val result = useCase.handleIncomingSms(hdfcSms.body, hdfcSms.sender, hdfcSms.timestamp)
@@ -395,5 +407,50 @@ class SmsSyncUseCaseTest {
         useCase.sync(range = SyncRange.ALL)
 
         coVerify(exactly = 1) { smsReader.readSms(dateRange = null) }
+    }
+
+    @Test
+    fun `sync applies category rule and records label`() = runTest {
+        coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        every { categoryRepository.getRules() } returns flowOf(
+            listOf(UserCategoryRule(id = 1L, pattern = "acme", categoryId = 7L))
+        )
+        every { categoryRepository.getAllCategories() } returns flowOf(
+            listOf(Category(id = 7L, name = "Shopping", icon = "", color = 0, isDefault = false))
+        )
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(101L)
+        coEvery { transactionLabelRepository.insert(any()) } returns 1L
+        coEvery { parseLogRepository.insert(any()) } returns Unit
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        val result = useCase.sync()
+
+        assertEquals(SyncResult(scanned = 1, inserted = 1, unparsed = 0), result)
+        coVerify {
+            transactionRepository.insertBatchReturningIds(
+                match { list -> list.size == 1 && list[0].categoryId == 7L }
+            )
+        }
+        coVerify {
+            transactionLabelRepository.insert(
+                match { label -> label.transactionId == 101L && label.label == "Shopping" }
+            )
+        }
+    }
+
+    @Test
+    fun `sync does not record label when no rule matches`() = runTest {
+        coEvery { smsReader.readSms() } returns MutableStateFlow(listOf(hdfcSms))
+        every { smsRuleRepository.getAllRules() } returns MutableStateFlow(listOf(hdfcRule))
+        every { categoryRepository.getRules() } returns flowOf(emptyList())
+        every { categoryRepository.getAllCategories() } returns flowOf(emptyList())
+        coEvery { transactionRepository.insertBatchReturningIds(any()) } returns listOf(101L)
+        coEvery { parseLogRepository.insert(any()) } returns Unit
+        coEvery { syncMetaRepository.upsert(any()) } returns Unit
+
+        useCase.sync()
+
+        coVerify(exactly = 0) { transactionLabelRepository.insert(any()) }
     }
 }
